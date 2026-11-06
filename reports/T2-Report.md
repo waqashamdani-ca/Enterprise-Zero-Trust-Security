@@ -19,7 +19,7 @@ Reviewed README, assignment, implementation guide, architecture, security requir
 
 Created `docs/GLOSSARY.md` and `reports/T2-Report.md`. Modified `README.md`, `AGENTS.md`, `docs/PROJECT-ASSIGNMENT.md`, `docs/LAB-IMPLEMENTATION-GUIDE.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY-REQUIREMENTS.md`, `docs/ACCEPTANCE-CRITERIA.md`, `docs/TEST-PLAN.md`, `docs/RISKS.md`, `docs/DECISIONS.md`, and `reports/README.md`. Reviewed the project final report template and reference catalog without changing them. Detailed Git guidance stays in AGENTS.md; the original README command example is preserved below as a historical reference.
 
-No infrastructure, software, VM, network, production, credential-store, license, or repository-protection change is authorized. Finalized T1, its reporting addendum, and bootstrap evidence must remain unchanged. The baseline includes the owner's `eb50d3f` README edit removing the prominent status banner; use a clear implementation-status section without restoring that banner.
+No infrastructure, software, VM, network, production, credential-store, license, or repository-protection change is authorized. Finalized T1, its reporting addendum, and bootstrap evidence remain unchanged. The baseline includes the owner's `eb50d3f` README edit removing the prominent status banner. A later owner edit, `f450b39`, removed the introductory Task 001 completion sentence. Both choices were preserved: the revised README has no restored banner or deleted introductory sentence, and status/evidence appear in their dedicated sections. The later main change was reconciled through a normal merge into the task branch without rewriting history.
 
 ## C. Testing and Validation
 
@@ -31,14 +31,14 @@ No infrastructure, software, VM, network, production, credential-store, license,
 | Requirement/control/flow/capacity/rubric comparison | Existing technical tables and IDs unchanged | Fourteen technical tables across five documents matched exactly; full T00–T20 catalog/coverage index unchanged | PASS |
 | Historical report/evidence digest comparison | Finalized T1/addendum and bootstrap evidence unchanged | All three files matched their baseline bytes and SHA-256 digests | PASS |
 | `git diff --check` and authored-content review | Clean formatting and only authorized public text changes | Passed; writing reviewed and listed stock marketing phrases absent | PASS |
-| Reachable history and commit-metadata review | Public text scan clean; new publication identity uses noreply | Historical text blobs had no selected findings; two existing commits had non-noreply author/committer email fields | FAIL for historical noreply policy; existing finding recorded without exposing addresses |
+| Reachable history and commit-metadata review | Public text scan clean; new publication identity uses noreply | Historical text blobs had no selected findings; three existing commits had non-noreply author/committer email fields at the review cutoff | FAIL for historical noreply policy; existing finding recorded without exposing addresses |
 | GitHub PR/CI/merge and main synchronization | Actual results read back before completion | Pending | NOT TESTED |
 
 ## D. Security and Quality Review
 
 Reviewed public-safe text only. Exact command blocks, requirement/control/flow/capacity/rubric tables, security boundaries, standards mappings, and the test catalog were preserved. The prose now explains purpose and recovery without claiming those procedures ran. Operational controls remain PLANNED / NOT TESTED. No implementation, business outcome, performance metric, compliance result, independent human review, or owner acceptance was invented. New-file and historical-text scans found no selected sensitive-data patterns; this does not cover every possible secret.
 
-Commit-metadata review found non-noreply author/committer emails in existing commits `eb50d3fe692f3a087eaeed423710c2a9994575d4` (the owner's README edit) and `20c5bb491927c513b8773ead7ecda76716c23b89` (the GitHub-created PR 1 merge). The merge used the account's web/API email rather than the configured local noreply identity. This distinction was missed before that merge and is now recorded in RK-17; addresses are deliberately omitted. No credential or key finding was identified.
+Commit-metadata review found non-noreply author/committer emails in existing commits `eb50d3fe692f3a087eaeed423710c2a9994575d4` and `f450b3992752eb8289089c3e0c2e7e6f3c07b6ac` (owner README edits) and `20c5bb491927c513b8773ead7ecda76716c23b89` (the GitHub-created PR 1 merge). The merge used the account's web/API email rather than the configured local noreply identity. This distinction was missed before that merge and is now recorded in RK-17; addresses are deliberately omitted. No credential or key finding was identified.
 
 Existing history remains intact. New commits/merges must verify both noreply fields; the intended PR 2 publication uses a normal local merge only after exact-head CI/review requirements pass, followed by remote/PR read-back. GitHub documents [commit email preferences](https://docs.github.com/en/account-and-profile/how-tos/email-preferences/setting-your-commit-email-address?platform=windows) and [recognition of merges outside the PR button](https://docs.github.com/en/pull-requests/reference/pull-request-merges). No account privacy setting or history rewrite is authorized here. Historical remediation remains an owner decision.
 
@@ -67,7 +67,7 @@ Local documentation editing and validation are complete; PR/CI/final publication
 
 ## H. Next Task
 
-After this documentation task, request owner review. The recommended next bounded engineering task is a read-only Stage A hardware and isolation readiness assessment, requiring explicit owner approval, asset ownership/access confirmation, and private evidence handling. No installation, VM creation, network configuration, or security testing begins here.
+The owner subsequently authorized documentation folder organization and reproducible PDF deliverables. After T2 is finalized, merged, and synchronized, assign that documentation-only scope T3. Its prerequisites are environment/toolchain inspection, preservation of finalized sources and evidence, faithful PDF rendering, and a separate report. That authorization does not permit Proxmox installation, VM creation, network changes, or infrastructure/security testing. Any later Stage A readiness task still requires its own explicit owner approval.
 
 ## Historical README command example
 
