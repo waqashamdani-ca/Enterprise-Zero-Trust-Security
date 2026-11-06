@@ -1,140 +1,109 @@
-# Proposed architecture and trust boundaries
+# Focused lab architecture and trust boundaries
 
-**Status: PLANNED. Operational controls are NOT TESTED.** Hardware has not been inspected and the lab has not been installed or configured. Address labels are symbolic; actual addresses and protected-network inventories stay in private records outside Git.
+**HL-CYB-001 | T6 baseline, 2026-11-06 | PLANNED; operational controls NOT TESTED.**
 
-The design separates user work, administration, identity services, applications, and audit collection so one allowed connection does not grant access to everything. It also defines how the lab can recover without depending on production. A trust boundary is a point where access must be checked; the [glossary](../guides/GLOSSARY.md) explains the specialist terms used below.
-
-## Design principles
-
-Start with one offline virtualization host. Check identity and resource permission, enforce access at both network and host/application layers, separate administration, and permit only required service dependencies. Collect evidence centrally and verify recovery. Home networking and Purple Eye production remain outside the lab; being on a lab network does not grant resource permission.
+The lab lets an analyst read a report and an engineer read maintenance instructions while denying an unassigned user. One host and four virtual machines (VMs) are enough to study those decisions. The [assignment](../assignments/PROJECT-ASSIGNMENT.md) owns the ten FWR requirements; the [guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md) explains construction. Nothing here establishes installed hardware, software or working controls.
 
 ## Logical layout
 
 ```mermaid
 flowchart TB
-    Admin[Dedicated lab administrator / physical console]
-    Mgmt[Management zone: hypervisor and firewall admin]
-    FW[Virtual OPNsense enforcement boundary]
-    ID[Identity zone: AD, DNS, issuing CA]
-    USR[Endpoint zone: Windows and Linux]
-    APP[Service zone: synthetic application]
-    LOG[Monitoring zone: WEC and Linux logs]
-    RA[Remote-access zone: one pilot at a time]
-    ROOT[Offline root CA: powered off, no NIC]
-    WAN[Optional isolated uplink: approval required]
-    EXT[Approved vendor endpoints only]
-    HOME[Home network and production: excluded]
+    Admin[Dedicated lab administrator and console]
+    Mgmt[Management: Proxmox and firewall administration]
+    FW[One virtual OPNsense firewall]
+    Corp[Corporate: DC1 directory and WIN1 endpoint]
+    App[Restricted: APP1 Linux HTTPS application]
+    Remote[Lab-only Tailscale client]
+    Logs[Private review: firewall, directory and app logs]
+    Backup[Encrypted off-compute APP1 backup]
+    CA[One lab CA: offline signing files]
+    WAN[Isolated egress: approval required]
+    HOME[Home and production: excluded]
     Admin --> Mgmt
     Mgmt --> FW
-    FW --> ID
-    FW --> USR
-    FW --> APP
-    FW --> LOG
-    FW --> RA
-    FW -. Optional controlled egress .-> WAN
-    WAN -. Filtered outbound sessions .-> EXT
+    FW --> Corp
+    FW --> App
+    Remote -. HTTPS only .-> App
+    FW -. Log review .-> Logs
+    Corp -. Log review .-> Logs
+    App -. Log review .-> Logs
+    App -. Offline backup copy .-> Backup
+    FW -. Gated egress .-> WAN
 ```
 
-Arrows show paths that a policy may permit for a specific service. They do not allow every connection. HOME and ROOT have no network edges. Certificate requests and signed material move to/from the offline root certificate authority (CA) through separately reviewed media.
+Solid arrows show administrative or routed paths subject to explicit policy. Dashed log/backup arrows represent controlled record/media transfers, not unrestricted network permits. The Tailscale arrow is an overlay connection enforced on APP1; it does not pass through the inter-zone firewall in every deployment. CA signing is offline with reviewed request/public-certificate transfer; CA and HOME have no network edges. No fourth workload zone or extra collector, connector or CA VM is required.
 
 ## Physical and virtual topology
 
-Proposed compute: Dell Precision 5820. Verify firmware virtualization support, storage ownership, CPU compatibility, console recovery, NIC inventory, and usable capacity in Stage A. Do not assume a second NIC or that the disk can be erased. The Lenovo and HP are candidates for a dedicated admin/recovery or backup role after inspection; neither is assumed available for reinstallation.
+| Zone | Bridge | Attached assets and responsibilities |
+| --- | --- | --- |
+| Management | vmbr0 | Proxmox management, OPNsense management interface and dedicated lab administrator station; verified lab-only physical segment |
+| Corporate | vmbr10 | DC1: Windows Server AD/DNS/Group Policy; WIN1: one Windows domain member |
+| Restricted | vmbr20 | APP1: one Linux HTTPS server; local application roles/logs and directly enrolled lab Tailscale interface |
 
-| Zone | Proposed bridge | Attached components | Physical ports / host address |
-| --- | --- | --- | --- |
-| Management | `vmbr0` | Proxmox management, firewall management interface, dedicated admin station | Dedicated lab-only Ethernet segment if verified; Proxmox management address only here |
-| Identity | `vmbr10` | Lab DC/DNS and issuing CA | None; no hypervisor IP |
-| Endpoints | `vmbr20` | Windows/Linux member or standalone lab endpoints | None; no hypervisor IP |
-| Services | `vmbr30` | Synthetic application/service | None; no hypervisor IP |
-| Monitoring | `vmbr40` | WEC and Linux/syslog collector | None; no hypervisor IP |
-| Remote access | `vmbr50` | Separate pilot connector or scoped endpoint | None; no hypervisor IP |
-| Optional WAN | `vmbr99` | Firewall WAN only | A separately approved, dedicated uplink; no hypervisor IP |
-| Offline PKI | No bridge | Standalone root CA | No virtual NIC or physical network |
+OPNsense has one interface per zone. An optional uplink is disconnected until independently isolated egress is approved; it is not a fourth workload zone. Corporate/Restricted bridges have no physical ports or host IP addresses. Ordinary VMs have one zone NIC. Only APP1 gains the explicitly reviewed Tailscale virtual interface. Proxmox must not route between zones. Corporate traffic between WIN1 and DC1 stays on its bridge, so Windows host policy is essential.
 
-The firewall has one interface for each connected zone. Ordinary guest virtual machines (VMs) have exactly one zone interface and no direct home-facing bridge connection. Do not add a second network interface (NIC), NAT adapter, Wi-Fi link, or host-sharing path. Traffic between zones must pass through the firewall. Traffic inside a zone may not, so host/application controls remain necessary.
+A dedicated administrator station uses only the isolated lab path. Review Wi-Fi, other adapters, VPNs, Internet sharing and forwarding; no production-joined workstation or credential store. Maintain physical console access when narrowing management rules. Do not attach lab bridges to Google Wifi or treat NAT as isolation. Verify IPv6 forwarding, router advertisements, DHCPv6, automatic rules and overlay paths; baseline routed IPv6 is disabled without indiscriminately disabling Windows IPv6 stacks.
 
-The initial management cable/segment is disconnected from Google Wifi and all production. The dedicated administrator station has Wi-Fi, other NICs, bridges, VPNs, Internet sharing, and forwarding disabled during lab administration; do not use a production-joined workstation as the administrator station. Use physical console while this topology is being built. Retain console access if the firewall is down. Do not claim that assigning different virtual bridges isolates a physical uplink that is still shared.
+An uplink must prevent direct layer-2 contact with protected networks as well as routed access. A second NIC or Beryl AX connected to the home LAN is not proof of isolation. DEC-03 remains blocking until an inspected design and rollback are approved. Remote access/activation stay NOT TESTED when this dependency is absent. Never send a test packet to home or production; use passive/configuration inspection and lab-owned mocks.
 
-Internet egress—traffic leaving the lab—requires a separate approved design. The uplink/firewall arrangement must prevent direct layer-2 access to home devices and block protected destinations independently of guest routes. A second NIC plugged into the home LAN is insufficient because the virtual firewall's WAN interface would still share that LAN.
+## Hardware status and preparation
 
-Keep `vmbr99` disconnected until the owner approves the actual isolation boundary. Remote access and online activation remain pending in the meantime. Prefer offline transfer of verified media. Do not turn the hypervisor into a home-to-lab router or weaken isolation to finish a pilot.
+Owner-reported existing equipment includes the Dell Precision 5820 (W-2125, 80 GB RAM, 512 GB SSD), Lenovo laptop, HP desktop, test laptops, Google Wifi and available thermal paste. This is an inventory description, not a readiness finding.
 
-Future physical firewall/managed-switch integration requires a new topology review, dedicated management design, verified VLAN/trunk/native-VLAN behavior, route/IPv6 review, and owner-approved cutover/rollback. It is not part of the bootstrap or assumed Google Wifi capability.
+The latest owner procurement plan and 2026-11-06 correction identify these items as **Ordered**: Xeon W-2145, Samsung 1 TB SSD, Sabrent PCIe adapter, Intel I350-T4 NIC, GL.iNet Beryl AX and TP-Link managed switch. Expected delivery: November 7, 2026 for the five non-CPU items; November 12 for the CPU. **Delivered** is unconfirmed. **Installed** and **Validated** lab states have no evidence.
 
-## Private addressing, DNS, and time
-
-Use one nonoverlapping privately assigned subnet per zone after a private inventory review of home, production, remote-access, and vendor-reserved ranges. Public artifacts use `LAB_MGMT_CIDR`, `LAB_IDENTITY_CIDR`, `LAB_ENDPOINT_CIDR`, `LAB_SERVICE_CIDR`, `LAB_MONITOR_CIDR`, and `LAB_REMOTE_CIDR`. Never publish actual internal addresses, gateway details, or protected endpoint lists.
-
-The proposed lab-only directory namespace is `ad.lab.test`; example service names include `app.ad.lab.test` and `dc1.ad.lab.test`. `.test` is reserved for testing by [RFC 2606](https://www.rfc-editor.org/rfc/rfc2606). It has no production DNS delegation. Use a private reverse zone when addresses are approved. No corporate suffix search, conditional forwarding to corporate DNS, public zone publication, or production certificate issuance.
-
-Domain members query only the lab DC/DNS. Standalone lab systems use the approved lab resolver. Only the designated resolver may reach specifically approved upstream resolvers if egress is enabled; suppress forwarding of the lab namespace. Block direct client DNS to other destinations, including encrypted DNS bypass where controllable. Do not imply that blocking a port alone defeats DNS-over-HTTPS. Domain time follows the AD hierarchy; the PDC and standalone systems use the selected lab time source. Measure offsets; an offline lab may require periodic owner-approved time correction and cannot assume Internet NTP.
-
-IPv6 is **disabled for lab routing/RA/DHCPv6 in the baseline**, with explicit hypervisor/firewall review for an unintended bypass. Do not indiscriminately disable Windows IPv6 stacks; Microsoft service dependencies require a separate decision. If IPv6 is later enabled, design and test equivalent policy, DNS, routing, and logging first. Treat link-local communication and host services as explicit review items.
+Before installation, confirm receipt, inspect condition/part identity, verify firmware/CPU/cooler/slot/adapter/storage compatibility, inventory existing data and services, verify backups and recovery, and obtain owner approval of exact destructive targets. Preserve the original Windows disk; no existing service may be stopped/migrated without its own approval. Extra ordered equipment does not mandate physical OPNsense, VLAN deployment, CPU replacement or additional hosts. The focused baseline retains virtual OPNsense; assign ordered parts only where needed and approved.
 
 ## Initial capacity budget
 
-The following values are planning ceilings. They are not inspected allocations or a guarantee that a workload will fit. The ledger uses GiB, which differs from advertised GB capacity. Verify actual usable space before creating a VM, keep at least 80 GiB free, and do not treat thin provisioning as additional physical storage.
+Planning allocations below replace the earlier enterprise VM ledger. They must fit observed usable capacity and current guest-OS minimums before installation.
 
-| VM role | vCPU planning allocation | RAM GiB | Virtual disk ceiling GiB | Operation |
+| VM | vCPU | RAM GiB | Disk GiB | Responsibility |
 | --- | --- | --- | --- | --- |
-| OPNsense | 2 | 4 | 12 | Baseline |
-| DC/DNS | 2 | 6 | 48 | Baseline |
-| Issuing CA | 2 | 4 | 32 | After G |
-| Offline root CA | 1 | 2 | 16 | Normally off; no NIC |
-| Windows member endpoint | 2 | 6 | 40 | Baseline |
-| Linux endpoint | 1 | 2 | 16 | Baseline |
-| Windows Event Collector | 2 | 4 | 32 | After J |
-| Linux/syslog collector | 2 | 4 | 32 | After J |
-| Synthetic service | 1 | 2 | 12 | Minimal application |
-| Remote pilot component | 1 | 2 | 8 | One provider at a time |
-| Total planned guest ceilings | 16 | 36 | 248 | Offline root usually excluded from running total |
+| OPNsense | 2 | 4 | 16 | Three-zone firewall, local logs |
+| DC1 | 2 | 6 | 64 | One lab AD/DNS/Group Policy server |
+| WIN1 | 2 | 6 | 64 | Supported Windows member; verify its current CPU/TPM requirements |
+| APP1 | 2 | 4 | 32 | Linux, Apache HTTPS, local logs, Tailscale |
+| Total | 8 | 20 | 176 | Four VMs; no dedicated CPU-core guarantee |
 
-Reserve at least 12 GiB host RAM. A disk ledger starts with up to 32 GiB host OS, 16 GiB media, 248 GiB guest ceilings, 32 GiB temporary snapshot allowance, and 80 GiB free-space reserve: **408 GiB** before filesystem/metadata overhead. Confirm this fits measured capacity; shrink the approved workload or add separately approved storage if it does not. Set snapshot expiry and space alarms. CPU allocations are scheduled shares, not dedicated cores; measure contention and stagger workloads. Do not overcommit RAM or promise throughput/HA from this design.
-
-Thirty-day event retention must fit measured event volume. Start with bounded synthetic events and rotation quotas; the collector disk ceilings are not proof of retention. The HP may become an off-compute backup target only after capacity, encryption, connectivity, and recovery verification. No same-NVMe snapshot counts as a backup. A single host/disk outage interrupts the lab.
+Reserve at least 12 GiB host RAM and 80 GiB free storage. A provisional ledger is 32 GiB host + 16 GiB media + 176 GiB guest ceilings + 32 GiB temporary restore allowance + 80 GiB free = **336 GiB**, before filesystem overhead. Verify against the selected disk, including current contents; thin provisioning creates no extra physical capacity. Set short snapshot expiry and bounded local log rotation. The ordered 1 TB disk is not assumed installed. CPU contention and recovery-copy space need observation. Backups require separate encrypted off-compute storage, not the same host disk.
 
 ## Inter-zone policy matrix
 
-The objects below stand for private inventory entries. Apply stateful rules at the interface where traffic starts. Add narrow infrastructure exceptions, block protected destinations before Internet permits, and finish with a logged default deny. Review floating/group/automatic rules, existing connection states, local firewall services, and anti-lockout defaults as well as the visible interface rules.
+Use private nonoverlapping subnets, recorded outside Git, named publicly as LAB_MGMT_CIDR, LAB_CORPORATE_CIDR and LAB_RESTRICTED_CIDR. Lab DNS is ad.lab.test with dc1.ad.lab.test and app.ad.lab.test. The .test namespace is reserved; there is no production delegation.
 
-| Flow ID | Source → destination | Allowed service / reason | Enforcement and evidence |
-| --- | --- | --- | --- |
-| F01 | Dedicated admin → hypervisor/firewall management | HTTPS to named management interfaces; SSH only if separately justified | Management/host policy; T04 |
-| F02 | Domain members → named DC/DNS | Scoped AD domain services and DNS; only documented required ports | OPNsense plus DC host firewall; T07, T08 |
-| F03 | Authorized lab systems → named lab DNS/time source | TCP/UDP DNS and selected time service | Host/firewall policy; T07, T15 |
-| F04 | Analyst endpoint → synthetic application | TLS on named application port plus application role check | Network, host, application; T05, T12 |
-| F05 | Engineer administrative context → approved service | Named TLS/SSH management service; no general server-zone access | Host, application, scoped policy; T06, T12 |
-| F06 | Lab Windows event sources → WEC | Authenticated event forwarding to named collector | Prefer HTTPS once PKI exists; T16 |
-| F07 | Firewall/hypervisor/Linux → log collector | Authenticated encrypted logging where supported | Compatibility exception required if not supported; T16 |
-| F08 | Selected clients → issuing CA/CRL service | Approved enrollment protocol plus HTTP CRL/AIA retrieval; LDAP only when needed | CA templates, host/firewall policy; T10, T11 |
-| F09 | Remote pilot component → one named application | Only the selected resource/port; no management or directory route | Vendor policy and independent connector-zone firewall; T13, T14 |
-| F10 | Named update/resolver/vendor components → approved external services | Time-bounded, destination-scoped DNS/HTTPS and documented vendor protocols | Optional egress boundary; private alias review; T02 |
-| F11 | Any ordinary lab workload → management or protected networks | None | Explicit deny plus default deny; mock-boundary T01, T06 |
-| F12 | Unlisted inter-zone or same-zone resource access | None | Inter-zone firewall; same-zone host/application controls; T06 |
+| Flow | Source to destination | Essential permission and enforcement |
+| --- | --- | --- |
+| FF-01 | Dedicated admin to named management interfaces | HTTPS on the actual management ports; SSH only if approved; management/host policy, console recovery and supported MFA |
+| FF-02 | WIN1 to DC1, same Corporate zone | Named AD/DNS/time dependencies in DC/endpoint host rules; inspect Microsoft version-specific services, not an all-services allow |
+| FF-03 | WIN1 to APP1 | TCP 443 only; OPNsense, Linux host firewall and application authorization |
+| FF-04 | APP1 to DC1 | Lab DNS TCP/UDP 53 and selected time service only, as approved; no Linux domain join required |
+| FF-05 | Dedicated admin to guests | Only named management services needed for approved configuration; never ordinary-user administration |
+| FF-06 | Lab Tailscale client to APP1 | One exact enrolled server, TCP 443; explicit vendor grants, Linux overlay firewall and application role checks |
+| FF-07 | Named component to approved external dependencies | Only reviewed update/activation/Tailscale dependencies through independently isolated egress; default disconnected |
+| FF-08 | Unlisted inter-zone, ordinary-user management or protected destination | Deny, with appropriate policy/counter/log evidence; same-zone access also constrained at hosts |
 
-AD service dependencies must be selected from Microsoft's [AD firewall guidance](https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/config-firewall-for-ad-domains-and-trusts). Common requirements include DNS, Kerberos, LDAP, SMB, RPC endpoint mapper and dynamic RPC, time, and password changes. Scope dynamic RPC to named DCs and approved clients; do not replace this with an all-services permit to the identity zone. LDAPS/global catalog and enrollment dependencies are enabled only where justified. Record exact version-specific ports privately, then publish a sanitized service matrix. Protocol restrictions that break domain join/GPO are a failed design, not grounds for disabling the firewall.
+Apply interface rules where traffic enters. Inspect floating/group/automatic/anti-lockout rules, NAT, local listeners, states and firewall-originated traffic. Scope DNS/time and AD dependencies to the actual lab systems; confirm service/version requirements before a permit. Block protected destinations before any allowed egress, with the private alias inventory covering IPv4, IPv6, overlay ranges and corporate public endpoints. Shared hosting/alias updates limit static destination filtering; record the independent physical boundary. No inbound port forwarding, UPnP/NAT-PMP, subnet advertisements, exit nodes or public application sharing.
 
-For egress, protect home and production on **both** lab-originated and firewall-originated paths. Include private/special-use destinations, actual protected prefixes, corporate public endpoints, DNS-resolved aliases, IPv6, overlay ranges, and management addresses in private policy. Public services can share hosting addresses; assess destination overlap rather than claim that a static deny list guarantees separation. Permit only necessary named external services after that assessment. NAT is address translation, not isolation. No inbound port forwards, UPnP/NAT-PMP, exit-node routing, or exposed hypervisor/admin services.
+## Identity, application and certificate relationships
 
-## Identity, PKI, and authorization
+Create ava (analyst), eli (engineer) and uma (unassigned), plus one separate named privileged administrator. Three AD security groups are LabReaders (ava, eli), LabMaintainers (eli) and LabAdmins (administrator). Default built-in/service accounts are secured, not counted as additional project people. Windows logon and Group Policy use AD.
 
-Maintain six synthetic standard users, at least three business groups, two distinct privileged lab identities, scoped service accounts, and a protected emergency access method. Privileged identities do not browse/email and ordinary identities do not administer hosts. Use groups for rights, remove stale access, and record lifecycle events. A domain authentication success does not authorize every application.
+For a small reproducible HTTPS authorization exercise, Apache uses local password hashes and a group file reflecting the same three principals/approved memberships. Application passwords differ from AD passwords. This is **manual role mapping, not AD single sign-on or automatic group synchronization**. Directory and application changes must both be recorded; changing AD alone does not revoke web access. FWT-03 tests effective app permissions and removal from the application group file. A fresh request and an already authenticated browser must lose the removed permission.
 
-Separate the standalone offline root from the domain-joined issuing CA and DC. Restrict templates, enrollment rights, subject/SAN control, EKUs, private-key export, and administrative roles. Keep CA private keys and backups outside Git; do not import the lab root into home/production trust stores. Publish CRL/AIA only inside the lab. Decide renewal/revocation/availability behavior for the selected relying application; many TLS clients do not perform mandatory revocation checks by default.
+One offline OpenSSL lab CA signs one APP1 HTTPS leaf for app.ad.lab.test. CA keys remain encrypted/offline; the server key is readable only by the required service administrator. Import only the public CA certificate into approved lab clients. Verify hostname, chain and dates without moving DC time. There is no separate issuer, AD CS VM, automated renewal or certificate-revocation service requirement. Account/device revocation remains mandatory; certificate revocation is an explicit lab limitation.
 
-Management MFA applies at supported management and remote-access control planes. AD password authentication alone is not MFA, and remote MFA does not automatically add MFA to every internal Windows logon. Record unsupported paths and compensating controls; never claim universal MFA coverage without proof.
+## Tailscale access boundary
 
-## Remote access and Zero Trust limitations
+Use a separate lab-only tailnet and identities, current lawful plan terms, supported MFA and private recovery. Enroll only APP1 and the approved lab client after replacing permissive defaults with explicit TCP 443 access to APP1. No Proxmox, firewall, DC, RDP/SSH or subnet access is included. Keep SSH/Funnel/Serve and route/exit-node features off unless a new scope is approved.
 
-Tailscale and Twingate are separate sequential evaluations with isolated accounts/tenants and no corporate SSO, existing corporate tailnet membership, synchronization, subnet advertisements, or exit nodes. Verify that enrollment creates a separate environment before any client is connected. Use a dedicated lab device for the pilot; avoid simultaneous clients/DNS interception. The initial pilot exposes one synthetic resource, not a subnet.
+Review every additive grant/ACL, tag owner, device enrollment, DNS override and route. Use lab-only name resolution for app.ad.lab.test to the selected APP1 overlay address on the remote client; do not publish the address. Effective Linux policy on the Tailscale interface must deny other services and forwarding. Verify actual rule order because vendor-managed rules can precede host rules. OPNsense evidence alone cannot prove overlay restrictions. Remove the client's grant/device authorization for revocation and test current/new sessions and the effective device state.
 
-Replace Tailscale's initial permissive policy before enrollment; omitted/empty policy content must not be assumed deny-all. Review *all* additive grant paths and tag ownership. If an endpoint is directly enrolled rather than proxied, test its overlay interface and host firewall: overlay traffic can bypass an inter-zone firewall. Twingate connectors reach only their permitted resource and DNS dependencies, even if a connector is compromised. SaaS plan limits, posture checks, logging exports, and revocation behavior require current verification.
+## Logging, automation and recovery
 
-## Monitoring, recovery, and residual limits
+Use three existing sources: OPNsense firewall, DC1 Security log and Apache access/error logs. A private review record on the dedicated administrator station correlates five synthetic events: directory logon success, directory logon failure, application allow, application denial and firewall denial. Review source records directly or transfer only through an approved private path; no collector VM or SIEM is required. Record UTC/time differences, source/observer timestamps and gaps. Apply bounded rotation/access controls; no event-ingestion SLA or extended-retention calculation.
 
-Sources retain local logs from initial deployment. Stage J aggregates six classes, correlates UTC timestamps, records policy changes, and tests missing-source alerts. Capture identity, authorization, management, DNS, certificate, and denied-network events without logging credentials. Restrict collector access, rotation, deletion, and private export. Immutable logging and continuous enterprise telemetry are not promised by a single-host lab.
+One useful automation produces a local capacity summary for an approved lab Windows machine. The implementation guide specifies target rejection, output handling and repeat-run checks; T6 creates no executable lab automation.
 
-Recovery order: console/private inventory and secrets → hypervisor/bridges → firewall isolation → directory/DNS/time → PKI/revocation publication → logging → applications/endpoints → scoped remote access. Restore into disconnected networks before reconnecting. Use application-aware identity/CA backups; snapshots are short-lived rollback aids, not a substitute for supported recovery. The approved representative recovery scope and timed objectives are in R13/T19.
-
-See [decisions](../governance/DECISIONS.md), [risks](../governance/RISKS.md), and the [implementation guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md) for unresolved topology, egress, version, backup, and capacity gates.
+Back up APP1's synthetic pages, Apache configuration, application role/password files and HTTPS material to encrypted off-compute media. Restore one APP1 VM copy into a disconnected bridge before any network attachment; keep the original safe and Tailscale inactive in the copy. Prove data integrity, HTTPS and local role behavior, measure elapsed recovery and state that AD, host and CA disaster recovery were not tested. No enterprise recovery point/time objective is promised. See the [test plan](../testing/TEST-PLAN.md) and [risks](../governance/RISKS.md).

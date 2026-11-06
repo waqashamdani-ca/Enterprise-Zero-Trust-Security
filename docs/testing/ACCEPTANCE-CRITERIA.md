@@ -1,59 +1,54 @@
-# Acceptance criteria and approval gates
+# Focused acceptance criteria and approval gates
 
-Acceptance answers two different questions: did the engineer verify the approved work, and did the owner accept it for its intended use? Keep those decisions separate. Repository/documentation checks have evidence in the [task reports](../reports/INDEX.md); lab implementation is PLANNED and its operational controls are NOT TESTED.
+**T6 baseline, 2026-11-06. Lab implementation PLANNED; operational tests NOT TESTED; owner user acceptance testing (UAT) PENDING.**
 
-The criteria below define what evidence a reviewer needs. A passing continuous integration (CI) run checks the repository; owner user acceptance testing (UAT) needs explicit confirmation. See the [glossary](../guides/GLOSSARY.md) for these terms.
+Engineering asks whether the approved lab works as specified. Owner UAT asks whether it supports the intended business workflows. Keep these decisions separate. [Assignment](../assignments/PROJECT-ASSIGNMENT.md) requirements and its single [100-point rubric](../assignments/PROJECT-ASSIGNMENT.md#success-criteria) govern this four-week baseline; no second rubric is defined here.
 
-## Task 001 bootstrap criteria
+## Measurable completion criteria
 
-| ID | Criterion | Verification |
-| --- | --- | --- |
-| B01 | Preserve existing work, inspect tooling/authentication/target repository, and resolve conflicts before mutation | Preflight report and Git/remote inspection |
-| B02 | Create every requested file/directory with useful content or a clearly scoped future-use README | Required-structure validator and Git tree |
-| B03 | Assignment covers scenario, business case, measurable requirements, scope, dependencies, architecture, threats, standards, deliverables, tests, 100-point rubric, publication, and honest achievement objectives | Validator anchors/rubric plus independent content review |
-| B04 | Guide covers A–L with prerequisites, procedures, proposed commands, expected outcome, verification, rollback, and completion criteria for every stage | Stage-section validator plus manual feasibility review |
-| B05 | Architecture protects home/production, defaults deny, addresses management/egress/DNS/IPv6/secrets/logging, and flags unverified hardware/resources | Cross-document review; no operational test claim |
-| B06 | AGENTS.md contains stage approval, documentation-first, bounded work, production/destructive restrictions, public hygiene, verification/UAT separation, tracking, and controlled Git workflow | Governance review |
-| B07 | All local Markdown destinations/anchors resolve; required IDs are traceable; focused validator tests and whitespace checks pass | Local checks and hosted CI |
-| B08 | Proposed published contents and history contain no detected secrets, actual internal addresses, sensitive exports, or proprietary source, and receive manual public-safety review | T00/T17; acknowledge pattern-scan limits |
-| B09 | Authorized public GitHub repository uses `main`; official checkout action is commit-pinned, token is read-only, credentials are not persisted, and documentation-only CI passes | GitHub metadata and actual Actions run |
-| B10 | `origin` is correct, local `main` tracks remote `main`, status is clean, and local/remote SHA match; report URL/user/branch/SHA/CI/blockers | Required Git synchronization commands and remote read-back |
-| B11 | No software install, VM creation, infrastructure/network/identity change, or security-test execution occurred; stop after Task 001 | Executed-action review and explicit completion report |
-| B12 | Open decisions/risks and one recommended next task are reported; owner UAT is not inferred | Final report; owner review remains pending |
-| B13 | Every completed task has a unique sequential finalized A–H report in `docs/reports/`; historical finalized reports are preserved | Reporting validator, source comparison, Git history review |
-| B14 | Maintained user-facing documents outside `docs/reports/` have faithful searchable PDF editions; task reports/addenda require Markdown only; final project report remains a template | Document source/PDF manifest and fresh rebuild, report exclusion/archive regression checks, text/navigation/page checks, representative visual QA, and CI |
+All criteria below are mandatory for project engineering completion. Each FAC ID maps to the same-numbered FWR requirement, FSC control and FWT test in the [coverage index](TEST-PLAN.md#coverage-index).
 
-If GitHub authentication/permissions block publication, B09/B10 remain blocked and the local reviewed repository plus precise owner action are delivered. Do not present a local-only repository as published. If the target already exists, preserve and reconcile its branches/content without force-pushing.
+| ID | Completion evidence |
+| --- | --- |
+| FAC-01 | Hardware readiness/approvals and isolation inspected; lab mock denial demonstrated; no protected-network probes/trust/data/credential reuse. |
+| FAC-02 | One operational host/four baseline VMs, Management/Corporate/Restricted, capacity fit, named management/console recovery and actual permitted/default-denied flows. |
+| FAC-03 | Separate AD/DNS/Group Policy; three standard users/role groups and one privileged admin; standard logon, all six role cases and app revocation verified. |
+| FAC-04 | Supported Windows/Linux baseline, host firewalls, update/antivirus status and standard-user privilege denial verified. |
+| FAC-05 | One CA/HTTPS leaf, correct chain/name/date behavior and untrusted-client rejection; trust restricted to lab clients. |
+| FAC-06 | Separate lab Tailscale reaches only named APP1 HTTPS; unauthorized/wrong-port and existing/new revoked sessions denied; no broad routes or production enrollment. |
+| FAC-07 | Five representative events from two or three relevant sources and one denied-access investigation tied to actual policy. |
+| FAC-08 | One useful local operation, safe invalid-input rejection, correct output and repeat execution without unintended changes. |
+| FAC-09 | One encrypted off-compute backup successfully restored in isolation; actual recovery time, data/HTTPS/role checks and exclusions recorded. |
+| FAC-10 | All ten tests/every mandatory subcheck have evidence and PASS; no unresolved critical/high safety issue; five T7 final submissions and reviewed sanitized GitHub publication exist. |
 
-## Future stage acceptance
+A missing/blocked mandatory subcheck is NOT TESTED, not a pass or an approved omission. No 95% threshold, enterprise RPO/RTO, six-zone requirement, extra provider, two-tier CA, twenty-event target or extended retention calculation applies. Reintroducing enterprise scope requires explicit owner approval and corresponding specification changes before evaluation.
 
-Obtain scope-specific owner approval **before each stage**. To finish a stage, record engineering checks, reviewed evidence, unresolved issues, and the owner's separate acceptance decision. Finishing one stage does not authorize the next.
+Critical isolation, privilege/authorization, TLS trust, remote exposure, recovery-integrity, secret-disclosure or false-result failures block acceptance regardless of points. Retain original failure evidence and record bounded remediation/retest. Scope changes require a new explicit owner decision; never downgrade an expected denial after seeing a permit.
 
-| Stage | Minimum exit evidence | Blocking condition |
-| --- | --- | --- |
-| A | Verified hardware/disk ownership, usable capacity, offline cable plan, backup/console feasibility, and go/no-go | Uncertain asset ownership or unverified destructive-install target |
-| B | Supported isolated hypervisor, administrator/MFA, console recovery, patch/capacity record | Missing disk approval/backup or unmanaged protected-network connection |
-| C | Six zone bridges, no ordinary guest uplink/host routing, reviewed IPv6 and console rollback | Shared physical/home bridge or unaccounted forwarding |
-| D | Effective default-deny policy, management protection, scoped allows, mocked boundary verification | Broad LAN allow, protected path, exposed administration, unapproved egress |
-| E | Separate lab forest/DNS/GPO, synthetic identities, recovery/evaluation deadlines | Production trust/sync/credentials or broken domain dependencies |
-| F | Supported Windows/Linux endpoints, host firewall, standard/admin separation | Dual-homed guest, real corporate profile, or ordinary-user admin access |
-| G | Offline root, separate issuer, scoped templates, valid/untrusted/revoked relying-application results | Exported CA key, broad enrollment, production trust, or unsupported revocation claim |
-| H | Twelve role/resource cases, same-zone enforcement, measured revocation | Any unintended resource/admin access or unmet revocation target |
-| I | Two separate sequential lab pilots, narrow resources, MFA/recovery, deny/revocation and route/DNS evidence | Corporate enrollment, wildcard access, subnet/exit exposure, or unresolved safe egress |
-| J | Six sources, at least 19/20 timely events, clock target, retention design/health evidence | Missing source class, unsupported claimed export/encryption, or unbounded disk growth |
-| K | Executed traceable cases, all critical passed, noncritical threshold met, no high-severity issue | Unexecuted mandatory cases, hidden failure, or unapproved test scope |
-| L | Two bounded automations, repeat-run verification, encrypted off-compute timed restore, final evidence/report, owner UAT | Unproven recovery, unsupported claims, secret publication, or pending final owner acceptance |
+## Phase gates and stage approvals
 
-An owner-approved scope exception must record affected requirements/tests, justification, risk, revised acceptance, and rubric impact before evaluation. Unavailable features remain a gap until that decision; do not silently lower targets.
+[AGENTS.md](../../AGENTS.md) still requires explicit approval **before every stage A-L**, identifying scope/assets/permitted changes/validation/rollback. The guide groups them into five phases, with stage L's explicitly approved automation/recovery portion before final K validation if needed. A document, PR merge or previous stage does not approve execution.
+
+| Phase | Required exit evidence |
+| --- | --- |
+| 1: Infrastructure and Network | Delivered/inspected compatible assets where needed, data/service inventory, exact disk/backup/recovery approval, isolated host/firewall/three-zone policy and console recovery |
+| 2: Identity and Endpoint Security | Directory counts/logon/policy, Windows/Linux host baseline and separate privileges |
+| 3: Zero Trust Access Controls | Six app cases/revocation, one CA/leaf trust/expiry, one-resource Tailscale permit/deny/revoke |
+| 4: Monitoring, Automation and Recovery | Five events/investigation, one repeatable operation and measured isolated APP1 restore |
+| 5: Validation and Final Submission | Every test/subcheck passes, actual evidence/rubric, five T7 files, reviewed publication and separate owner UAT decision |
+
+Delivery/compatibility, exact disk/recovery, safe egress and lawful software/provider terms are prerequisites, not results supplied by T6. Existing service migration/shutdown and destructive recovery need their exact owner scope. A temporary isolated APP1 restore copy is justified solely for FAC-09; it adds no permanent baseline VM.
 
 ## Engineering verification record
 
-In the individual task report, identify the stage/branch, approval/date, actual versions and asset roles, changed files/configuration, requirement/test IDs, expected and actual results, evidence IDs, verifier and second observation, defects/severity, rollback readiness, and verdict. Mark missing tests NOT TESTED. A second tool or observation supports verification; it is not a second human reviewer unless someone else participated.
+Record stage/approval/date, versions/asset roles, change, requirement/control/test/FAC IDs, expected and actual result, evidence reference, verifier, second observation, defects/severity, recovery state and verdict. A second tool/log observation is not independent human review. Retain actual operational fields empty until execution; current test verdicts stay NOT TESTED.
+
+T6 engineering completion is narrower: consistent reviewed specifications/PDFs, focused regression and preservation checks, a finalized Markdown-only T6 report, actual CI/merge and local/remote synchronization. It does not require future T7 templates or operational tests to be performed. Historical bootstrap B01-B14 and earlier stage criteria are preserved in previous Git revisions/reports; they are not extra current implementation targets.
 
 ## Owner UAT record
 
-Record the owner/reviewer, date, business workflows checked, observed usability, accepted limits, follow-up items, and explicit acceptance decision separately. Leave owner UAT pending until the owner supplies that decision. Engineering completion, GitHub publication, and CI do not supply owner acceptance.
+The owner later checks analyst report access, engineer maintenance-page access, unassigned-user denial, remote access/revocation and understandable recovery/evidence records. Record reviewer/date, observed usability, limitations, follow-ups and explicit confirmation reference. **Owner UAT remains PENDING** without that confirmation. Engineering verification, grading, CI and publication cannot supply acceptance.
 
 ## Current gate
 
-Task 001 technical results are recorded in [T1-Report.md](../reports/T1-Report.md), its separately recorded addenda, and the final chat completion response. Every future task must finalize its own [individual report](../reports/INDEX.md) before engineering completion. [FINAL-REPORT.md](../final-report/FINAL-REPORT.md) remains the project-level template. Owner UAT: **PENDING**. Stages A–L: **NOT STARTED / NOT APPROVED FOR EXECUTION**. No next task starts without the owner's scope-specific authorization.
+T6 is documentation only. No hardware/software installation, VM/network/directory change, Tailscale enrollment or lab/security-test execution is authorized. T7 requires separate approval to migrate the eight unchanged Office shells into the five planned files. See [task reports](../reports/INDEX.md) for observed results; the [project final report](../final-report/FINAL-REPORT.md) remains a template.

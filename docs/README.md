@@ -23,9 +23,11 @@ The final project report remains a clearly identified template. All infrastructu
 
 ## Editable lab deliverable templates
 
-The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) owns these filenames and requirement mappings. Complete private working copies only after stage approval. Pale yellow Excel cells accept inputs, gray cells calculate, and Not Started means NOT TESTED. Owner UAT starts Pending and requires its own explicit confirmation. Keep actual results and reviewed evidence in their owning record; use references in summaries.
+The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) defines the five approved future T7 filenames. They are not yet created. T7 requires separate owner approval to reconcile the eight existing files below.
 
-| Editable template | Primary requirements | Information maintained here |
+These are **legacy T5 blank shells**, byte-preserved in T6. Their old requirements, counts, rubric and stage prompts describe the retired baseline and do not govern current implementation. Do not use them as current answer sheets until approved T7 migration. Their original actual/evidence fields remain empty.
+
+| Editable template | Historical requirements | Historical T5 purpose |
 | --- | --- | --- |
 | [01-Lab-Environment.xlsx](deliverables/01-Lab-Environment.xlsx) | R02 | Hardware, VMs, software, stage checklist and planned/actual resource ledger |
 | [02-Architecture-and-Network-Design.docx](deliverables/02-Architecture-and-Network-Design.docx) | R01, R03, R04, R15 | Business roles, zones, diagrams, flows, threats, decisions and limitations |
@@ -36,9 +38,8 @@ The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) owns t
 | [07-Troubleshooting-and-Lessons.xlsx](deliverables/07-Troubleshooting-and-Lessons.xlsx) | R14, R15 | Issues, impact, investigation, correction/rollback, verification and lessons |
 | [08-Final-Lab-Submission.docx](deliverables/08-Final-Lab-Submission.docx) | R11, R15, R16 | Assessment, supporting-file references, measured-outcome summary, rubric, public hygiene and GitHub record |
 
-These are blank submission shells. No stage, security test, hardware inspection, owner acceptance or project benefit is claimed. Word answer prompts and diagram placeholders are editable. Spreadsheet tables have filters, frozen headers, dropdowns and bounded status formatting. Capacity, elapsed-time and retention formulas keep unmeasured outputs blank. Expand the case register into all approved individual subcases before execution; catalog headings alone are not the R14 denominator.
 
-Run `python scripts/validate_office_templates.py` for the bounded offline package/blank-field/traceability check. Native Word/Excel opening, edits, recalculation and rendered layout checks are separate T5 observations in the [task report](reports/T5-Report.md). No macro, embedded evidence or external workbook data connection is included.
+Run `python scripts/validate_office_templates.py` to inspect the unchanged legacy packages. Native Office/layout validation belongs to [T5](reports/T5-Report.md); T6 does not reopen, edit or regenerate these files. Keep future working records private.
 
 ## Task reports and other instructions
 

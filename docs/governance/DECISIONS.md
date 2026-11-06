@@ -4,6 +4,8 @@
 
 ## Decision register
 
+Current baseline: T6, 2026-11-06. DEC-23 through DEC-26 record the focused scope and procurement correction. Earlier decisions remain for traceability; rows marked SUPERSEDED do not impose additional current requirements.
+
 | ID | Decision / rationale | Status and owner | Revisit trigger |
 | --- | --- | --- | --- |
 | DEC-01 | Task 001 covers planning, repository scaffold, documentation validation, and reviewed public Git publication only | Authorized by owner task and addendum; technical lead executes | Any request to install, deploy, configure, or test the lab |
@@ -11,10 +13,10 @@
 | DEC-03 | Offline baseline first; independent protected-network isolation required before any uplink. A WAN NIC on the home LAN alone is insufficient | OPEN / BLOCKING online stages; owner + architect | Concrete inspected cable/interface/egress boundary and rollback available |
 | DEC-04 | Public docs use symbolic address labels and `ad.lab.test`; actual addresses/protected aliases stay outside Git | Proposed design; private inventory/address choice OPEN; architect | Overlap with existing home/production/overlay ranges or naming incompatibility |
 | DEC-05 | Select supported Proxmox/OPNsense/Windows/Linux versions at stage entry; use lawful evaluation terms and record deadlines | OPEN; owner + engineer | Stage A/B media and compatibility review; no software assumed installed |
-| DEC-06 | Separate offline standalone root and online issuing CA; no lab root trust outside lab | Proposed; owner approves Stage G design/key custody | Capacity/skills/lifecycle constraints; any simplification requires revised R07 acceptance |
-| DEC-07 | Start with WEC and Linux/syslog collection; no heavyweight SIEM assumed | Proposed; log transport/source exports/retention capacity OPEN; engineer | Measured event volume, unsupported source transport, or remote-plan export limitations |
-| DEC-08 | Encrypted off-compute supported backups; proposed representative recovery RPO 24h/RTO 4h | OPEN / BLOCKING recovery claim; owner | Verified backup capacity/device, key custody, identity/CA scope, and supported restore method |
-| DEC-09 | Evaluate Tailscale/Twingate sequentially with separate lab-only identities/environments and one resource per pilot | Proposed; identity/provider plan/MFA/recovery choices OPEN; owner | Stage I entry; auto-enrollment risk, paid-plan dependency, unavailable logging/posture |
+| DEC-06 | Separate offline standalone root and online issuing CA; no lab root trust outside lab | SUPERSEDED by T6 DEC-23; historical design only | Capacity/skills/lifecycle constraints; any simplification requires revised R07 acceptance |
+| DEC-07 | Start with WEC and Linux/syslog collection; no heavyweight SIEM assumed | SUPERSEDED by T6 DEC-23; historical design only | Measured event volume, unsupported source transport, or remote-plan export limitations |
+| DEC-08 | Encrypted off-compute supported backups; proposed representative recovery RPO 24h/RTO 4h | SUPERSEDED by T6 DEC-23; historical design only | Verified backup capacity/device, key custody, identity/CA scope, and supported restore method |
+| DEC-09 | Evaluate Tailscale/Twingate sequentially with separate lab-only identities/environments and one resource per pilot | SUPERSEDED by T6 DEC-23; historical design only | Stage I entry; auto-enrollment risk, paid-plan dependency, unavailable logging/posture |
 | DEC-10 | Do not select a license in bootstrap | Deferred pending explicit owner choice | Owner approves license/rights and scope of reuse |
 | DEC-11 | Public repository under `waqashamdani-ca`, `main`, intentional reviewed commits; task branches and PRs after initial bootstrap | Authorized by owner addendum; repository engineer | Existing remote work, permission conflict, repository policy change |
 | DEC-12 | Repository rulesets/required checks/reviewers are not changed silently; documented PR conventions are initially procedural | OPEN; owner | Owner selects enforceable rules and available reviewer model |
@@ -25,9 +27,14 @@
 | DEC-17 | Markdown remains authoritative; use a pinned free Python PDF toolchain with deterministic adjacent outputs, manifest, automated consistency checks, and separate visual QA | Authorized by owner PDF/folder addendum; no paid software or lab operation | New source/format requirement or a reproducibility/layout defect |
 | DEC-18 | Organize current sources by purpose; preserve finalized Markdown/evidence and retain decision/risk compatibility links needed by historical reports | Authorized documentation migration in T3 | Future move affecting immutable historical navigation |
 | DEC-19 | Task reports/addenda are Markdown only; exclude all of docs/reports/ from PDF builds and the generated manifest, retain byte-frozen report PDFs, and preserve PDFs for user-facing project documents | Authorized by owner task-report-format addendum to T3, 2026-11-06; current location governed by DEC-21 | A later owner-approved reporting change; never infer infrastructure approval |
-| DEC-20 | Use a nine-section assignment, retain R01-R16 and the unchanged rubric weights, and finalize eight named Word/Excel submissions in its Expected Deliverables; create their shells only in separately approved T5 | Authorized by owner T4 request and deliverable-filename addendum, 2026-11-06; documentation only | Owner-approved deliverable/scope change; no implementation outcome or template creation implied |
+| DEC-20 | Use a nine-section assignment, retain R01-R16 and the unchanged rubric weights, and finalize eight named Word/Excel submissions in its Expected Deliverables; create their shells only in separately approved T5 | SUPERSEDED by T6 DEC-23; historical design only | Owner-approved deliverable/scope change; no implementation outcome or template creation implied |
 | DEC-21 | Relocate the complete report folder to docs/reports/ with all eleven existing file hashes unchanged; preserve the original index and use INDEX.md for current rules; keep small navigation aliases for frozen relative links and check both historical paths | Authorized by owner T4 report-relocation addendum, 2026-11-06; path-only preservation exception | A failed migration/hash/link check or future owner-approved move; no content waiver |
 | DEC-22 | Create the eight T4-named native Word/Excel blank templates in Segoe UI; keep detailed answers in one owning record and summarize by reference; no Office-template PDFs; admit only those exact XML-only Office packages after bounded inspection and native/visual QA | Authorized by owner T5 Lab Deliverable Templates request, 2026-11-06; templates are editable sources; no stage or result authorization | Owner-approved submission change, filled-record publication, unsupported native feature or layout defect; preserve frozen task reports |
+| DEC-23 | Adopt four VMs/three zones, three users/groups/one privileged admin, six app cases, one CA/leaf, Tailscale only, five events, one operation and measured APP1 restore; FWR/FWT/FSC/FAC IDs replace current old targets | Owner T6 alignment addendum, 2026-11-06; documentation approved, execution NOT APPROVED | Any scope expansion requires explicit owner approval |
+| DEC-24 | Treat W-2145, Samsung SSD, Sabrent adapter, I350-T4, Beryl AX and TP-Link switch as Ordered; receipt/install/validation unconfirmed; preserve original disk/services | Owner procurement correction, 2026-11-06; hardware readiness PENDING | Delivery, inspection, compatibility, current data/services, backup/recovery and exact destructive approval |
+| DEC-25 | Use Apache file/group roles manually mapped to AD, distinct app passwords, offline OpenSSL CA and direct APP1 Tailscale with host enforcement; no extra permanent VM | Proposed detailed implementation of T6 baseline; owner stage G/H/I approvals still required | Requirement for live AD SSO, extra certificate lifecycle or broader remote access |
+| DEC-26 | Five exact future submissions are a T7 target; preserve all eight T5 Office files byte for byte in T6; retain A-L approvals within five phases | Owner T6/T7 separation and alignment addenda, 2026-11-06 | Separately authorized T7 migration or individual implementation-stage scope |
+
 
 Do not treat hardware descriptions, planning allocations, or documented software alternatives as an inspected fact or an implemented choice. Resolve each blocking decision before its dependent stage.
 
@@ -35,7 +42,7 @@ Do not treat hardware descriptions, planning allocations, or documented software
 
 For each later decision/change, record ID, date, problem/trigger, options, selected outcome, rationale, affected requirements/tests/artifacts, security/production impact, rollback, engineering verifier, owner approval reference, and status. Never paste private chat transcripts, actual addresses, or secrets. Use an opaque approval reference with the private record retained by the owner.
 
-## Bootstrap change history
+## Change history
 
 | Change | Date | Scope and authority | Effect |
 | --- | --- | --- | --- |
@@ -48,5 +55,6 @@ For each later decision/change, record ID, date, problem/trigger, options, selec
 | CH-007 | 2026-11-06 | Owner task-report-format change, recorded as a separate T3 addendum | Require Markdown-only task reports; exclude the then-root report directory from PDF automation, retain historical archives, and update governance/validation/CI without beginning T4 or infrastructure |
 | CH-008 | 2026-11-06 | Owner T4 assignment-redesign request and report-relocation/deliverable-filename addenda | Simplify and redesign the assignment; define eight future submissions; migrate report files without byte changes and update navigation/build/validation; no T5 templates or infrastructure |
 | CH-009 | 2026-11-06 | Owner T5 Lab Deliverable Templates request | Create the eight blank Word/Excel shells; add traceability, focused Office publication checks, native/visual validation and navigation; no lab exercise, actual outcome or T6 execution |
+| CH-010 | 2026-11-06 | Owner T6 four-week alignment and hardware-status addenda | Align active specifications/PDFs, preserve old mappings and Office/history, document Ordered status; no lab execution or T7 |
 
 Actual Task 001 commit IDs and CI/publication evidence are recorded in [T1-Report.md](../reports/T1-Report.md) and its addenda. Each later task records its own results in [docs/reports/](../reports/INDEX.md). [FINAL-REPORT.md](../final-report/FINAL-REPORT.md) is the project-level template. No implementation stage approval or owner UAT decision has been recorded.

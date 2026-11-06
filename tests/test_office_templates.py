@@ -8,6 +8,8 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
+import subprocess
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile, ZIP_DEFLATED
 
@@ -25,8 +27,6 @@ def fixture():
     with tempfile.TemporaryDirectory(dir=base) as temporary:
         root = Path(temporary)
         shutil.copytree(ROOT / "docs/deliverables", root / REL)
-        (root / "docs/testing").mkdir(parents=True)
-        shutil.copyfile(ROOT / "docs/testing/TEST-PLAN.md", root / "docs/testing/TEST-PLAN.md")
         yield root
 
 
@@ -165,6 +165,12 @@ class OfficeTemplateTests(unittest.TestCase):
             path = root / REL / office.FILES[5]
             rewrite(path, "xl/worksheets/sheet7.xml", lambda b: set_cell(b, "D8", "Accepted"))
             self.assertTrue(any("UAT must remain Pending" in x for x in office.template_set_issues(root)))
+
+    def test_missing_legacy_plan_fails_closed(self):
+        with fixture() as root:
+            with patch.object(office.subprocess, "check_output",
+                              side_effect=subprocess.CalledProcessError(1, ["git"])):
+                self.assertTrue(any("could not be verified" in x for x in office.template_set_issues(root)))
 
     def test_removed_status_dropdown_rejected(self):
         with fixture() as root:

@@ -190,9 +190,11 @@ class PdfArtifactTests(unittest.TestCase):
         diagrams = [token for token in docs.MARKDOWN(source) if token["type"] == "block_code" and token.get("attrs", {}).get("info") == "mermaid"]
         self.assertEqual(len(diagrams), 1)
         nodes, edges = docs.parse_diagram(diagrams[0]["raw"])
-        self.assertEqual(len(nodes), 12)
-        self.assertEqual(len(edges), 9)
-        self.assertFalse(any(a in {"ROOT", "HOME"} or b in {"ROOT", "HOME"} for a, b, _, _ in edges))
+        self.assertEqual(len(nodes), 11)
+        self.assertEqual(len(edges), 10)
+        self.assertFalse(any(a in {"CA", "HOME"} or b in {"CA", "HOME"} for a, b, _, _ in edges))
+        self.assertEqual({b for a, b, label, _ in edges if a == "Remote"}, {"App"})
+        self.assertEqual([label for a, b, label, _ in edges if a == "Remote"], ["HTTPS only"])
         with self.assertRaisesRegex(ValueError, "Unsupported Mermaid"):
             docs.parse_diagram(diagrams[0]["raw"] + "\nclick FW https://example.com\n")
 
@@ -217,12 +219,13 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertEqual((ROOT / "docs/docs" / record["moved_to"]).resolve(), ROOT / docs.MANIFEST)
         self.assertEqual(record["url"], docs.REPOSITORY + "/blob/main/" + docs.MANIFEST)
 
-    def test_assignment_has_compact_cover_all_requirements_submissions_and_original_rubric(self):
+    def test_assignment_is_four_pages_with_focused_scope_and_approved_rubric(self):
         content = (ROOT / docs.ASSIGNMENT).read_bytes()
         sources = set(docs.discover_sources(ROOT))
         data = docs.render_pdf(docs.ASSIGNMENT, content, sources)
         reader = docs.PdfReader(io.BytesIO(data))
-        self.assertLessEqual(len(reader.pages), 6)
+        self.assertGreaterEqual(len(reader.pages), 3)
+        self.assertLessEqual(len(reader.pages), 4)
         cover = reader.pages[0].extract_text()
         self.assertIn("Assignment contents", cover)
         self.assertIn("PLANNED", cover)
@@ -230,22 +233,26 @@ class PdfArtifactTests(unittest.TestCase):
         compact = "".join("".join(page.extract_text().split()) for page in reader.pages)
         for name in validator.DELIVERABLE_FILENAMES:
             self.assertIn(name, compact)
-        for number in range(1, 17):
-            self.assertIn(f"R{number:02d}", compact)
+        for number in range(1, 11):
+            self.assertIn(f"FWR-{number:02d}", compact)
         self.assertIn("100points", compact)
         self.assertEqual(docs.inspect_pdf(data, docs.ASSIGNMENT, content, sources)["text_token_coverage"], 1.0)
-        baseline = subprocess.check_output(["git", "-C", str(ROOT), "show",
-                                           validator.REPORT_MIGRATION_BASELINE + ":" + docs.ASSIGNMENT]).decode()
-        old_rubric = baseline.partition("## 100-point evaluation rubric")[2].split("\n## ", 1)[0]
-        new_rubric = content.decode().partition("## Success Criteria")[2].split("\n## ", 1)[0]
-        scores = lambda text: re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", text, re.M)
-        self.assertEqual(scores(new_rubric), scores(old_rubric))
+        rubric = content.decode().partition("## Success Criteria")[2].split("\n## ", 1)[0]
+        weights = [(name.strip(), int(points)) for name, points in
+                   re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
+        self.assertEqual(weights, list(validator.RUBRIC_WEIGHTS))
 
-    def test_lab_guide_stage_bodies_remain_identical_to_pre_t4_baseline(self):
-        name = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
-        old = subprocess.check_output(["git", "-C", str(ROOT), "show",
-                                       validator.REPORT_MIGRATION_BASELINE + ":" + name])
-        self.assertEqual((ROOT / name).read_bytes().partition(b"## Stage A")[2], old.partition(b"## Stage A")[2])
+    def test_all_eight_office_files_remain_byte_identical_to_t5(self):
+        baseline = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
+        names = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                         baseline, "--", "docs/deliverables"]).decode().splitlines()
+        self.assertEqual(len(names), 8)
+        current = sorted(str(p.relative_to(ROOT)).replace("\\", "/")
+                         for p in (ROOT / "docs/deliverables").iterdir())
+        self.assertEqual(current, sorted(names))
+        for name in names:
+            old = subprocess.check_output(["git", "-C", str(ROOT), "show", baseline + ":" + name])
+            self.assertEqual((ROOT / name).read_bytes(), old, name)
 
 
 if __name__ == "__main__":
