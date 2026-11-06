@@ -1,6 +1,6 @@
 # T7 - Microsoft Office lab deliverable consolidation
 
-Report state: DRAFT
+Report state: FINALIZED
 
 ## A. Task Information
 
@@ -8,8 +8,8 @@ Report state: DRAFT
 | --- | --- |
 | Task ID | T7 |
 | Execution date | 2026-11-06, America/Toronto |
-| Evidence cutoff | Pending report finalization; this draft records observed local verification only |
-| Finalization date | Pending; final report publication, final-head CI, merge and synchronization will be verified after its cutoff |
+| Evidence cutoff | 2026-11-06 23:18:48 UTC (18:18:48 America/Toronto); later final-report publication/CI/merge/synchronization are outside this cutoff |
+| Finalization date | 2026-11-06; this report is immutable after finalization; later publication observations belong in the final response or a separate addendum |
 | Authority | Owner T7 Microsoft Office Lab Deliverable Consolidation request, 2026-11-06; original retained privately |
 | Authorized scope | Five exact editable Office templates; retirement of verified blank T5 shells; necessary navigation, governance, validation/regression/CI and adjacent document PDF updates; Markdown-only report; reviewed GitHub publication and synchronization |
 | Dependency | T6B FINALIZED; PR 9 merged; main workflow 42285308983 SUCCESS; local/tracking/live main d408c4571105bd42396dd5e71aae22f4f3d9290c |
@@ -61,7 +61,7 @@ The ten OVERALL rows in Test Cases quote the current plan's objective/method, sc
 | [Office tests](../../tests/test_office_templates.py), [documentation tests](../../tests/test_validate_docs.py), [PDF tests](../../tests/test_build_docs.py), [CI](../../.github/workflows/documentation.yml) | Negative fixtures and migration/preservation regressions; explicit read-only Office validation step |
 | [Report index](INDEX.md), this report | T7 navigation and accurate Markdown-only evidence record |
 
-The complete footprint is 41 paths: 26 changed baseline files, eight retired files and seven additions (five Office files, contract and report). Forty-eight of the 82 baseline files remain byte-identical, including all 16 historical report/index/archive files except the separately editable current INDEX, public evidence, architecture/security specifications, AGENTS and the visibly uncompleted project final-report template. Fifteen unrelated/archived PDFs retain their bytes. No infrastructure/configuration source or repository setting changed.
+The complete footprint is 41 paths: 26 changed baseline files, eight retired files and seven additions (five Office files, contract and report). Forty-eight of the 82 baseline files remain byte-identical, including all 16 historical report/index/archive files (the current INDEX is separately editable), public evidence, architecture/security specifications, AGENTS and the visibly uncompleted project final-report template. Fifteen unrelated/archived PDFs retain their bytes. No infrastructure/configuration source or repository setting changed.
 
 ## C. Testing and Validation
 
@@ -85,6 +85,7 @@ Execution date for these observations: 2026-11-06. Verifier: Codex. Separate sou
 | python -m unittest discover -s tests -v | 77 tests PASS at final local source/PDF tree; unsafe packages/formulas/relationships, hidden split token, outcome/actual/score drift, lost child check, source-plan/flow/case drift, font/compatibility prefix, UAT and frozen history negatives included | PASS |
 | git diff --check and git diff --cached --check | No whitespace finding; complete proposed paths, source/code changes and binary package/PDF contents reviewed manually | PASS |
 | Independent baseline and current-plan comparison | 48 unchanged baseline paths, 16 historical report files, 15 unchanged PDFs; all ten methods/scopes/outcomes/second observations and eleven guide code blocks unchanged; original owner shells still match | PASS |
+| Committed new-history/publication read-back | Focused new-history scan passes; all 14 committed binary payloads match reviewed files; implementation commit identities, live branch equality and exact-head push/PR CI observed | PASS |
 | Lab FWT-01 through FWT-10 execution | No infrastructure, remote enrollment, automation operation, backup/restore or security test executed | NOT TESTED |
 | Independent human review / owner UAT | No second human reviewer or explicit owner confirmation | NOT TESTED / PENDING |
 
@@ -112,22 +113,27 @@ The original checkout retains five owner archive-PDF deletions; T7 neither commi
 
 ## E. GitHub Operations
 
-| Item | Observed state at this draft |
+| Item | Observed state at evidence cutoff |
 | --- | --- |
 | Repository | [waqashamdani-ca/Enterprise-Zero-Trust-Security](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security); PUBLIC, default main; repository ID 1447671295 |
 | Identity and permission | waqashamdani-ca; push/admin confirmed through connected repository metadata and CLI/API read-back |
 | Author and committer | Both Git identities verified as the owner's GitHub noreply identity; recheck each new commit and merge before push |
 | Base / live main | d408c4571105bd42396dd5e71aae22f4f3d9290c, exact T6B merged baseline |
 | Task branch | codex/007-office-deliverables, clean isolated baseline with --ff-only pull |
-| Publication commit / PR / CI | Pending; no future result or self commit SHA claimed |
+| Implementation commit | [1861acbe8f76acea058efb6fd787cf4e5fd08676](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/1861acbe8f76acea058efb6fd787cf4e5fd08676); 41 reviewed paths; verified noreply author and committer |
+| Pull request | [PR 10](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/10), OPEN; MERGEABLE / CLEAN; exact head 1861acbe8f76acea058efb6fd787cf4e5fd08676 |
+| Push CI | [Run 42310768593](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42310768593), completed / success at the implementation head |
+| PR CI | [Run 42310884532](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42310884532), completed / success for the same head; connected workflow read-back confirms success |
+| Review / branch observation | No requested reviews, submitted reviews or review threads at cutoff; task local and live branch equal the implementation head, live main remains the T6B baseline |
+| Connector fallback | Connected PR creation returned 403 integration permission; existing authenticated owner GitHub CLI created PR 10. No account/repository settings or credentials changed |
 | Merge rules | main protected=false; live branch rules empty; merge-commit method allowed; no settings changed. Recheck exact head, reviews/requests/threads/checks before merge |
-| Merge / main synchronization | Pending final report publication and applicable completed-head checks |
+| Final report publication / merge / main synchronization | Pending this finalized report's commit/push and applicable completed-head checks; no self SHA or future result is claimed |
 
-The completed report will name an evidence cutoff. Its own commit, later CI, merge and synchronization cannot be recorded prospectively. Observe those after publication and report them in the final response; later written corrections require a separate addendum. A normal permitted local merge may preserve verified noreply identities only after exact-head checks and applicable reviews/rules pass. No force push or approval bypass is authorized.
+This finalized report names its evidence cutoff. Its own commit, later CI, merge and synchronization cannot be recorded prospectively. Observe those after publication and report them in the final response; later written corrections require a separate addendum. A normal permitted local merge may preserve verified noreply identities only after exact-head checks and applicable reviews/rules pass. No force push or approval bypass is authorized.
 
 ## F. Outstanding Issues
 
-- Final report finalization/publication, completed-head CI, merge and synchronization are IN PROGRESS at this draft; no local Office/documentation defect remains.
+- The report is FINALIZED at cutoff; its publication, completed-head CI, merge and synchronization remain post-cutoff verification work. No local Office/documentation defect remains.
 - Original working folder still has its same five archive-PDF deletions. Its documentation check will report missing archives until the owner reconciles those pre-existing changes; clean engineering-worktree checks pass.
 - Lab readiness/delivery/compatibility, selected versions/backend, exact disk/data-service backup/recovery approval and independent safe egress remain unverified dependencies. No template availability or repository check resolves them.
 - Independent human review is NOT TESTED and owner UAT remains PENDING. Repository protection/reviewer choices and licensing remain explicit owner decisions; historical metadata is preserved.
@@ -138,12 +144,12 @@ The completed report will name an evidence cutoff. Its own commit, later CI, mer
 | --- | --- |
 | Five-template implementation | IMPLEMENTED; local Office/content/formatting checks VALIDATED |
 | Local engineering verification | PASS for the bounded template/documentation scope; 77 regressions and separate native/package/render observations |
-| Report / publication | DRAFT / IN PROGRESS; finalization, final-head publication checks, merge and main synchronization pending |
+| Report / publication | FINALIZED at cutoff; implementation publication and initial exact-head CI verified; finalized-report publication, final-head CI, merge and main synchronization pending |
 | Independent human review | NOT TESTED |
 | Owner UAT | PENDING; no confirmation reference exists |
 | Operational implementation / lab controls | PLANNED / NOT TESTED; no infrastructure change or operational FWT PASS claimed |
 
-This draft does not declare T7 engineering completion. Stop after final verification/reporting and intentional GitHub synchronization. No T8 or implementation stage is started.
+Local engineering verification is complete for the bounded template/documentation scope, and this report is finalized after review of actual local and initial publication evidence. The required --require-finalized gate and remaining publication outcomes will be reported after observation in the final response. Full T7 completion still depends on those checks and intentional main synchronization. No independent human sign-off, owner acceptance, operational result or T8 work is claimed.
 
 ## H. Next Task
 
