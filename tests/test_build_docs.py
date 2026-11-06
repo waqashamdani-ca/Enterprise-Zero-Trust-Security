@@ -1,5 +1,6 @@
 """Artifact-level PDF tests: text, navigation, pagination, fidelity, and drift."""
 import contextlib
+import hashlib
 import importlib.util
 import io
 import json
@@ -94,6 +95,94 @@ class PdfArtifactTests(unittest.TestCase):
             (root / "fixture.pdf").write_bytes((root / "fixture.pdf").read_bytes() + b"\nchanged")
             self.assertTrue(any("differ" in item for item in validator.generated_pdf_issues(root, "fixture.pdf")))
             self.assertTrue(validator.generated_pdf_issues(root, "unapproved.pdf"))
+
+    def test_reports_are_excluded_and_report_edits_do_not_churn_document_pdfs(self):
+        base = ROOT / "local/pdf-tests"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as directory:
+            root = Path(directory)
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            (root / "docs").mkdir()
+            (root / "reports/nested").mkdir(parents=True)
+            content = b"# Guide\n\n[Task record](reports/T1-Report.md#c-testing-and-validation).\n"
+            (root / "guide.md").write_bytes(content)
+            for name in ("README.md", "T1-Report.md", "T1-Addendum-001-Format.md", "nested/guide.md"):
+                (root / "reports" / name).write_text("Not a PDF source; no title required.\n", encoding="utf-8")
+            archive = root / "reports/T1-Report.pdf"
+            archive.write_bytes(b"untouched archive fixture")
+            self.assertEqual(docs.discover_sources(root), ["guide.md"])
+            first = quiet_build(root)
+            self.assertEqual([entry["source"] for entry in first["documents"]], ["guide.md"])
+            pdf = root / "guide.pdf"
+            stamp, data = pdf.stat().st_mtime_ns, pdf.read_bytes()
+            archive_stamp = archive.stat().st_mtime_ns
+            (root / "reports/T1-Report.md").write_text("Updated report only.\n", encoding="utf-8")
+            second = quiet_build(root, check=True, rebuild_check=True)
+            self.assertEqual(first, second)
+            self.assertEqual((pdf.stat().st_mtime_ns, pdf.read_bytes()), (stamp, data))
+            self.assertEqual((archive.stat().st_mtime_ns, archive.read_bytes()),
+                             (archive_stamp, b"untouched archive fixture"))
+            self.assertEqual(list((root / "reports").rglob("*.pdf")), [archive])
+
+    def test_direct_report_pdf_generation_is_refused(self):
+        for name in ("reports/T1-Report.md", "reports/README.md", "reports/nested/guide.md", "REPORTS/Guide.md"):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Markdown only"):
+                docs.render_pdf(name, self.content, {name})
+
+    def test_pdf_report_links_open_markdown_with_normal_heading_anchors(self):
+        target = docs.REPOSITORY + "/blob/main/reports/T1-Report.md#c-testing-and-validation"
+        content = b"# Guide\n\n[Task record](../reports/T1-Report.md#c-testing-and-validation).\n"
+        self.assertEqual(docs.resolve_link("docs/guide.md", "../reports/T1-Report.md#c-testing-and-validation", {"docs/guide.md"}), target)
+        data = docs.render_pdf("docs/guide.md", content, {"docs/guide.md"})
+        reader = docs.PdfReader(io.BytesIO(data))
+        uris = [str(ref.get_object()["/A"]["/URI"]) for page in reader.pages
+                for ref in page.get("/Annots", []) if ref.get_object().get("/A", {}).get("/S") == "/URI"]
+        self.assertEqual(uris, [target])
+        self.assertEqual(docs.inspect_pdf(data, "docs/guide.md", content)["uri_links"], 1)
+        with self.assertRaisesRegex(ValueError, "Unknown PDF source"):
+            docs.resolve_link("docs/guide.md", "missing.md", {"docs/guide.md"})
+
+    def test_markdown_reports_need_no_pdf_and_cannot_enter_generated_inventory(self):
+        report = "# Report\n\nReport state: FINALIZED\n\n"
+        for section in validator.REPORT_SECTIONS:
+            report += "## " + section + "\n\n"
+            if section == "A. Task Information":
+                report += "| Field | Record |\n| --- | --- |\n| Task ID | T1 |\n\n"
+            report += "Fixture evidence.\n\n"
+        manifest = {"schema": 1, "documents": [{"source": "guide.md", "pdf": "guide.pdf"}]}
+        texts = {"guide.md": "# Guide\n", "reports/T1-Report.md": report,
+                 "reports/README.md": "# Report index\n", validator.PDF_MANIFEST: json.dumps(manifest)}
+        paths = list(texts) + ["guide.pdf"]  # No report PDFs, including optional archives.
+        self.assertEqual(validator.report_issues(texts, require_finalized=True), [])
+        self.assertEqual(validator.pdf_inventory_issues(paths, texts), [])
+        manifest["documents"].append({"source": "reports/T1-Report.md", "pdf": "reports/T1-Report.pdf"})
+        texts[validator.PDF_MANIFEST] = json.dumps(manifest)
+        self.assertTrue(validator.pdf_inventory_issues(paths + ["reports/T1-Report.pdf"], texts))
+        manifest["documents"] = [{"source": "guide.md", "pdf": "reports/T1-Report.pdf"}]
+        texts[validator.PDF_MANIFEST] = json.dumps(manifest)
+        self.assertTrue(validator.pdf_inventory_issues(paths + ["reports/T1-Report.pdf"], texts))
+
+    def test_historical_report_pdf_bytes_are_pinned_and_new_report_pdfs_are_rejected(self):
+        base = ROOT / "local/pdf-tests"
+        base.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=base) as directory:
+            root = Path(directory)
+            (root / "reports").mkdir()
+            for name, expected in validator.ARCHIVED_REPORT_PDFS.items():
+                with self.subTest(name=name):
+                    data = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                                    validator.REPORT_ARCHIVE_BASELINE + ":" + name])
+                    self.assertEqual(hashlib.sha256(data).hexdigest(), expected)
+                    path = root / name
+                    path.write_bytes(data)
+                    self.assertEqual(validator.generated_pdf_issues(root, name), [])
+                    (root / (name[:-4] + ".md")).write_text("Current Markdown need not match archive.\n", encoding="utf-8")
+                    self.assertEqual(validator.generated_pdf_issues(root, name), [])
+                    path.write_bytes(data + b"\nchanged")
+                    self.assertTrue(any("frozen" in issue for issue in validator.generated_pdf_issues(root, name)))
+            name = "reports/T3-Addendum-001-Markdown-Only-Reporting.pdf"
+            (root / name).write_bytes(docs.render_pdf("fixture.md", self.content, {"fixture.md"}))
+            self.assertTrue(any("prohibited" in issue for issue in validator.generated_pdf_issues(root, name)))
 
     def test_diagram_keeps_offline_and_protected_nodes_disconnected(self):
         source = (ROOT / "docs/architecture/ARCHITECTURE.md").read_text(encoding="utf-8")

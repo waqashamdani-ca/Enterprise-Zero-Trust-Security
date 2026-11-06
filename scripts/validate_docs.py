@@ -47,6 +47,16 @@ STAGE_FIELDS = (
 )
 PDF_MANIFEST = "docs/documentation-manifest.json"
 PDF_ALIASES = {"docs/DECISIONS.md", "docs/RISKS.md"}
+# Optional, byte-frozen archives already published at the T3 baseline. These
+# exceptions never admit new report PDFs or require a current Markdown pairing.
+REPORT_ARCHIVE_BASELINE = "d1b575761c090c35dac535ec331a1e32f9bd5fe6"
+ARCHIVED_REPORT_PDFS = {
+    "reports/README.pdf": "8dac0d69a194a43a550f086e409cb763245bbd583d9e1e1fe94db6bb933d6567",
+    "reports/T1-Addendum-001-Reporting-Governance.pdf": "e684fa1f73c0cf8aa9029dc0ae13c2fbab3bb1c26a77ae5a00925d5d5f3bde56",
+    "reports/T1-Report.pdf": "c42f42e0b548c0996a66f6431da09fcf85995dd5e0841b9358e58f01fb206dd9",
+    "reports/T2-Report.pdf": "36ec642bee80564ac9e50bb5c24900211f70908d5a2fb29d6c51f26d2d6e5856",
+    "reports/T3-Report.pdf": "4ab8ce03f2009e8cfbfe44c4b9803780043f3b7203b7373cb0f1aa64e3a8ab5d",
+}
 REPORT_SECTIONS = (
     "A. Task Information", "B. Implementation Summary",
     "C. Testing and Validation", "D. Security and Quality Review",
@@ -240,8 +250,18 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
 
 
 def generated_pdf_issues(root: Path, relative: str) -> list[str]:
-    """Only source-matched, manifest-listed generated PDFs may be published."""
+    """Require source-matched generated PDFs or an exact historical archive."""
     try:
+        path = root / relative
+        if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
+            return [f"{relative}: unsafe PDF path"]
+        if relative.lower().startswith("reports/"):
+            expected = ARCHIVED_REPORT_PDFS.get(relative)
+            if expected is None:
+                return [f"{relative}: new report PDFs are prohibited; task reports must be Markdown only"]
+            if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                return [f"{relative}: archived report PDF differs from frozen T3 artifact"]
+            return []
         manifest = json.loads((root / PDF_MANIFEST).read_text(encoding="utf-8"))
         entries = [entry for entry in manifest["documents"] if entry["pdf"] == relative]
         if len(entries) != 1:
@@ -252,7 +272,7 @@ def generated_pdf_issues(root: Path, relative: str) -> list[str]:
         source = root / entry["source"]
         if source.is_symlink() or not source.resolve().is_relative_to(root.resolve()):
             return [f"{relative}: unsafe PDF source"]
-        data = (root / relative).read_bytes()
+        data = path.read_bytes()
         if not data.startswith(b"%PDF-") or len(data) > 20 * 1024 * 1024:
             return [f"{relative}: invalid/oversized generated PDF"]
         if hashlib.sha256(source.read_bytes()).hexdigest() != entry["source_sha256"]:
@@ -269,9 +289,12 @@ def pdf_inventory_issues(paths: list[str], texts: dict[str, str]) -> list[str]:
         manifest = json.loads(texts.get(PDF_MANIFEST, ""))
         entries = manifest["documents"]
         sources = [entry["source"] for entry in entries]
-        expected = {name for name in texts if name.endswith(".md") and name not in PDF_ALIASES}
+        expected = {name for name in texts if name.endswith(".md") and name not in PDF_ALIASES
+                    and not name.lower().startswith("reports/")}
         if manifest.get("schema") != 1 or set(sources) != expected or len(sources) != len(expected):
-            return ["generated PDF manifest must cover each maintained Markdown source exactly once"]
+            return ["generated PDF manifest must cover each maintained document outside reports/ exactly once"]
+        if any(entry["pdf"].lower().startswith("reports/") for entry in entries):
+            return ["reports/ must not appear in the generated PDF inventory"]
         if any(entry["pdf"] not in paths for entry in entries):
             return ["required generated PDF missing from publication set"]
         return []
@@ -450,7 +473,7 @@ def main() -> int:
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
     print("PASS: structure, local links/anchors, stage fields, R01–R16/T00–T20 coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
-    print("PASS: purpose-folder structure and source/hash-matched generated PDF inventory.")
+    print("PASS: purpose-folder structure, Markdown-only reports, source/hash-matched document PDFs, and frozen archives.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")
     return 0
 

@@ -21,7 +21,7 @@ The criteria below define what evidence a reviewer needs. A passing continuous i
 | B11 | No software install, VM creation, infrastructure/network/identity change, or security-test execution occurred; stop after Task 001 | Executed-action review and explicit completion report |
 | B12 | Open decisions/risks and one recommended next task are reported; owner UAT is not inferred | Final report; owner review remains pending |
 | B13 | Every completed task has a unique sequential finalized A–H report in `reports/`; historical finalized reports are preserved | Reporting validator, source comparison, Git history review |
-| B14 | Maintained public documents and task reports have faithful searchable PDF editions in the approved folders; final project report remains a template | Source/PDF manifest, fresh rebuild, text/navigation/page checks, representative visual QA, and CI |
+| B14 | Maintained user-facing documents outside `reports/` have faithful searchable PDF editions; task reports/addenda require Markdown only; final project report remains a template | Document source/PDF manifest and fresh rebuild, report exclusion/archive regression checks, text/navigation/page checks, representative visual QA, and CI |
 
 If GitHub authentication/permissions block publication, B09/B10 remain blocked and the local reviewed repository plus precise owner action are delivered. Do not present a local-only repository as published. If the target already exists, preserve and reconcile its branches/content without force-pushing.
 
