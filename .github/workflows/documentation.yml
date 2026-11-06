@@ -18,13 +18,13 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Validate documents and publication hygiene
+      - name: Validate Markdown reports, documents, archives, and publication hygiene
         run: python3 scripts/validate_docs.py
       - name: Install pinned documentation-only libraries
         run: python3 -m pip install -r requirements-docs.txt
-      - name: Check source/PDF consistency and deterministic regeneration
+      - name: Check document PDFs and deterministic regeneration (reports excluded)
         run: python3 scripts/build_docs.py --check --rebuild-check
-      - name: Test validator rejection cases
+      - name: Test PDF generation and Markdown-only reporting regressions
         run: python3 -m unittest discover -s tests -v
       - name: Check whitespace
         run: git show --format= --check HEAD

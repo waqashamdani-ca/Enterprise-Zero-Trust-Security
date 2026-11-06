@@ -72,7 +72,7 @@ Use the [documentation library](docs/README.md) for source/PDF pairs, including 
 
 ## Reporting and GitHub Workflow
 
-Every task needs a sequential, finalized report before engineering completion. Finalized reports are immutable; corrections use an addendum or later task report. Owner UAT remains separate.
+Every task needs a sequential, finalized Markdown-only report (`reports/Ti-Report.md`) before engineering completion. Reports and addenda do not receive PDFs; the entire reporting directory is excluded from PDF generation. Existing report PDFs are archived artifacts. Finalized Markdown reports remain immutable; corrections use an addendum or later task report. Owner UAT remains separate.
 
 Use a task branch, focused commits, CI, and a reviewed pull request before merging; then fast-forward local `main`. Synchronization is intentional Git activity. [AGENTS.md](AGENTS.md) defines the workflow, approvals, writing standards, and prohibition on background upload. Protection/reviewer settings remain owner decisions.
 

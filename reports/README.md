@@ -1,6 +1,6 @@
 # Individual task reports
 
-Every Codex task in HL-CYB-001 must create and finalize an individual report here. Reports explain what was authorized, what changed, how it was checked, what remains unresolved, and what may happen next. They are evidence records, not approval to begin another task.
+Every Codex task in HL-CYB-001 must create and finalize an individual Markdown-only report here. Reports explain what was authorized, what changed, how it was checked, what remains unresolved, and what may happen next. They are evidence records, not approval to begin another task. Do not generate PDFs for reports, addenda, or this index; the entire `reports/` directory is excluded from PDF generation.
 
 ## Index and numbering
 
@@ -10,6 +10,7 @@ Every Codex task in HL-CYB-001 must create and finalize an individual report her
 | T1 addendum 001 | [Reporting governance](T1-Addendum-001-Reporting-Governance.md) | Migration and reporting rules; no Task 2 allocation |
 | T2 | [T2-Report.md](T2-Report.md) | Separately authorized documentation quality and readability review |
 | T3 | [T3-Report.md](T3-Report.md) | Documentation folder organization and reproducible PDF deliverables |
+| T3 addendum 001 | [Markdown-only reporting](T3-Addendum-001-Markdown-Only-Reporting.md) | Reporting-format governance and PDF automation exclusion; no T4 allocation |
 
 Use `reports/T1-Report.md`, `reports/T2-Report.md`, and so on, without leading zeroes, gaps, or reuse. Before allocating a number, inspect the current local and remote reports and reconcile concurrent work. Do not create an empty report to reserve a number. The next report number does not authorize its task: obtain the owner's bounded scope first.
 
@@ -35,6 +36,8 @@ Start with a descriptive title and `Report state: DRAFT`. In section A, include 
 Record tests as PASS, FAIL, or NOT TESTED, with evidence and an explanation. Separate project implementation status from task/report progress. Separate engineering verification, a second observation, independent human review, and owner UAT. Do not mark owner UAT PASS without an explicit owner confirmation reference. Missing data, future results, and an expected CI outcome are not evidence.
 
 ## Finalization and preservation
+
+Existing PDFs published before the format change may remain as archived artifacts. They are optional, are not regenerated, and do not define current reporting rules. The validator accepts only their exact recorded T3 bytes and rejects new report PDFs. Required A–H content, numbering, finalization, immutable Markdown history, security checks, and owner UAT rules continue to apply. User-facing project documents outside this directory still require generated PDFs.
 
 Create the draft during task execution. After the authorized implementation and validation are complete, review the evidence, record its cutoff and the finalization date, and change the marker to `Report state: FINALIZED`. From that point the report is immutable, including during later editing or readability work. Never edit, delete, overwrite, or renumber it. Use a new addendum for a correction or later outcome.
 

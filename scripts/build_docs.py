@@ -74,7 +74,7 @@ def discover_sources(root: Path = ROOT) -> list[str]:
     # automatic documentation source simply because they end with .md.
     inventory = subprocess.check_output(["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"])
     for name in sorted(set(inventory.decode("utf-8").split("\0")) - {""}):
-        if not name.endswith(".md"):
+        if not name.endswith(".md") or name.lower().startswith("reports/"):
             continue
         path = root / name
         if not path.is_file():
@@ -140,12 +140,14 @@ def resolve_link(source: str, target: str, sources: set[str]) -> str:
     name = ALIASES.get(name, name)
     if name == source and parsed.fragment:
         return "#" + unquote(parsed.fragment)
-    if name.endswith(".md"):
+    markdown_report = name.lower().startswith("reports/") and name.endswith(".md")
+    if name.endswith(".md") and not markdown_report:
         if name not in sources:
             raise ValueError(f"Unknown PDF source link from {source}: {name}")
         name = name[:-3] + ".pdf"
     url = REPOSITORY + "/blob/main/" + name
-    return url + ("#nameddest=" + parsed.fragment if parsed.fragment else "")
+    fragment_prefix = "#" if markdown_report else "#nameddest="
+    return url + (fragment_prefix + parsed.fragment if parsed.fragment else "")
 
 
 def inline(tokens: list[dict], source: str, sources: set[str]) -> str:
@@ -386,6 +388,8 @@ class Builder:
                 widths = [145, 140, 163, 56]
             elif headers[0] == "ID":
                 widths = [52, 231, 153, 68] if headers[-1] == "Stage" else [52, 200, 137, 115]
+            elif headers[:2] == ["Change", "Date"]:
+                widths = [52, 70, 190, 192]
             else:
                 widths = [117, 153, 139, 95]
         elif count == 5:
@@ -479,19 +483,18 @@ def source_tokens(tokens: list[dict]) -> set[str]:
 
 
 def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
+    if source.lower().startswith("reports/"):
+        raise ValueError("Task reports are Markdown only; reports/ is excluded from PDF generation")
     tokens = MARKDOWN(content.decode("utf-8"))
     if not tokens or tokens[0]["type"] != "heading":
         raise ValueError(f"Document must start with a title: {source}")
     title = plain(tokens[0]["children"])
     builder = Builder(source, sources)
-    formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/", "reports/T"))
+    formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
     if formal:
         cover_status = ""
-        if source.startswith("reports/T"):
-            state = re.search(r"^Report state: (DRAFT|FINALIZED)$", content.decode("utf-8"), re.M)
-            cover_status = "Report state: " + state[1] if state else "Task report"
-        elif source.startswith(("docs/lab-guides/", "docs/architecture/", "docs/security/")):
+        if source.startswith(("docs/lab-guides/", "docs/architecture/", "docs/security/")):
             cover_status = "PLANNED - operational controls NOT TESTED"
         elif source.startswith("docs/final-report/"):
             cover_status = "TEMPLATE - no completed implementation results"

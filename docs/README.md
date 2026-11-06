@@ -1,6 +1,6 @@
 # Documentation library
 
-Markdown is the editable source. PDF is the generated reading/printing edition. The [build guide](governance/DOCUMENTATION-BUILD.md) explains the Windows rebuild command, validation, and source/PDF consistency rules.
+Markdown is the editable source. User-facing project documents have a generated PDF reading/printing edition; task reports are Markdown only. The [build guide](governance/DOCUMENTATION-BUILD.md) explains the Windows rebuild command, validation, and source/PDF consistency rules.
 
 ## Project documents
 
@@ -23,7 +23,7 @@ The final project report remains a clearly identified template. All infrastructu
 
 ## Task reports and other instructions
 
-[The task-report index](../reports/README.md) links the sequential reports and addenda. Each report and the index have a same-name PDF counterpart. Finalized report Markdown remains immutable; older reports are exported faithfully without editing their historical content.
+[The task-report index](../reports/README.md) links the sequential Markdown-only reports and addenda. The entire `reports/` directory, including its index, is excluded from PDF generation. Finalized Markdown remains immutable. Existing report PDFs are retained as optional historical archives and are not regenerated or required for later reports.
 
 PDF editions also accompany the root [project overview](../README.pdf) and [agent governance](../AGENTS.pdf), [infrastructure guidance](../infrastructure/README.pdf), [configuration guidance](../configurations/README.pdf), [evidence handling](../evidence/README.pdf), and [bootstrap evidence](../evidence/BOOTSTRAP-VALIDATION.pdf). [This library index](README.pdf) is available as PDF too.
 
