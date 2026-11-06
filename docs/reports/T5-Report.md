@@ -1,6 +1,8 @@
 # T5 - Editable lab deliverable templates
 
-Report state: DRAFT
+Report state: FINALIZED
+
+Evidence cutoff: 2026-11-06 08:43:23 UTC (2026-11-06 03:43:23, America/Toronto). Finalization date: 2026-11-06, America/Toronto. The report-finalization commit, its CI, merge and final main synchronization are outside this cutoff.
 
 ## A. Task Information
 
@@ -61,9 +63,11 @@ Updated README/library navigation, the current report index, DEC-22/CH-009, RK-2
 | T4 preservation | All twelve baseline report/archive files other than the editable INDEX are byte-identical; assignment/architecture/security/testing/acceptance/final template and evidence unchanged; guide from Stage A onward identical | PASS |
 | Operational lab tests | Outside T5 scope; no execution | NOT TESTED |
 
-All checks above were performed on 2026-11-06 by the Codex engineering verifier. Scope is repository-only T00 and publication-only T17; no passing T01-T20 lab result is claimed. The required --require-finalized gate remains pending until report finalization.
+All checks above were performed on 2026-11-06 by the Codex engineering verifier. Scope is repository-only T00 and publication-only T17; no passing T01-T20 lab result is claimed. The required --require-finalized gate will run against these final report bytes before completion/merge; its post-cutoff result belongs in the final chat response.
 
 The canonical render_docx.py attempt failed because LibreOffice is absent on this Windows host. Reviewed recovery used installed Word's [Page.EnhMetaFileBits](https://learn.microsoft.com/en-us/dotnet/api/microsoft.office.interop.word.page.enhmetafilebits?view=word-pia) to create PNGs directly, without a PDF intermediate or software installation. Native Excel opening used [Workbooks.Open](https://learn.microsoft.com/en-us/office/vba/api/excel.workbooks.open) with external-link updating disabled. Restricted-process COM/temporary-fixture access initially failed; reviewed local execution completed the same checks. QA helper numeric marshalling and Word pagination caches were corrected before final checks. Visual QA removed an inherited title border and shortened a cramped rubric heading. One synthetic split-token negative test initially failed; paragraph/cell-aware text-run scanning fixed it, and the complete suite then passed. No real credential finding occurred.
+
+A restricted Git PDF text-conversion helper failed during a staged read. The complete new-history review used git diff --no-textconv with separately inspected PDF/Office payloads; the focused history scan passed and all fourteen committed binary payloads matched the reviewed files before push. No publication scanner was disabled or waived.
 
 Raw scripts, logs and previews remain outside public Git. Reviewed artifact identities at this local evidence snapshot:
 
@@ -86,24 +90,40 @@ Separate observations were artifact-tool calculations versus native Excel recalc
 
 ## E. GitHub Operations
 
-Repository PUBLIC, default main, repository ID 1447671295; authenticated account waqashamdani-ca and push/admin permissions verified by connector and GitHub CLI. Branch task/005-lab-deliverable-templates starts at c5fa6ee4fa5eb3333b486d555fc71152ad0091c4. No open PR/conflicting T5 branch was found. Live main has no active branch rules; no settings changed. Commit/push/PR/CI/merge/synchronization are pending and are not claimed.
+| Item | Observed state at evidence cutoff |
+| --- | --- |
+| Repository | [waqashamdani-ca/Enterprise-Zero-Trust-Security](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security), PUBLIC, default main; repository ID 1447671295 |
+| Authenticated account / permission | waqashamdani-ca; push/admin verified by connected GitHub and CLI/API observations |
+| Task branch | task/005-lab-deliverable-templates; no conflicting T5 work was found during preflight |
+| Dependency baseline | c5fa6ee4fa5eb3333b486d555fc71152ad0091c4; T4 report finalized, PR 5 merged, local/remote main equal; clean isolated checkout and git pull --ff-only origin main confirmed already up to date |
+| Implementation commit | [ebe45b996f829de4be77eaad0686a043a3602e0f](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/ebe45b996f829de4be77eaad0686a043a3602e0f); both author/committer are verified GitHub noreply; 27 reviewed paths |
+| Pull request | [PR 6](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/6), OPEN, MERGEABLE / CLEAN, exact head ebe45b996f829de4be77eaad0686a043a3602e0f |
+| Push CI | [Run 42189371245](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42189371245), completed / success at the implementation head |
+| PR CI | [Run 42189502099](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42189502099), completed / success at the same head; every validation job step succeeded |
+| Review/protection observations | No requested reviews, submitted reviews or review threads; live main protected=false and active branch rules empty; no repository settings changed |
+| Branch synchronization | git ls-remote confirmed the T5 branch at ebe45b996f829de4be77eaad0686a043a3602e0f and main at c5fa6ee4fa5eb3333b486d555fc71152ad0091c4 |
+| Final report publication / merge / main synchronization | Pending this finalized report's commit/push and exact-final-head checks; not claimed at cutoff |
+
+The GitHub connector returned 403 for PR creation; the existing authenticated GitHub CLI created PR 6 from the reviewed body file, and connector/CLI read-backs confirmed it. The configured lowercase origin redirects to the same case-renamed repository verified in T4; T5 did not rename it or change origin. Raw evidence and authentication material were not published.
+
+After final report publication, recheck the exact PR head, CI, reviews, requests, threads and branch rules before a normal local merge with verified noreply author/committer. Push without force, confirm GitHub records the PR as merged, then fast-forward local main and compare live remote IDs. Those later observed outcomes belong in the final chat response. Merge does not supply owner UAT.
 
 ## F. Outstanding Issues
 
-Initial publication, CI, finalization, merge and synchronization are pending. No unresolved local template/check defect is known. The owner's original tree has five pre-existing archive-PDF deletions, preserved and excluded from T5. It cannot be described as clean while those owner changes remain; T5 uses its separate reviewed worktree. The eight templates need owner UAT. Filled private working copies will need separate review before publication and a deliberate change to the blank-shell validation contract. Existing asset/disk/backup, egress, software/evaluation, remote-provider and recovery decisions remain open. No stage approval follows from T5.
+Final report publication, final-head CI, merge and main synchronization remain outside this cutoff. No unresolved local template/check defect is known. The owner's original tree has five pre-existing archive-PDF deletions, preserved and excluded from T5. It cannot be described as clean while those owner changes remain; T5 uses its separate reviewed worktree. The eight templates need owner UAT. Filled private working copies will need separate review before publication and a deliberate change to the blank-shell validation contract. Existing asset/disk/backup, egress, software/evaluation, remote-provider and recovery decisions remain open. No stage approval follows from T5.
 
 ## G. Completion Status
 
 | Dimension | State |
 | --- | --- |
 | Local template implementation | VALIDATED for the stated Office/documentation scope |
-| Report / publication | DRAFT; branch publication, CI, finalization and merge pending |
+| Report / publication | FINALIZED at cutoff; implementation branch and initial CI verified; final report publication, final-head CI, merge and main synchronization pending |
 | Second observations | PASS for the methods in C/D; same engineering verifier |
 | Independent human review | NOT TESTED / not performed |
 | Owner UAT | PENDING; no explicit acceptance reference |
 | Lab stages A-L | PLANNED / NOT TESTED; no execution |
 
-T5 is not declared engineering-complete until this report is finalized, the finalized validator passes and the authorized publication checks have been observed. No T6 work has begun.
+Local engineering verification is complete for the stated scope, and this report is finalized after reviewing the actual local and initial publication evidence. The required finalized validator and remaining publication outcomes will be reported after observation in the final chat response. No independent human sign-off, owner acceptance, operational result or T6 work is claimed.
 
 ## H. Next Task
 
