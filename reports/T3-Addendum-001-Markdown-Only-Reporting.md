@@ -1,6 +1,8 @@
 # T3 addendum 001 — Markdown-only task reporting
 
-Report state: DRAFT
+Report state: FINALIZED
+
+Finalization date: 2026-11-06, America/Toronto. Evidence cutoff: implementation commit `318857b99cd7c61691adb062d02dd97b4372f2d0` and its successful push/PR checks. This final Markdown record's publication commit, final exact-head CI, merge, and main synchronization follow the cutoff and must be read back in the final task response; no future result is assumed here.
 
 ## A. Task Information
 
@@ -32,7 +34,8 @@ Rebuilt nineteen active project-document editions and their manifest. Ten PDF bi
 | `python scripts/validate_docs.py` and `git diff --check` | Links, A–H structure, numbering, traceability, publication patterns, workflow, archive hashes, and whitespace pass | Local checks passed; finalization gate and exact-head CI follow before merge | PASS |
 | Git-baseline byte comparisons | Four finalized Markdown reports, five archived report PDFs, and bootstrap evidence unchanged | All compared with `d1b575761c090c35dac535ec331a1e32f9bd5fe6`; no historical differences | PASS |
 | pypdf/pdfplumber inspection and Poppler rendering | Readable/searchable text, preserved navigation, no selected sensitive-data findings or clipping | Inspected generated text/metadata and character bounds; viewed all ten changed first pages, six detail samples, and the revised change-history page; corrected narrow history columns | PASS |
-| Addendum PR, final exact-head CI, merge, and synchronization | Normal checked-head noreply merge; matching main refs | Pending publication at this draft checkpoint | NOT TESTED |
+| Implementation GitHub CI | Hosted document generation, Markdown report/archive checks, tests, and whitespace pass | Push run 42169975296 and PR run 42169979260 completed successfully for the implementation commit | PASS |
+| Final record publication, exact-head CI, merge, and synchronization | Normal checked-head noreply merge; matching main refs | Follows this immutable report's evidence cutoff; final response must record observed results | NOT TESTED |
 
 ## D. Security and Quality Review
 
@@ -44,18 +47,26 @@ No lab, production, credential, account-privacy, license, or repository-protecti
 
 ## E. GitHub Operations
 
-Authenticated account `waqashamdani-ca` has repository admin/push permission. Baseline local and remote main matched at `d1b575761c090c35dac535ec331a1e32f9bd5fe6`; worktree was clean. Addendum commit, PR, CI, merge, and final synchronization: pending.
+| Item | Observed state at evidence cutoff |
+| --- | --- |
+| Repository / identity | Public `waqashamdani-ca/enterprise-zero-trust-security`; authenticated `waqashamdani-ca` with admin/push permission; default branch main |
+| Branch / implementation commit | `task/003-markdown-only-reporting`; local/remote branch at `318857b99cd7c61691adb062d02dd97b4372f2d0`; verified noreply author and committer |
+| Pull request | [PR 4](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/pull/4), open with clean merge state; no required branch protections/rules observed |
+| Push CI | [Run 42169975296](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/actions/runs/42169975296): success |
+| PR CI | [Run 42169979260](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/actions/runs/42169979260): success; hosted Ubuntu source/PDF regeneration, report/archive validation, tests, and whitespace passed |
+| Main synchronization | Fetched remote main remains `d1b575761c090c35dac535ec331a1e32f9bd5fe6`, matching local main; implementation worktree clean before freezing this addendum |
+| Final record / merge | This final Markdown record's publication and final checks follow the cutoff; PR not merged at cutoff; final main read-back belongs in the completion response |
 
 ## F. Outstanding Issues
 
-Local implementation and validation are complete; publication/finalization read-back remains pending at this draft checkpoint. Existing historical email metadata risk RK-17 and prior owner decisions remain unchanged. Archive PDFs contain historical reporting instructions; current Markdown governance takes precedence. PDF reader-specific navigation and prior external-reference transport limits remain documented; no new external reachability or operational-security claim is made.
+Local implementation/validation and implementation CI are complete. Publication of this frozen record, final exact-head checks, merge, and synchronization read-back remain pending at the cutoff. Existing historical email metadata risk RK-17 and prior owner decisions remain unchanged. Archive PDFs contain historical reporting instructions; current Markdown governance takes precedence. PDF reader-specific navigation and prior external-reference transport limits remain documented; no new external reachability or operational-security claim is made.
 
 ## G. Completion Status
 
 | Area | Status |
 | --- | --- |
-| Engineering | IN PROGRESS |
-| Independent verification | Git-baseline comparisons, separate PDF text/geometry/render observations completed; hosted CI pending; no independent human review claimed |
+| Engineering | Authorized reporting governance/automation scope VALIDATED; final record publication and read-back follow the cutoff |
+| Independent verification | Git-baseline comparisons, separate PDF text/geometry/render observations, and hosted Ubuntu CI passed; no independent human reviewer sign-off claimed |
 | Owner UAT | PENDING |
 | Remaining owner decisions | Acceptance of the completed governance change; previously recorded privacy, protection, licensing, and future-stage decisions |
 
