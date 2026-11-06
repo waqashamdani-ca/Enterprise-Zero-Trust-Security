@@ -18,7 +18,20 @@ For future work, require **explicit owner approval before each implementation st
 6. Use focused automated checks appropriate to the change. Independently verify outcomes through a second observation, such as a policy inspection plus a bounded positive/negative connection test. Re-running the same command is not independent verification. Do not claim independent reviewer sign-off unless someone else actually reviewed it.
 7. Separate **engineering verification** from **owner user acceptance testing (UAT)**. A CI pass does not approve business behavior or stage advancement. Record each result, reviewer role, evidence, date, and unresolved issue.
 8. Report proposed, implemented, verified, failed, blocked, and accepted states accurately. Attach sanitized evidence to each claimed result. Never turn a planned test into a passing result.
-9. Track architectural choices and changes in [DECISIONS.md](docs/DECISIONS.md), risks in [RISKS.md](docs/RISKS.md), requirements/tests in their respective documents, and actual completion in [FINAL-REPORT.md](docs/FINAL-REPORT.md).
+9. Track architectural choices and changes in [DECISIONS.md](docs/DECISIONS.md), risks in [RISKS.md](docs/RISKS.md), requirements/tests in their respective documents, and individual task outcomes in [reports/](reports/README.md). Keep [FINAL-REPORT.md](docs/FINAL-REPORT.md) for the project-level final report.
+
+## Mandatory individual task reports
+
+Every Codex task must create a report during execution and finalize it after the authorized implementation and validation. A task cannot be declared engineering-complete without its corresponding finalized report. Use [the reporting convention](reports/README.md) for the required structure and status vocabulary.
+
+- Allocate the next unique sequential number from the existing reports: `reports/T1-Report.md`, `reports/T2-Report.md`, and so on. Check local and remote work before allocation. Do not reserve numbers with empty reports, skip numbers, reuse a number, renumber a report, or start an unapproved next task.
+- Use sections A–H: Task Information; Implementation Summary; Testing and Validation; Security and Quality Review; GitHub Operations; Outstanding Issues; Completion Status; Next Task. Include dates, scope/dependencies, changed files/configuration/decisions, executed commands and expected/actual results, PASS/FAIL/NOT TESTED verdicts, risks/remediation, branch/commit/PR/CI/merge/synchronization, engineering/independent verification/owner UAT, and the next bounded task with its approval requirements.
+- Start with `Report state: DRAFT`. Finalize only after reviewing the actual evidence; change the marker to `Report state: FINALIZED` and record the evidence cutoff and finalization date. Missing tests are NOT TESTED. Owner UAT remains PENDING unless the owner explicitly confirms acceptance; record that confirmation reference before marking UAT PASS.
+- A finalized report is an immutable historical record. Never overwrite, edit, renumber, or delete it, including for later readability changes. Record corrections or follow-up evidence in a separately numbered addendum such as `reports/T1-Addendum-001-Reporting-Governance.md`, or in a subsequent authorized task report. An addendum has the same A–H structure and state marker, identifies its parent task, and does not allocate a new task number.
+- The Task 001 reporting migration is an authorized Task 001 addendum, not Task 2. Its historical report is [T1-Report.md](reports/T1-Report.md); the original source and evidence are preserved there. Later tasks use the next available number only after the owner authorizes their scope.
+- Keep all individual task reports and report addenda in `reports/`. Keep raw evidence private and link only reviewed public artifacts. The project-level final report is not an individual task log.
+- Final reports describe a named evidence cutoff. Do not invent the report commit's own SHA, future CI result, merge outcome, synchronization, independent review, or owner acceptance. After publishing a report, verify its PR/CI/merge and local/remote state and give those observed results in the final response; later written corrections require a new addendum.
+- Run `python scripts/validate_docs.py --require-finalized` before declaring completion or merging the completed task. The checks cover report numbering, required sections, and preservation of committed finalized versions. They support review; they do not supply owner acceptance or enforce GitHub branch protection.
 
 ## Production and destructive-operation boundaries
 
@@ -52,4 +65,4 @@ Never select a software license without owner approval.
 
 ## Completion report
 
-State changed files, checks actually run, local/remote commit IDs, repository URL, visibility/default branch, CI result, owner UAT status, unresolved decisions/risks, and exactly one recommended next task. Stop at the authorized task boundary.
+Link the finalized individual task report and any authorized addendum. State changed files, checks actually run, local/remote commit IDs, repository URL, visibility/default branch, PR/merge and CI results, owner UAT status, unresolved decisions/risks, and exactly one recommended next task. Stop at the authorized task boundary.

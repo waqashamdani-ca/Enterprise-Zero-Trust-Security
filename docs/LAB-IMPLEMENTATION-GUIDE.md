@@ -4,7 +4,7 @@
 
 ## How to execute a future approved stage
 
-Before work, record its scope, approval reference/date, operator, hardware/software versions, private target inventory, proposed changes, expected outcomes, tests, stop conditions, and rollback. Recheck current vendor instructions and compatibility. Use a clean task branch, update the design first, perform only the approved stage, collect private evidence, publish reviewed synthetic summaries, and request separate owner UAT. Completing a stage does not authorize the next one.
+Before work, record its scope, approval reference/date, operator, hardware/software versions, private target inventory, proposed changes, expected outcomes, tests, stop conditions, and rollback. Create that task's next sequential draft [report](../reports/README.md). Recheck current vendor instructions and compatibility. Use a clean task branch, update the design first, perform only the approved stage, collect private evidence, publish reviewed synthetic summaries, and request separate owner UAT. Finalize the task report after verification; no task is engineering-complete without it. Completing a stage does not authorize the next one.
 
 All commands below are **proposed, not executed**. They illustrate verified vendor syntax, not a turnkey deployment script. Run only on the named lab target after stage approval and local help/version checks. Variables such as `$LabDnsAddress` and `$LabCertificatePath` must be populated privately with reviewed lab-only values. Do not paste secrets or real addresses into the repository. GUI labels can change; use the version-specific official documentation in [REFERENCES.md](REFERENCES.md).
 

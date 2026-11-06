@@ -20,7 +20,9 @@ Task 001 bootstrap publication and initial CI verification are recorded in [the 
 | [Acceptance criteria](docs/ACCEPTANCE-CRITERIA.md) | Bootstrap acceptance and future engineering/UAT gates |
 | [Decisions](docs/DECISIONS.md) | Proposed decisions, outstanding owner choices, and change history |
 | [Risks](docs/RISKS.md) | Constraints, mitigations, and residual risk |
-| [Final report](docs/FINAL-REPORT.md) | Honest bootstrap status and future completion-report requirements |
+| [Task reports](reports/README.md) | Individual, sequential reports and the reporting convention |
+| [Task 1 report](reports/T1-Report.md) | Preserved Task 001 outcomes and evidence |
+| [Project final report template](docs/FINAL-REPORT.md) | Project-wide assessment to complete after approved implementation |
 | [References](docs/REFERENCES.md) | Authoritative sources and command verification references |
 | [Agent governance](AGENTS.md) | Execution boundaries and repository conventions |
 
@@ -42,6 +44,7 @@ configurations/          Future sanitized configuration examples
 scripts/                 Local documentation validation
 tests/                   Focused tests of the documentation validator
 evidence/                Reviewed, sanitized evidence and capture conventions
+reports/                 Individual task reports and historical addenda
 ```
 
 No infrastructure or production configuration is included in the bootstrap.
@@ -59,6 +62,12 @@ git diff --check
 The standard-library validator checks required structure, local Markdown destinations and heading anchors, stage completeness, requirement traceability, rubric totals, and selected public-publication risks. It scans Git's proposed tracked/untracked, nonignored file set and rejects sensitive filenames, binary artifacts, private addresses, and selected credential patterns. It is a focused guardrail with known limits; a manual review of staged contents remains mandatory. External references are checked during bootstrap research, not fetched on every CI run.
 
 The workflow uses read-only repository permissions, an official checkout action pinned to a verified commit, no stored checkout credentials, no deployment jobs, and no lab secrets or remote-access connection.
+
+## Task reporting
+
+Every task must produce a report in `reports/`: `T1-Report.md`, `T2-Report.md`, and the next unique sequential number. Reports record scope, changes, executed tests and actual results, security review, GitHub operations, unresolved issues, completion/UAT status, and the next task's prerequisites and approval. A task is not engineering-complete until its report is finalized.
+
+Drafts use `Report state: DRAFT`; finalized reports use `Report state: FINALIZED` and become immutable. Corrections and later evidence go in a separate addendum or the next authorized task's report. The [reporting guide](reports/README.md) defines the A–H structure. Owner UAT remains pending until the owner explicitly accepts the work. Before completion, run `python scripts/validate_docs.py --require-finalized`. The project final report template summarizes the eventual project and does not hold individual task reports.
 
 ## GitHub workflow
 

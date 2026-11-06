@@ -19,6 +19,7 @@
 | DEC-11 | Public repository under `waqashamdani-ca`, `main`, intentional reviewed commits; task branches and PRs after initial bootstrap | Authorized by owner addendum; repository engineer | Existing remote work, permission conflict, repository policy change |
 | DEC-12 | Repository rulesets/required checks/reviewers are not changed silently; documented PR conventions are initially procedural | OPEN; owner | Owner selects enforceable rules and available reviewer model |
 | DEC-13 | Stage A is a read-only readiness assessment; Stage B contains destructive disk installation | Planning baseline; owner approval for either execution remains PENDING | Owner issues a stage-specific scope/approval |
+| DEC-14 | Every task has a sequential A–H report in `reports/`; finalized records are immutable and corrections use separate addenda; project-level final report remains a template | Authorized by owner reporting-governance addendum | A later owner-approved reporting change; historical finalized content remains preserved |
 
 Do not treat hardware descriptions, planning allocations, or documented software alternatives as an inspected fact or an implemented choice. Resolve each blocking decision before its dependent stage.
 
@@ -33,5 +34,6 @@ For each later decision/change, record ID, date, problem/trigger, options, selec
 | CH-001 | 2026-11-05 | Owner Task 001 | Establish assignment, proposed architecture/guide, security and acceptance framework, public-safe scaffold and documentation checks; no implementation |
 | CH-002 | 2026-11-05 | Owner GitHub integration/synchronization addendum | Confirm exact account/repository/public visibility, secure existing authentication, controlled commits/PRs/pulls, `main`, CI and local/remote verification; prohibit background sync |
 | CH-003 | 2026-11-05 | Task 001 completion verification within the existing authorization | Public bootstrap pushed with existing Git Credential Manager login; initial documentation CI and local/remote synchronization verified; add sanitized completion evidence without starting a lab stage |
+| CH-004 | 2026-11-05 | Owner task-reporting governance addendum | Migrate the original Task 001 report with a verbatim source appendix, establish sequential immutable reports and focused checks, and separate individual reports from the project-level final template |
 
-Actual commit IDs and CI/publication evidence are reported after verification in [FINAL-REPORT.md](FINAL-REPORT.md) and the Task 001 completion report. No stage approval or owner UAT decision has been recorded.
+Actual Task 001 commit IDs and CI/publication evidence are recorded in [T1-Report.md](../reports/T1-Report.md) and its addenda. Each later task records its own results in [reports/](../reports/README.md). [FINAL-REPORT.md](FINAL-REPORT.md) is the project-level template. No implementation stage approval or owner UAT decision has been recorded.
