@@ -1,6 +1,6 @@
 # Project terminology and status
 
-This guide explains terms used in the assignment and lab procedures. The [architecture](ARCHITECTURE.md) defines the actual proposed design; the glossary does not add controls or implementation claims.
+This guide explains terms used in the assignment and lab procedures. The [architecture](../architecture/ARCHITECTURE.md) defines the actual proposed design; the glossary does not add controls or implementation claims.
 
 ## Access, identity, and networking
 

@@ -9,10 +9,11 @@ Every Codex task in HL-CYB-001 must create and finalize an individual report her
 | T1 / Task 001 | [T1-Report.md](T1-Report.md) | Historical project bootstrap and GitHub setup |
 | T1 addendum 001 | [Reporting governance](T1-Addendum-001-Reporting-Governance.md) | Migration and reporting rules; no Task 2 allocation |
 | T2 | [T2-Report.md](T2-Report.md) | Separately authorized documentation quality and readability review |
+| T3 | [T3-Report.md](T3-Report.md) | Documentation folder organization and reproducible PDF deliverables |
 
 Use `reports/T1-Report.md`, `reports/T2-Report.md`, and so on, without leading zeroes, gaps, or reuse. Before allocating a number, inspect the current local and remote reports and reconcile concurrent work. Do not create an empty report to reserve a number. The next report number does not authorize its task: obtain the owner's bounded scope first.
 
-Corrections and additional evidence for an already finalized report go in a new file such as `T1-Addendum-002-Correction.md`. Addenda use a unique sequential three-digit number within their parent task and identify their reason. They do not change the parent task number or create a new task. Keep all individual reports and addenda here. [The project final report template](../docs/FINAL-REPORT.md) has a different purpose: the eventual assessment of the whole implemented project.
+Corrections and additional evidence for an already finalized report go in a new file such as `T1-Addendum-002-Correction.md`. Addenda use a unique sequential three-digit number within their parent task and identify their reason. They do not change the parent task number or create a new task. Keep all individual reports and addenda here. [The project final report template](../docs/final-report/FINAL-REPORT.md) has a different purpose: the eventual assessment of the whole implemented project.
 
 ## Required A–H structure
 

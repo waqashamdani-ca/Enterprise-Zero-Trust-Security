@@ -2,11 +2,11 @@
 
 **Operational tests: NOT TESTED.** This plan defines future lab validation; it is not a record of executed security tests. Authorized documentation tasks may run repository checks (T00 and repository-only T17). Every lab, security, remote-access, and recovery test needs explicit approval for the relevant stage. Home and production systems are never targets.
 
-A functional test checks that required work succeeds. A negative test checks that a named unauthorized action is denied. A recovery test checks that an agreed service can be restored. Use the [glossary](GLOSSARY.md) and [individual task reports](../reports/README.md) to distinguish these planned tests from actual evidence.
+A functional test checks that required work succeeds. A negative test checks that a named unauthorized action is denied. A recovery test checks that an agreed service can be restored. Use the [glossary](../guides/GLOSSARY.md) and [individual task reports](../../reports/README.md) to distinguish these planned tests from actual evidence.
 
 ## Test governance and evidence
 
-For each future test, freeze the lab-only source/target, identity/device context, version, expected outcome, bounded action/rate, independent observation, stop condition, recovery method, and evidence ID. Use [evidence conventions](../evidence/README.md). Evidence stays private until sanitized and manually reviewed. A negative result must show denial from the intended control, not merely a disconnected service or a DNS typo; first establish an approved working control case.
+For each future test, freeze the lab-only source/target, identity/device context, version, expected outcome, bounded action/rate, independent observation, stop condition, recovery method, and evidence ID. Use [evidence conventions](../../evidence/README.md). Evidence stays private until sanitized and manually reviewed. A negative result must show denial from the intended control, not merely a disconnected service or a DNS typo; first establish an approved working control case.
 
 Use PASS, FAIL, or NOT TESTED and explain any blocked or skipped case. Record an exception before assessment, with owner approval, risk, and revised scope. An unexecuted case never counts as passed. R14 requires every mandatory case executed, 100% of critical cases passed, at least 95% of applicable noncritical cases passed, and no unresolved high-severity issue. Count the declared individual cases, state the denominator, and do not round away a failure. T20 includes separate owner UAT; engineering cannot award it on the owner's behalf.
 

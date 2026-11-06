@@ -25,7 +25,7 @@ The lab will demonstrate allowed and denied actions, access revocation, and the 
 
 Proxmox VE will run the virtual machines; OPNsense will control traffic between Management, Identity, Endpoints, Services, Monitoring, and Remote access zones. Active Directory manages lab identities; host/application permissions control resource access. An offline certificate authority protects the root of certificate trust.
 
-Internet access needs a separately approved isolation design. See the [architecture](docs/ARCHITECTURE.md) for the diagram, capacity, and allowed flows, and the [glossary](docs/GLOSSARY.md) for terms.
+Internet access needs a separately approved isolation design. See the [architecture](docs/architecture/ARCHITECTURE.md) for the diagram, capacity, and allowed flows, and the [glossary](docs/guides/GLOSSARY.md) for terms.
 
 ## Technologies Used
 
@@ -47,7 +47,7 @@ Repository setup, planning documents, task reporting, and documentation validati
 
 ## Testing and Validation
 
-Use an existing Python 3.11 or later installation:
+Use Python 3.11 or later with the pinned [documentation dependencies](docs/governance/DOCUMENTATION-BUILD.md). With that documentation environment active:
 
 ```powershell
 python scripts/validate_docs.py
@@ -57,16 +57,18 @@ git diff --check
 
 The checks cover documentation, local links, traceability, report history, and selected publication risks; they do not test the lab. Before completion, also run `python scripts/validate_docs.py --require-finalized`. Review public content manually: the scanner is not exhaustive, and CI does not fetch external references.
 
-CI uses read-only permissions, a commit-pinned checkout, no retained credentials, and no lab access. The [test plan](docs/TEST-PLAN.md) defines future functional, denied-access, security, and recovery checks.
+CI uses read-only permissions, a commit-pinned checkout, no retained credentials, and no lab access. The [test plan](docs/testing/TEST-PLAN.md) defines future functional, denied-access, security, and recovery checks.
 
 ## Project Documentation
 
-- [Assignment](docs/PROJECT-ASSIGNMENT.md): business case, requirements, deliverables, and assessment rubric.
-- [Implementation guide](docs/LAB-IMPLEMENTATION-GUIDE.md): stages A–L, checks, rollback, and approval gates.
-- [Architecture](docs/ARCHITECTURE.md) and [security requirements](docs/SECURITY-REQUIREMENTS.md): boundaries, access rules, threats, and standards mappings.
-- [Acceptance criteria](docs/ACCEPTANCE-CRITERIA.md), [decisions](docs/DECISIONS.md), and [risks](docs/RISKS.md): evaluation and unresolved choices.
+Use the [documentation library](docs/README.md) for source/PDF pairs, including the [assignment PDF](docs/assignments/PROJECT-ASSIGNMENT.pdf), [lab guide PDF](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.pdf), and [architecture PDF](docs/architecture/ARCHITECTURE.pdf). Markdown remains editable; PDFs are generated with the [documented Windows build](docs/governance/DOCUMENTATION-BUILD.md).
+
+- [Assignment](docs/assignments/PROJECT-ASSIGNMENT.md): business case, requirements, deliverables, and assessment rubric.
+- [Implementation guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md): stages A–L, checks, rollback, and approval gates.
+- [Architecture](docs/architecture/ARCHITECTURE.md) and [security requirements](docs/security/SECURITY-REQUIREMENTS.md): boundaries, access rules, threats, and standards mappings.
+- [Acceptance criteria](docs/testing/ACCEPTANCE-CRITERIA.md), [decisions](docs/governance/DECISIONS.md), and [risks](docs/governance/RISKS.md): evaluation and unresolved choices.
 - [Task reports](reports/README.md) and [bootstrap evidence](evidence/BOOTSTRAP-VALIDATION.md): work performed and evidence available.
-- [Project final report template](docs/FINAL-REPORT.md), [glossary](docs/GLOSSARY.md), and [references](docs/REFERENCES.md): project assessment, terminology, and authoritative sources.
+- [Project final report template](docs/final-report/FINAL-REPORT.md), [glossary](docs/guides/GLOSSARY.md), and [references](docs/governance/REFERENCES.md): project assessment, terminology, and authoritative sources.
 
 ## Reporting and GitHub Workflow
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import ipaddress
+import json
 import re
 import subprocess
 import sys
@@ -22,23 +23,30 @@ ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
     "README.md", "AGENTS.md", ".gitignore", ".gitattributes",
     ".github/workflows/documentation.yml",
-    "docs/PROJECT-ASSIGNMENT.md", "docs/LAB-IMPLEMENTATION-GUIDE.md",
-    "docs/ARCHITECTURE.md", "docs/SECURITY-REQUIREMENTS.md",
-    "docs/TEST-PLAN.md", "docs/ACCEPTANCE-CRITERIA.md",
-    "docs/DECISIONS.md", "docs/RISKS.md", "docs/FINAL-REPORT.md",
-    "docs/REFERENCES.md", "infrastructure/README.md",
+    "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
+    "docs/architecture/ARCHITECTURE.md", "docs/security/SECURITY-REQUIREMENTS.md",
+    "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
+    "docs/governance/DECISIONS.md", "docs/governance/RISKS.md", "docs/final-report/FINAL-REPORT.md",
+    "docs/governance/REFERENCES.md", "infrastructure/README.md",
     "configurations/README.md", "scripts/validate_docs.py",
     "tests/test_validate_docs.py", "evidence/README.md",
     "reports/README.md", "reports/T1-Report.md",
+    "docs/README.md", "docs/guides/GLOSSARY.md", "docs/governance/DOCUMENTATION-BUILD.md",
+    "scripts/build_docs.py", "tests/test_build_docs.py", "requirements-docs.txt",
+    "docs/documentation-manifest.json",
 )
 REQUIRED_DIRS = (
     ".github/workflows", "docs", "infrastructure", "configurations",
     "scripts", "tests", "evidence", "reports",
+    "docs/assignments", "docs/lab-guides", "docs/architecture", "docs/security",
+    "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
 STAGE_FIELDS = (
-    "Prerequisites", "Procedures", "Proposed commands", "Expected outcome",
-    "Verification", "Rollback", "Completion criteria",
+    "Objective", "Prerequisites", "Required tools", "Procedures", "Proposed commands", "Expected outcome",
+    "Verification", "Troubleshooting", "Rollback", "Completion criteria",
 )
+PDF_MANIFEST = "docs/documentation-manifest.json"
+PDF_ALIASES = {"docs/DECISIONS.md", "docs/RISKS.md"}
 REPORT_SECTIONS = (
     "A. Task Information", "B. Implementation Summary",
     "C. Testing and Validation", "D. Security and Quality Review",
@@ -215,7 +223,10 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
         issues.append(f"{relative}: private directory in publication set")
     if PRIVATE_NAME.search(path.name):
         issues.append(f"{relative}: sensitive filename in publication set")
-    if path.suffix.lower() not in ALLOWED_EXTENSIONS and path.name not in ALLOWED_SPECIAL_NAMES:
+    if path.suffix.lower() == ".pdf":
+        return issues + generated_pdf_issues(root, relative), None
+    if (path.suffix.lower() not in ALLOWED_EXTENSIONS and path.name not in ALLOWED_SPECIAL_NAMES
+            and relative not in {PDF_MANIFEST, "requirements-docs.txt"}):
         issues.append(f"{relative}: unreviewed file type; extend policy only after artifact review")
     if path.stat().st_size > 1024 * 1024:
         return issues + [f"{relative}: exceeds 1 MiB public-text limit"], None
@@ -226,6 +237,46 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
     if "\0" in content:
         return issues + [f"{relative}: binary/NUL content is not publishable"], None
     return issues + public_content_issues(relative, content), content
+
+
+def generated_pdf_issues(root: Path, relative: str) -> list[str]:
+    """Only source-matched, manifest-listed generated PDFs may be published."""
+    try:
+        manifest = json.loads((root / PDF_MANIFEST).read_text(encoding="utf-8"))
+        entries = [entry for entry in manifest["documents"] if entry["pdf"] == relative]
+        if len(entries) != 1:
+            return [f"{relative}: PDF not uniquely approved in generated manifest"]
+        entry = entries[0]
+        if entry["source"] != relative[:-4] + ".md":
+            return [f"{relative}: invalid PDF/source pairing"]
+        source = root / entry["source"]
+        if source.is_symlink() or not source.resolve().is_relative_to(root.resolve()):
+            return [f"{relative}: unsafe PDF source"]
+        data = (root / relative).read_bytes()
+        if not data.startswith(b"%PDF-") or len(data) > 20 * 1024 * 1024:
+            return [f"{relative}: invalid/oversized generated PDF"]
+        if hashlib.sha256(source.read_bytes()).hexdigest() != entry["source_sha256"]:
+            return [f"{relative}: generated PDF is stale relative to Markdown"]
+        if hashlib.sha256(data).hexdigest() != entry["pdf_sha256"]:
+            return [f"{relative}: PDF bytes differ from reviewed generated manifest"]
+        return []
+    except (OSError, KeyError, ValueError, TypeError):
+        return [f"{relative}: PDF manifest/source cannot be verified"]
+
+
+def pdf_inventory_issues(paths: list[str], texts: dict[str, str]) -> list[str]:
+    try:
+        manifest = json.loads(texts.get(PDF_MANIFEST, ""))
+        entries = manifest["documents"]
+        sources = [entry["source"] for entry in entries]
+        expected = {name for name in texts if name.endswith(".md") and name not in PDF_ALIASES}
+        if manifest.get("schema") != 1 or set(sources) != expected or len(sources) != len(expected):
+            return ["generated PDF manifest must cover each maintained Markdown source exactly once"]
+        if any(entry["pdf"] not in paths for entry in entries):
+            return ["required generated PDF missing from publication set"]
+        return []
+    except (KeyError, ValueError, TypeError):
+        return ["generated PDF inventory/manifest is missing or invalid"]
 
 
 def structure_issues(root: Path, paths: list[str]) -> list[str]:
@@ -241,7 +292,7 @@ def structure_issues(root: Path, paths: list[str]) -> list[str]:
 
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     issues: list[str] = []
-    assignment = texts.get("docs/PROJECT-ASSIGNMENT.md", "")
+    assignment = texts.get("docs/assignments/PROJECT-ASSIGNMENT.md", "")
     titles = {match[2] for match in HEADING.finditer(strip_fences(assignment)[0])}
     for title in ASSIGNMENT_HEADINGS:
         if title not in titles:
@@ -254,7 +305,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     scores = re.findall(r"^\|[^|]+\|\s*(\d+)\s*\|", rubric, re.M)
     if not scores or sum(map(int, scores)) != 100:
         issues.append("assignment rubric must total exactly 100 points")
-    guide = texts.get("docs/LAB-IMPLEMENTATION-GUIDE.md", "")
+    guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
     sections = re.split(r"^## Stage ([A-L])[^\n]*\n", guide, flags=re.M)
     stage_parts = iter(sections[1:])
     stages = list(zip(stage_parts, stage_parts))
@@ -264,7 +315,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         for field in STAGE_FIELDS:
             if not re.search(rf"^### {re.escape(field)}\s*$", section, re.M):
                 issues.append(f"stage {letter} missing field: {field}")
-    plan = texts.get("docs/TEST-PLAN.md", "")
+    plan = texts.get("docs/testing/TEST-PLAN.md", "")
     test_ids = re.findall(r"^### (T\d{2})\b", plan, re.M)
     if test_ids != [f"T{number:02d}" for number in range(21)]:
         issues.append("test plan must declare T00–T20 exactly once in order")
@@ -384,6 +435,7 @@ def main() -> int:
             if relative.endswith(".md"):
                 issues.extend(link_issues(ROOT, relative, content))
     issues.extend(completeness_issues(texts))
+    issues.extend(pdf_inventory_issues(paths, texts))
     issues.extend(report_issues(texts, args.require_finalized))
     try:
         issues.extend(finalized_history_issues(ROOT, texts))
@@ -398,6 +450,7 @@ def main() -> int:
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
     print("PASS: structure, local links/anchors, stage fields, R01–R16/T00–T20 coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
+    print("PASS: purpose-folder structure and source/hash-matched generated PDF inventory.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")
     return 0
 

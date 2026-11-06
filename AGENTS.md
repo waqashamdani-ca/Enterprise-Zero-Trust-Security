@@ -18,7 +18,7 @@ For future work, require **explicit owner approval before each implementation st
 6. Use focused automated checks appropriate to the change. Independently verify outcomes through a second observation, such as a policy inspection plus a bounded positive/negative connection test. Re-running the same command is not independent verification. Do not claim independent reviewer sign-off unless someone else actually reviewed it.
 7. Separate **engineering verification** from **owner user acceptance testing (UAT)**. A CI pass does not approve business behavior or stage advancement. Record each result, reviewer role, evidence, date, and unresolved issue.
 8. Report proposed, implemented, verified, failed, blocked, and accepted states accurately. Attach sanitized evidence to each claimed result. Never turn a planned test into a passing result.
-9. Track architectural choices and changes in [DECISIONS.md](docs/DECISIONS.md), risks in [RISKS.md](docs/RISKS.md), requirements/tests in their respective documents, and individual task outcomes in [reports/](reports/README.md). Keep [FINAL-REPORT.md](docs/FINAL-REPORT.md) for the project-level final report.
+9. Track architectural choices and changes in [DECISIONS.md](docs/governance/DECISIONS.md), risks in [RISKS.md](docs/governance/RISKS.md), requirements/tests in their respective documents, and individual task outcomes in [reports/](reports/README.md). Keep [FINAL-REPORT.md](docs/final-report/FINAL-REPORT.md) for the project-level final report.
 
 ## Mandatory writing standards
 
@@ -26,7 +26,7 @@ Apply these standards to public READMEs, assignments, implementation guides, arc
 
 - Explain the business problem and intended reader outcome before listing technologies. State what the project does, why it matters, what actually exists, how it was checked, and what evidence supports the outcome.
 - Use direct, natural professional English. Prefer concrete actions and short explanations. Remove marketing claims, exaggerated adjectives, stock AI phrases, repeated warnings, and unnecessary decoration.
-- Define specialist terms/acronyms on first use where practical, or link the [glossary](docs/GLOSSARY.md). Keep internal technical language where needed for accuracy. Use consistent project, zone, component, requirement, and stage names.
+- Define specialist terms/acronyms on first use where practical, or link the [glossary](docs/guides/GLOSSARY.md). Keep internal technical language where needed for accuracy. Use consistent project, zone, component, requirement, and stage names.
 - Preserve technical commands, configuration values, standards/control mappings, test expectations, and requirement IDs. Improve the explanation around them. Procedures must say what to do, why, how, expected outcome, verification, and recovery; do not replace usable instructions with vague summaries.
 - Use links to the authoritative project document instead of repeating large explanations. Keep the README concise and useful to a hiring manager, IT manager, reviewer, or technical reader. Retain the formal assignment, measurable requirements, deliverables, and 100-point rubric.
 - Distinguish PLANNED, IN PROGRESS, IMPLEMENTED, VALIDATED, and NOT TESTED as defined in the glossary. Never invent implementation, tests, metrics, screenshots, business results, certifications, independent review, production deployment, or owner UAT.
@@ -44,6 +44,15 @@ Every Codex task must create a report during execution and finalize it after the
 - Keep all individual task reports and report addenda in `reports/`. Keep raw evidence private and link only reviewed public artifacts. The project-level final report is not an individual task log.
 - Final reports describe a named evidence cutoff. Do not invent the report commit's own SHA, future CI result, merge outcome, synchronization, independent review, or owner acceptance. After publishing a report, verify its PR/CI/merge and local/remote state and give those observed results in the final response; later written corrections require a new addendum.
 - Run `python scripts/validate_docs.py --require-finalized` before declaring completion or merging the completed task. The checks cover report numbering, required sections, and preservation of committed finalized versions. They support review; they do not supply owner acceptance or enforce GitHub branch protection.
+
+## PDF deliverables and documentation organization
+
+- Keep editable documents in the approved purpose folders under `docs/`: assignments, lab-guides, architecture, security, testing, governance, final-report, and related guide/index locations. Keep README.md and AGENTS.md at the root; code/configurations/tests/evidence stay in their designated folders.
+- Markdown is the source of truth. Generate adjacent PDFs for all maintained public documents and task reports/addenda using [the build guide](docs/governance/DOCUMENTATION-BUILD.md). Never edit a PDF independently or change a finalized report's Markdown to obtain its PDF counterpart. Compatibility redirects are navigation aliases, not duplicate source editions.
+- Use `python scripts/build_docs.py` with the pinned documentation dependencies. Rebuild changed sources, then run `python scripts/build_docs.py --check --rebuild-check`, documentation/report checks, focused tests, and manual publication review. Do not publish unknown binary artifacts or hand-edit the generated manifest to suppress drift.
+- Preserve searchable text, tables/code, the diagram's actual topology, hyperlinks, numbered sections, document version, and page navigation. Render and inspect representative title/contents/table/diagram/code/page-break pages; extraction alone cannot establish layout quality.
+- Keep PDFs deterministic: fixed metadata, source-derived versions, embedded package fonts, and unchanged-output skipping. Commit reviewed sources, generated PDFs, manifest, and relevant build/CI changes. No-change builds must avoid binary churn.
+- Record PDF generation, source/frozen-history comparisons, structural/text/link checks, visual review, and actual CI/merge state in the individual task report. The project final report must remain visibly a template until its real implementation/evidence exists. PDF generation never authorizes lab execution or owner UAT.
 
 ## Production and destructive-operation boundaries
 

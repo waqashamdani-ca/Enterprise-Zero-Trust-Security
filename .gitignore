@@ -71,6 +71,8 @@ desktop.ini
 __pycache__/
 *.py[cod]
 .venv/
+.venv-docs/
+/tmp/pdfs/
 venv/
 node_modules/
 .pytest_cache/
