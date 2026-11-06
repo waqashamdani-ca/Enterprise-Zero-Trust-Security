@@ -98,12 +98,17 @@ REPORT_SECTIONS = (
     "G. Completion Status", "H. Next Task",
 )
 REPORT_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Report\.md")
+# Owner-authorized companion report; does not allocate T7 or generalize lettered tasks.
+COMPANION_REPORTS = {"docs/reports/T6A-Report.md": ("T6A", 6)}
 ADDENDUM_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
-    "Project Overview", "Project Objectives", "Project Scope", "Technologies and Resources",
-    "Project Requirements", "Expected Deliverables", "Implementation Approach",
-    "Success Criteria", "References",
+    "Project Overview", "Learning Objectives", "What You Will Build", "Project Requirements",
+    "Required Deliverables", "Four-Week Implementation Plan", "Evaluation Criteria", "References",
 )
+ASSIGNMENT_COMPATIBILITY_ANCHORS = {
+    "project-objectives", "project-scope", "technologies-and-resources",
+    "expected-deliverables", "implementation-approach", "success-criteria",
+}
 DELIVERABLE_FILENAMES = (
     "01-Lab-Environment-and-Architecture.xlsx",
     "02-Identity-and-Zero-Trust-Implementation.docx",
@@ -188,6 +193,7 @@ def heading_anchors(content: str) -> set[str]:
             suffix += 1
             anchor = f"{base}-{suffix}"
         used.add(anchor)
+    used.update(re.findall(r'^<a id="([a-z][a-z0-9-]*)"></a>\s*$', visible, re.M))
     return used
 
 
@@ -370,30 +376,41 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         row = re.search(rf"^\|\s*FWR-{number:02d}\s*\|[^\n]+$", assignment, re.M)
         if not row or re.findall(r"FWT-\d{2}", row[0]) != [f"FWT-{number:02d}"]:
             issues.append(f"FWR-{number:02d}: wrong primary test mapping")
-    rubric = assignment.partition("## Success Criteria")[2].split("\n## ", 1)[0]
+    rubric = assignment.partition("## Evaluation Criteria")[2].split("\n## ", 1)[0]
     weights = [(title.strip(), int(score)) for title, score in
                re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
     if weights != list(RUBRIC_WEIGHTS) or sum(score for _, score in weights) != 100:
         issues.append("assignment rubric must match approved five categories/weights and total 100 points")
-    deliverables = assignment.partition("## Expected Deliverables")[2].split("\n## ", 1)[0]
+    deliverables = assignment.partition("## Required Deliverables")[2].split("\n## ", 1)[0]
     names = re.findall(r"^\|\s*`([^`]+)`\s*\|", deliverables, re.M)
     if tuple(names) != DELIVERABLE_FILENAMES:
         issues.append("assignment must declare the five approved unique T7 deliverable filenames in order")
     mapped = set()
     for row in deliverables.splitlines():
-        match = re.match(r"\|\s*`([^`]+)`\s*\|\s*([^|]+)\|(.+)\|$", row)
-        if not match:
-            continue
-        if {".xlsx": "Excel (.xlsx)", ".docx": "Word (.docx)"}.get(Path(match[1]).suffix) != match[2].strip():
-            issues.append(f"{match[1]}: deliverable extension/Office format mismatch")
-        mapped.update(re.findall(r"\bFWR-\d{2}\b", match[3]))
+        match = re.match(r"\|\s*`([^`]+)`\s*\|([^|]+)\|$", row)
+        if match:
+            mapped.update(re.findall(r"\bFWR-\d{2}\b", match[2]))
     if mapped != set(required_ids):
         issues.append("assignment deliverables must cover all FWR-01 through FWR-10 requirements")
     if "`docs/deliverables/`" not in deliverables:
         issues.append("assignment must state the docs/deliverables/ submission location")
-    for name, content in (("assignment", deliverables), ("guide", guide)):
-        if "approved T7 target, not yet created" not in content:
-            issues.append(f"{name}: future T7 status must be explicit")
+    if "planned and not yet available" not in deliverables:
+        issues.append("assignment: template availability must remain explicit")
+    if "approved T7 target, not yet created" not in guide:
+        issues.append("guide: future T7 status must be explicit")
+    aliases = set(re.findall(r'^<a id="([a-z][a-z0-9-]*)"></a>\s*$', assignment, re.M))
+    if aliases != ASSIGNMENT_COMPATIBILITY_ANCHORS:
+        issues.append("assignment: preserve compatibility anchors for existing links")
+    if re.search(r"\b(?:T6A?|T7|A-L)\b", assignment):
+        issues.append("assignment: internal task/stage jargon must stay in the guide/report")
+    for meaning in ("separate test accounts", "manually assigned roles", "removing an application role", "single sign-on"):
+        if meaning not in assignment.lower():
+            issues.append("assignment: preserve separate application identity/revocation/SSO limits")
+    for meaning in ("existing and ordered hardware", "backup and recovery", "owner approval", "original windows disk", "not assumed delivered, installed or validated"):
+        if meaning not in assignment.lower():
+            issues.append("assignment: preserve concise hardware readiness/data/safety controls")
+    if any(part in assignment for part in ORDERED_HARDWARE):
+        issues.append("assignment: detailed procurement belongs in the guide")
     guide_files = guide.partition("## Five future T7 deliverables")[2].split("\n## ", 1)[0]
     if tuple(re.findall(r"^\|\s*`([^`]+)`\s*\|", guide_files, re.M)) != DELIVERABLE_FILENAMES:
         issues.append("guide must match the five future T7 filenames")
@@ -410,7 +427,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         issues.append("guide historical requirement transition must preserve all R01-R16 IDs")
     if set(re.findall(r"\bT\d{2}\b", transition)) != {f"T{i:02d}" for i in range(21)}:
         issues.append("guide historical test transition must preserve all T00-T20 IDs")
-    for label, content in (("assignment", assignment), ("guide", guide)):
+    for label, content in (("guide", guide),):
         for status in ("Existing", "Ordered", "Delivered", "Installed", "Validated"):
             if not re.search(rf"\b{status}\b", content, re.I):
                 issues.append(f"{label}: missing hardware status {status}")
@@ -481,11 +498,17 @@ def report_issues(texts: dict[str, str], require_finalized: bool = False) -> lis
             continue
         report = REPORT_NAME.fullmatch(name)
         addendum = ADDENDUM_NAME.fullmatch(name)
-        if not report and not addendum:
+        companion = COMPANION_REPORTS.get(name)
+        if not report and not addendum and not companion:
             issues.append(f"{name}: invalid task-report/addendum filename")
             continue
-        number = int((report or addendum)[1])
-        if report:
+        number = companion[1] if companion else int((report or addendum)[1])
+        expected_id = companion[0] if companion else f"T{number}"
+        if companion:
+            parent = texts.get(f"docs/reports/T{number}-Report.md", "")
+            if not re.search(r"^Report state: FINALIZED$", parent, re.M):
+                issues.append(f"{expected_id}: companion requires its finalized parent task report")
+        elif report:
             numbers.append(number)
         else:
             addenda.setdefault(number, []).append(int(addendum[2]))
@@ -494,8 +517,8 @@ def report_issues(texts: dict[str, str], require_finalized: bool = False) -> lis
         required = [heading for heading in headings if heading in REPORT_SECTIONS]
         if required != list(REPORT_SECTIONS):
             issues.append(f"{name}: required report sections A–H must occur once in order")
-        task_id = re.search(r"^\|\s*Task ID\s*\|\s*T([1-9][0-9]*)\b", visible, re.M)
-        if not task_id or int(task_id[1]) != number:
+        task_id = re.search(r"^\|\s*Task ID\s*\|\s*(T[1-9][0-9]*[A-Z]?)(?=\s|/|\|)", visible, re.M)
+        if not task_id or task_id[1] != expected_id:
             issues.append(f"{name}: missing/mismatched Task ID row")
         states = re.findall(r"^Report state: (DRAFT|FINALIZED)$", visible, re.M)
         if len(states) != 1:
@@ -530,7 +553,7 @@ def finalized_history_issues(root: Path, texts: dict[str, str]) -> list[str]:
             name = raw_name.decode("utf-8")
             if name.startswith("reports/"):
                 name = "docs/" + name  # T4 permits relocation, never a renamed basename.
-            if not (REPORT_NAME.fullmatch(name) or ADDENDUM_NAME.fullmatch(name)):
+            if not (REPORT_NAME.fullmatch(name) or ADDENDUM_NAME.fullmatch(name) or name in COMPANION_REPORTS):
                 continue
             if name in seen:
                 return [f"{name}: duplicate report locations in committed history"]

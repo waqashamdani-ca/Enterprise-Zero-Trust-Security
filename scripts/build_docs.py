@@ -32,14 +32,14 @@ from pygments import lex
 from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.token import Comment, Keyword, Name, Number, String
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     BaseDocTemplate, CondPageBreak, Flowable, Frame, LongTable, PageBreak, PageTemplate,
-    Paragraph, Spacer, TableStyle, XPreformatted,
+    Paragraph, Spacer, TableStyle, XPreformatted, KeepTogether,
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 
@@ -296,6 +296,7 @@ class Document(BaseDocTemplate):
                          subject=f"Source: {source}; SHA-256: {source_hash}",
                          invariant=1, pageCompression=1, allowSplitting=1)
         self.document_title, self.source_hash = normalize(title), source_hash
+        self.is_assignment = source == ASSIGNMENT
         self.destinations = {}
         frame = Frame(MARGIN, 51, CONTENT_WIDTH, HEIGHT - 115, id="body", leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)
         self.addPageTemplates(PageTemplate(id="standard", frames=[frame], onPage=self.page_furniture))
@@ -304,11 +305,15 @@ class Document(BaseDocTemplate):
         canvas.saveState()
         canvas.setFont("Vera", 7.8)
         canvas.setFillColor(colors.HexColor("#475c6c"))
-        canvas.drawString(MARGIN, HEIGHT - 29, "HL-CYB-001 | Enterprise Zero Trust Security Architecture")
-        title = self.document_title
-        while pdfmetrics.stringWidth(title, "Vera", 7.8) > CONTENT_WIDTH and len(title) > 5:
-            title = title[:-2]
-        canvas.drawString(MARGIN, HEIGHT - 41, title)
+        if self.is_assignment:
+            canvas.drawString(MARGIN, HEIGHT - 32, "HL-CYB-001 | Practical assignment")
+            canvas.drawRightString(WIDTH - MARGIN, HEIGHT - 32, "Four-week lab")
+        else:
+            canvas.drawString(MARGIN, HEIGHT - 29, "HL-CYB-001 | Enterprise Zero Trust Security Architecture")
+            title = self.document_title
+            while pdfmetrics.stringWidth(title, "Vera", 7.8) > CONTENT_WIDTH and len(title) > 5:
+                title = title[:-2]
+            canvas.drawString(MARGIN, HEIGHT - 41, title)
         canvas.setStrokeColor(colors.HexColor("#d9e0e5"))
         canvas.line(MARGIN, HEIGHT - 48, WIDTH - MARGIN, HEIGHT - 48)
         canvas.drawString(MARGIN, 27, "Source version " + self.source_hash[:12])
@@ -319,6 +324,9 @@ class Document(BaseDocTemplate):
         if hasattr(flowable, "_anchor"):
             self.canv.bookmarkPage(flowable._anchor)
             self.destinations[flowable._anchor] = self.page - 1
+            for alias in getattr(flowable, "_aliases", ()):
+                self.canv.bookmarkPage(alias)
+                self.destinations[alias] = self.page - 1
             self.canv.addOutlineEntry(flowable.getPlainText(), flowable._anchor, flowable._level - 1, closed=flowable._level > 2)
             if flowable._level == 2:
                 self.notify("TOCEntry", (0, flowable.getPlainText(), self.page, flowable._anchor))
@@ -329,14 +337,15 @@ class Builder:
         register_fonts()
         self.source, self.sources = source, sources
         self.anchors: set[str] = set()
+        self.pending_anchors: list[str] = []
         self.counters = [0] * 6
         self.table_count, self.figure_count = 0, 0
         self.section_title = "Document"
         self.style = ParagraphStyle("body", fontName="Vera", fontSize=9.3, leading=13.2, spaceAfter=7)
         self.cell_style = ParagraphStyle("cell", parent=self.style, fontSize=8.25, leading=10.8, spaceAfter=0)
         if source == ASSIGNMENT:
-            self.style = ParagraphStyle("assignment-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=7)
-            self.cell_style = ParagraphStyle("assignment-cell", parent=self.style, fontSize=8.7, leading=11.5, spaceAfter=0)
+            self.style = ParagraphStyle("assignment-body", parent=self.style, fontSize=10, leading=13.4, spaceAfter=6)
+            self.cell_style = ParagraphStyle("assignment-cell", parent=self.style, fontSize=9.0, leading=11.8, spaceAfter=0)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
                                         borderWidth=0.4, borderPadding=6, leftIndent=7, rightIndent=7, spaceAfter=11)
@@ -353,11 +362,15 @@ class Builder:
                 self.counters[index] = 0
             label = ".".join(str(n) for n in self.counters[:level - 1]) + ". " + inline(token["children"], self.source, self.sources)
         sizes = {1: 24 if cover else 18, 2: 13.1, 3: 10.6, 4: 10, 5: 9.5, 6: 9.3}
+        if self.source == ASSIGNMENT:
+            sizes.update({1: 21, 2: 12.8})
         style = ParagraphStyle("heading", parent=self.style, fontName="Vera-Bold", fontSize=sizes[level], leading=sizes[level] * 1.3,
                                textColor=colors.HexColor("#193e58"), spaceBefore=12 if level > 1 else 0,
                                spaceAfter=7, keepWithNext=1)
         paragraph = Paragraph(label, style)
         paragraph._anchor, paragraph._level = anchor, level
+        paragraph._aliases = tuple(self.pending_anchors)
+        self.pending_anchors.clear()
         if level == 2:
             self.section_title = normalize(title)
         return paragraph
@@ -408,10 +421,14 @@ class Builder:
         rows = [head] + [row["children"] for row in token["children"][1]["children"]]
         headers = [plain(cell["children"]) for cell in head]
         count = len(headers)
-        if self.source == ASSIGNMENT and headers == ["ID", "Required outcome and measurement", "Tests"]:
-            widths = [54, 390, 60]
-        elif self.source == ASSIGNMENT and headers[0] == "Deliverable filename":
-            widths = [209, 66, 229]
+        if self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
+            widths = [55, 389, 60]
+        elif self.source == ASSIGNMENT and headers == ["Filename", "What to record"]:
+            widths = [300, 204]
+        elif self.source == ASSIGNMENT and headers == ["Week", "Phase and activities", "Checkpoint"]:
+            widths = [48, 272, 184]
+        elif self.source == ASSIGNMENT and headers[1] == "Points":
+            widths = [194, 52, 258]
         elif count == 2:
             widths = [62, 442] if max(len(plain(row[0]["children"])) for row in rows) < 12 else [133, 371]
         elif count == 3:
@@ -431,8 +448,21 @@ class Builder:
             widths = [CONTENT_WIDTH / count] * count
         cells = []
         for row_number, row in enumerate(rows):
-            cells.append([Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), self.cell_style) for cell in row])
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source == "docs/governance/RISKS.md" else 1, hAlign="LEFT", spaceAfter=12)
+            values = []
+            for column, cell in enumerate(row):
+                if self.source == ASSIGNMENT and headers[0] == "Filename" and row_number and column == 0:
+                    filename = plain(cell["children"])
+                    style = ParagraphStyle("filename", parent=self.cell_style, splitLongWords=False)
+                    if pdfmetrics.stringWidth(filename, style.fontName, style.fontSize) > widths[0] - 10:
+                        raise ValueError("Assignment filename must fit on one line")
+                    values.append(Paragraph(html.escape(filename), style))
+                else:
+                    style = self.cell_style
+                    if self.source == ASSIGNMENT and "Points" in headers and column == 1:
+                        style = ParagraphStyle("points", parent=style, alignment=TA_RIGHT)
+                    values.append(Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), style))
+            cells.append(values)
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in {ASSIGNMENT, "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
@@ -443,12 +473,20 @@ class Builder:
         ]))
         if self.source == ASSIGNMENT:
             table.setStyle(TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef1f4")),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white]),
+
                 ("GRID", (0, 0), (-1, -1), 0, colors.white),
                 ("LINEBELOW", (0, 0), (-1, 0), 0.7, colors.HexColor("#849aa9")),
                 ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#d9e0e5")),
                 ("TOPPADDING", (0, 0), (-1, -1), 5),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
             ]))
+        if self.source == ASSIGNMENT:
+            if "Points" in headers:
+                table.setStyle(TableStyle([("ALIGN", (1, 0), (1, -1), "RIGHT")]))
+            table.wrap(CONTENT_WIDTH, HEIGHT)
+            return [CondPageBreak(min(640, sum(table._rowHeights[:2]) + 12)), table]
         self.table_count += 1
         caption = Paragraph(f"Table {self.table_count}. {html.escape(self.section_title)}", ParagraphStyle("caption", parent=self.style, fontName="Vera-Italic", fontSize=8.3, leading=11, keepWithNext=0, spaceBefore=3, spaceAfter=4))
         # Keep enough room for caption/header/first row without asking a
@@ -464,6 +502,8 @@ class Builder:
             kind = token["type"]
             if kind in {"paragraph", "block_text"}:
                 style = self.style if not depth else ParagraphStyle("indented", parent=self.style, leftIndent=depth * 14)
+                if self.source == ASSIGNMENT and len(token["children"]) == 1 and token["children"][0]["type"] == "strong":
+                    style = ParagraphStyle("assignment-label", parent=style, keepWithNext=1)
                 story.append(Paragraph(inline(token["children"], self.source, self.sources), style))
             elif kind == "heading":
                 title = plain(token["children"])
@@ -480,6 +520,9 @@ class Builder:
                     if first["type"] not in {"paragraph", "block_text"}:
                         raise ValueError("Unsupported list structure")
                     style = ParagraphStyle("list", parent=self.style, leftIndent=12 + 14 * depth, firstLineIndent=-10)
+                    if self.source == ASSIGNMENT:
+                        style.spaceAfter = 4
+                        style.keepWithNext = index < len(token["children"]) - 1
                     story.append(Paragraph(prefix + inline(first["children"], self.source, self.sources), style))
                     story.extend(self.blocks(children, depth + 1))
             elif kind == "table":
@@ -503,6 +546,9 @@ class Builder:
                 story.extend(self.blocks(token["children"], depth + 1))
             elif kind in {"blank_line", "thematic_break"}:
                 continue
+            elif kind == "block_html" and self.source == ASSIGNMENT and re.fullmatch(
+                    r'(?:<a id="[a-z][a-z0-9-]*"></a>\s*)+', token.get("raw", "").strip()):
+                self.pending_anchors.extend(re.findall(r'<a id="([a-z][a-z0-9-]*)"></a>', token["raw"]))
             elif kind == "block_html" and token.get("raw", "").lstrip().startswith("<!--"):
                 continue
             else:
@@ -527,6 +573,14 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     if source.lower().startswith(REPORT_PREFIXES):
         raise ValueError("Task reports are Markdown only; docs/reports/ is excluded from PDF generation")
     tokens = MARKDOWN(content.decode("utf-8"))
+    if source == ASSIGNMENT:
+        for token in tokens:
+            if token["type"] == "paragraph":
+                raw = "".join("\n" if c["type"] == "softbreak" else c.get("raw", "")
+                              for c in token.get("children", []))
+                if re.fullmatch(r'(?:<a id="[a-z][a-z0-9-]*"></a>\s*)+', raw.strip()):
+                    token.clear()
+                    token.update(type="block_html", raw=raw)
     if not tokens or tokens[0]["type"] != "heading":
         raise ValueError(f"Document must start with a title: {source}")
     title = plain(tokens[0]["children"])
@@ -534,14 +588,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
     if source == ASSIGNMENT:
-        first_section = next(i for i, token in enumerate(tokens) if token["type"] == "heading" and token["attrs"]["level"] == 2)
-        story.extend([Spacer(1, 8), Paragraph("CYBERSECURITY ENGINEERING", ParagraphStyle("assignment-label", parent=builder.style, fontSize=9, textColor=colors.HexColor("#475c6c"), spaceAfter=8)), builder.heading(tokens[0], cover=True), Spacer(1, 10)])
-        story.extend(builder.blocks(tokens[1:first_section]))
-        story.extend([Spacer(1, 10), Paragraph("Assignment contents", ParagraphStyle("assignment-contents", parent=builder.style, fontName="Vera-Bold", fontSize=11, spaceAfter=8))])
-        contents = TableOfContents()
-        contents.levelStyles = [ParagraphStyle("assignment-toc", fontName="Vera", fontSize=9.3, leading=13, spaceBefore=3)]
-        story.extend([contents, Spacer(1, 10)])
-        tokens = [tokens[0], *tokens[first_section:]]
+        story.append(builder.heading(tokens[0]))
     elif formal:
         cover_status = ""
         if source.startswith(("docs/lab-guides/", "docs/architecture/", "docs/security/")):
@@ -559,7 +606,24 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
         story.extend([contents, PageBreak()])
-    story.extend(builder.blocks(tokens[1:]))
+    if source == ASSIGNMENT:
+        # Keep short assignment sections intact; never split their tables across pages.
+        groups, current = [], []
+        for token in tokens[1:]:
+            if token["type"] == "heading" and token["attrs"]["level"] == 2 and current:
+                groups.append(current)
+                current = []
+            current.append(token)
+        if current:
+            groups.append(current)
+        compact_sections = {"Project Requirements", "Required Deliverables",
+                            "Four-Week Implementation Plan", "Evaluation Criteria"}
+        for group in groups:
+            section = next((plain(t["children"]) for t in group if t["type"] == "heading"), "")
+            blocks = builder.blocks(group)
+            story.extend([KeepTogether(blocks)] if section in compact_sections else blocks)
+    else:
+        story.extend(builder.blocks(tokens[1:]))
     output = io.BytesIO()
     document = Document(output, title, source, digest(content))
     document.multiBuild(story)

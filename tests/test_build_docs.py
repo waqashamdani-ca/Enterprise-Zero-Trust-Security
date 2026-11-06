@@ -219,28 +219,51 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertEqual((ROOT / "docs/docs" / record["moved_to"]).resolve(), ROOT / docs.MANIFEST)
         self.assertEqual(record["url"], docs.REPOSITORY + "/blob/main/" + docs.MANIFEST)
 
-    def test_assignment_is_four_pages_with_focused_scope_and_approved_rubric(self):
+    def test_assignment_is_concise_and_keeps_filenames_whole(self):
         content = (ROOT / docs.ASSIGNMENT).read_bytes()
         sources = set(docs.discover_sources(ROOT))
         data = docs.render_pdf(docs.ASSIGNMENT, content, sources)
         reader = docs.PdfReader(io.BytesIO(data))
         self.assertGreaterEqual(len(reader.pages), 3)
         self.assertLessEqual(len(reader.pages), 4)
-        cover = reader.pages[0].extract_text()
-        self.assertIn("Assignment contents", cover)
-        self.assertIn("PLANNED", cover)
-        self.assertIn("NOT TESTED", cover)
-        compact = "".join("".join(page.extract_text().split()) for page in reader.pages)
+        text = "\n".join(page.extract_text() for page in reader.pages)
+        self.assertNotIn("Assignment contents", text)
+        self.assertNotRegex(text, r"\b(?:T6A?|T7|A-L)\b")
+        self.assertIn("PLANNED", text)
+        self.assertIn("NOT TESTED", text)
         for name in validator.DELIVERABLE_FILENAMES:
-            self.assertIn(name, compact)
-        for number in range(1, 11):
-            self.assertIn(f"FWR-{number:02d}", compact)
-        self.assertIn("100points", compact)
+            self.assertTrue(any(name in line for line in text.splitlines()), name)
+        self.assertTrue(any(all(name in p.extract_text() for name in validator.DELIVERABLE_FILENAMES)
+                            for p in reader.pages))
+        self.assertTrue(any(all(f"FWT-{n:02d}" in p.extract_text() for n in range(1, 11))
+                            for p in reader.pages))
+        for title in validator.ASSIGNMENT_HEADINGS:
+            self.assertIn(docs.anchor_for(title, set()), reader.named_destinations)
+        for alias in validator.ASSIGNMENT_COMPATIBILITY_ANCHORS:
+            self.assertIn(alias, reader.named_destinations)
+        self.assertIn("100 points", text)
         self.assertEqual(docs.inspect_pdf(data, docs.ASSIGNMENT, content, sources)["text_token_coverage"], 1.0)
-        rubric = content.decode().partition("## Success Criteria")[2].split("\n## ", 1)[0]
+        rubric = content.decode().partition("## Evaluation Criteria")[2].split("\n## ", 1)[0]
         weights = [(name.strip(), int(points)) for name, points in
                    re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
         self.assertEqual(weights, list(validator.RUBRIC_WEIGHTS))
+
+    def test_assignment_aliases_do_not_allow_active_html(self):
+        content = b'# Assignment\n\n<a id="legacy" onclick="unsafe()"></a>\n\n## Section\n'
+        with self.assertRaisesRegex(ValueError, "Unreviewed inline HTML"):
+            docs.render_pdf(docs.ASSIGNMENT, content, {docs.ASSIGNMENT})
+
+    def test_assignment_edit_does_not_change_other_sources_or_pdfs(self):
+        base = "36a2eb0a5e65dd344b165dda158d75b129f5585b"
+        allowed = {docs.ASSIGNMENT, docs.ASSIGNMENT[:-3] + ".pdf",
+                   "docs/governance/DOCUMENTATION-BUILD.md", "docs/governance/DOCUMENTATION-BUILD.pdf",
+                   "docs/reports/INDEX.md", docs.MANIFEST}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        for name in files:
+            if name in allowed or not name.endswith((".md", ".pdf", ".docx", ".xlsx")):
+                continue
+            old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+            self.assertEqual((ROOT / name).read_bytes(), old, name)
 
     def test_all_eight_office_files_remain_byte_identical_to_t5(self):
         baseline = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
