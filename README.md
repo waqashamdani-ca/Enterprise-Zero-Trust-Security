@@ -22,9 +22,9 @@ Start offline. No protected home/production trust, identities, credentials, rout
 
 ## Editable Lab Deliverable Templates
 
-The [five planned submission filenames](docs/assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) are the approved **T7 target, not yet created**. T7 requires separate approval.
+[Five editable Word and Excel templates](docs/README.md#editable-lab-deliverable-templates) are available for the approved four-week lab: environment/architecture, identity/access implementation, monitoring/testing, troubleshooting and final submission. They contain planned prompts and empty answer areas, with all ten requirements and tests, mandatory subchecks and the approved 100-point rubric.
 
-The [eight existing T5 Word/Excel shells](docs/README.md#editable-lab-deliverable-templates) remain unchanged as legacy artifacts of the earlier baseline. Their old counts, IDs and rubric are historical and must not drive current implementation. Keep working records private; publish only reviewed sanitized summaries.
+Keep working copies and raw evidence private. Fill them during separately approved lab stages and publish only reviewed summaries. The eight retired T5 shells remain in Git history; no historical result transfers to these templates.
 
 ## Testing and evidence
 
@@ -47,10 +47,10 @@ These checks validate documentation, preservation and bounded publication risks;
 The [documentation library](docs/README.md) links Markdown sources and generated PDFs. Markdown is authoritative; task reports/addenda are Markdown only and frozen when finalized. Existing report PDFs remain byte-frozen archives.
 
 - [Security controls](docs/security/SECURITY-REQUIREMENTS.md), [decisions](docs/governance/DECISIONS.md) and [risks](docs/governance/RISKS.md) explain safeguards and unresolved gates.
-- [T6 report](docs/reports/T6-Report.md) records specification alignment; [T5](docs/reports/T5-Report.md) preserves original template validation.
+- [T7 report](docs/reports/T7-Report.md) records the five-file consolidation; [T6](docs/reports/T6-Report.md) records specification alignment and [T5](docs/reports/T5-Report.md) preserves original template validation.
 - [All task reports](docs/reports/INDEX.md) preserve engineering history; [project final report](docs/final-report/FINAL-REPORT.md) remains a template.
 - [Glossary](docs/guides/GLOSSARY.md) and [official references](docs/governance/REFERENCES.md) explain terms and proposed commands.
 
 Use focused task branches, reviewed public-safe commits/PRs, exact-head CI and intentional main synchronization under [AGENTS.md](AGENTS.md). No background upload. Licensing and repository-protection settings remain owner decisions.
 
-**Next task:** T7 Office-template migration only, after explicit scope/preservation/validation approval. T6 authorizes no installation, VM/network/directory change, remote enrollment or security-test execution.
+**Next recommended task:** T8, a read-only Stage A hardware and isolation readiness assessment, after explicit owner approval of assets, scope, existing tools, validation, private evidence and recovery/stop conditions. No installation or later stage is included.

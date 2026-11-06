@@ -198,6 +198,34 @@ def heading_anchors(content: str) -> set[str]:
     return used
 
 
+def retired_t5_link(root: Path, relative: str, content: str, destination: Path) -> bool:
+    """Verify retired targets only for the byte-frozen T5 report snapshot.
+
+    Open that report at this revision for working GitHub relative navigation.
+    Current source links must resolve normally; this is not a missing-link waiver.
+    """
+    if relative != "docs/reports/T5-Report.md" or hashlib.sha256(content.encode("utf-8")).hexdigest() != "3c686c0c308e42eea3524a1077d389925cf18439a5a742e578f0c50b8aceb78d":
+        return False
+    old_names = {
+        "01-Lab-Environment.xlsx", "02-Architecture-and-Network-Design.docx",
+        "03-Identity-and-Access-Management.xlsx", "04-Zero-Trust-Implementation.docx",
+        "05-Security-Monitoring.xlsx", "06-Testing-and-Validation.xlsx",
+        "07-Troubleshooting-and-Lessons.xlsx", "08-Final-Lab-Submission.docx",
+    }
+    name = destination.relative_to(root.resolve()).as_posix()
+    if name not in {"docs/deliverables/" + n for n in old_names}:
+        return False
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "cat-file", "-e",
+             "6f5352bb6d5e2eca37ac2384703367543530b952:" + name],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+        )
+        return result.returncode == 0
+    except OSError:
+        return False
+
+
 def link_issues(root: Path, relative: str, content: str) -> list[str]:
     visible, balanced = strip_fences(content)
     issues = [] if balanced else [f"{relative}: unclosed Markdown code fence"]
@@ -221,6 +249,8 @@ def link_issues(root: Path, relative: str, content: str) -> list[str]:
             issues.append(f"{relative}: local link escapes repository")
             continue
         if not path.is_file():
+            if not parsed.fragment and retired_t5_link(root, relative, content, path):
+                continue
             issues.append(f"{relative}: missing local link destination: {target}")
             continue
         if parsed.fragment and path.suffix.lower() == ".md":
@@ -395,9 +425,9 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         issues.append("assignment deliverables must cover all FWR-01 through FWR-10 requirements")
     if "`docs/deliverables/`" not in deliverables:
         issues.append("assignment must state the docs/deliverables/ submission location")
-    if "planned and not yet available" not in deliverables:
+    if "available as blank templates" not in deliverables:
         issues.append("assignment: template availability must remain explicit")
-    if "planned and not yet available" not in guide:
+    if "available as blank templates" not in guide:
         issues.append("guide: template availability must remain explicit")
     if re.search(r"\b(?:T6[AB]?|T7|Codex)\b", guide):
         issues.append("guide: internal task jargon belongs in reports")
@@ -641,7 +671,7 @@ def main() -> int:
         return 1
     markdown_count = sum(path.endswith(".md") for path in paths)
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
-    print("PASS: structure, local links/anchors, five phase fields, FWR/FWT/FSC/FAC coverage, rubric, workflow, focused publication scan.")
+    print("PASS: structure, local links/anchors and verified frozen T5 snapshot targets, five phase fields, FWR/FWT/FSC/FAC coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
     print("PASS: docs/reports/ migration, eleven historical file hashes, Markdown-only reporting, and source/hash-matched document PDFs.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")

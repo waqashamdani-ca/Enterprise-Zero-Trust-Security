@@ -16,6 +16,7 @@ Use this index for the current location and reporting rules. Every task in HL-CY
 | T6 | [T6 report](T6-Report.md) | Four-week project specification/PDF alignment and ordered-hardware status; Office files unchanged |
 | T6A | [T6A report](T6A-Report.md) | Owner-authorized assignment language/design/layout follow-up; T6 scope preserved |
 | T6B | [T6B report](T6B-Report.md) | Owner-authorized Lab Guide usability/language/layout follow-up; T6 scope preserved |
+| T7 | [T7 report](T7-Report.md) | Five four-week Office deliverables, legacy retirement, native/visual validation and publication |
 
 ## Numbering and required content
 
@@ -45,5 +46,7 @@ Owner UAT remains PENDING without an explicit confirmation reference. A second o
 T4 moved all eleven existing files from the root report folder without changing their bytes, including the [original index](README.md). That index's paths and instructions describe the earlier location; this index and [AGENTS.md](../../AGENTS.md) define the current convention. The five historical PDFs remain frozen archives, excluded from builds and the generated manifest. No new task report, addendum or index receives a PDF.
 
 Relative links inside immutable files are preserved through small navigation aliases under `docs/docs/` and `docs/evidence/`. They point to maintained documents or unchanged evidence; they are not duplicate report/source editions and receive no PDFs. The manifest alias is a JSON navigation record with a current target URL. Commit-specific GitHub links still describe their original evidence snapshots. The validator checks both historical report paths, exact file hashes and current links, and rejects duplicate report locations.
+
+T5 Office links refer to files retired by T7. Open the [original T5 report snapshot](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/blob/6f5352bb6d5e2eca37ac2384703367543530b952/docs/reports/T5-Report.md) for its working historical relative links. The validator resolves only that immutable report's eight retired targets against the verified published snapshot; it does not permit missing active-template links.
 
 The original bootstrap report source remains preserved in T1's source appendix and its immutable GitHub reference. No historical evidence or Git history was rewritten.

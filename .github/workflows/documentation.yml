@@ -20,6 +20,8 @@ jobs:
           persist-credentials: false
       - name: Validate reports, blank Office templates and publication hygiene
         run: python3 scripts/validate_docs.py
+      - name: Validate five blank Office deliverables and approved FWR/FWT subchecks
+        run: python3 scripts/validate_office_templates.py
       - name: Install pinned documentation-only libraries
         run: python3 -m pip install -r requirements-docs.txt
       - name: Check document PDFs and deterministic regeneration (docs/reports excluded)

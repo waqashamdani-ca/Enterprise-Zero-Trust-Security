@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Offline checks for the eight approved blank T5 Office packages.
+"""Offline checks for the five approved blank four-week Office packages.
 
 This is a bounded package/content check, not a native Office renderer or a
 complete secret detector. It never opens external links or executes formulas.
 """
 from __future__ import annotations
 
-import hashlib
-import subprocess
+import io
 import posixpath
 import re
 import sys
@@ -17,33 +16,33 @@ from xml.etree import ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
-# T6 preserves legacy shells; T7 alone may migrate their historical contract.
-LEGACY_TEST_PLAN_REF = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
-LEGACY_TEST_PLAN_SHA256 = "c01a987e29cfcfe637d5f25bbdbd8fecef526ae8175c0a6f9f3b604063e27811"
-FILES = (
-    "01-Lab-Environment.xlsx", "02-Architecture-and-Network-Design.docx",
-    "03-Identity-and-Access-Management.xlsx", "04-Zero-Trust-Implementation.docx",
-    "05-Security-Monitoring.xlsx", "06-Testing-and-Validation.xlsx",
-    "07-Troubleshooting-and-Lessons.xlsx", "08-Final-Lab-Submission.docx",
-)
-SHEETS = {
-    FILES[0]: ("Hardware Inventory", "Virtual Machines", "Software and Versions", "Setup Checklist", "Resource Allocation"),
-    FILES[2]: ("Test Identities", "Groups and Roles", "Access Matrix", "Authentication Policies", "Privileged Access", "Endpoint Baselines", "Revocation Timing", "Access Verification"),
-    FILES[4]: ("Log Sources", "Security Events", "Detection Rules", "Alerts and Investigations", "Monitoring Coverage", "Clock Checks", "Retention Sizing", "Observed Results"),
-    FILES[5]: ("Test Catalog", "Case Register", "Requirement Coverage", "Recovery Measurements", "Evidence Index", "Engineering Review", "Owner UAT", "Scope Exceptions"),
-    FILES[6]: ("Issue Log",),
-}
+try:
+    from office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, SUBCHECKS, RUBRIC, approved_tests
+except ModuleNotFoundError:
+    from scripts.office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, SUBCHECKS, RUBRIC, approved_tests
 NS = {
     "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
 }
-STATUSES = "Not Started,In Progress,Pass,Fail,Blocked,Not Applicable"
-FORMULAS = {"IF", "COUNT", "SUM", "ISNUMBER", "ABS", "ROUND"}
-WORD_SECTIONS = {
-    FILES[1]: ("Architecture overview", "Business and security objectives", "Logical architecture diagram", "Network zones", "Physical topology diagram", "Access and segmentation", "Network design decisions", "Design verification", "Limitations and conclusions"),
-    FILES[3]: ("Implementation overview", "Observed results limitations and conclusions"),
-    FILES[7]: ("Executive summary", "Project objectives", "Architecture summary", "Implementation summary", "Requirements coverage", "Testing results", "Security findings", "Limitations", "Lessons learned", "Final conclusions", "Supporting deliverables", "Publication and repository record", "Rubric assessment"),
+FORMULAS = {"IF", "COUNT", "SUM"}
+
+BLANK_COLUMNS = {
+    "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
+    "Network Zones": "EFHI", "Allowed Network Flows": "DEGH",
+    "Resource Allocation": "DGH", "Security Events": "DEFGHIK",
+    "Denied Access Investigation": "CDFG", "Test Cases": "HIJKL",
+    "Requirements Coverage": "HI", "Automation Verification": "CDFG",
+    "Backup & Restore": "CDFG", "Evidence Index": "ABCDEFG",
+    "Owner Acceptance": "DEFG", "Issue Log": "ABCDEFGHIJK",
+}
+RESOURCE_FORMULAS = {
+    "C8": "SUM('Virtual Machines'!D8:D11)", "C9": "SUM('Virtual Machines'!E8:E11)",
+    "C10": "SUM('Virtual Machines'!F8:F11)",
+    "D8": "IF(COUNT('Virtual Machines'!G8:G11)<4,\"\",SUM('Virtual Machines'!G8:G11))",
+    "D9": "IF(COUNT('Virtual Machines'!H8:H11)<4,\"\",SUM('Virtual Machines'!H8:H11))",
+    "D10": "IF(COUNT('Virtual Machines'!I8:I11)<4,\"\",SUM('Virtual Machines'!I8:I11))",
+    "C16": "SUM(C10,C12:C15)", "D16": 'IF(COUNT(D10,D12:D15)<5,"",SUM(D10,D12:D15))',
 }
 
 
@@ -87,6 +86,11 @@ def package_issues(root: Path, relative: str, scan_text=None) -> list[str]:
         sheet_names = set(workbook_data(parts)) if relative.endswith(".xlsx") else set()
         for name, raw in parts.items():
             tree = ET.fromstring(raw)
+            declared = {prefix for _, (prefix, _) in ET.iterparse(io.BytesIO(raw), events=("start-ns",))}
+            for node in tree.iter():
+                ignored = node.get("{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable", "").split()
+                if set(ignored) - declared:
+                    issues.append(f"{relative}: undeclared Office compatibility prefix")
             if scan_text:
                 # Inspect text and attributes, including metadata and relationships.
                 # Join runs within a paragraph/cell, retaining record boundaries
@@ -162,20 +166,26 @@ def plain_word(parts: dict[str, bytes]) -> str:
 
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
-    if not directory.exists():
-        return ["T5 requires all eight approved Office templates"]
+    if not directory.is_dir():
+        return ["T7 requires all five approved Office templates"]
     issues = []
     if {p.name for p in directory.iterdir()} != set(FILES):
-        issues.append("docs/deliverables/ must contain exactly the eight approved Office templates")
+        issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
+        definitions = approved_tests(root)
+        all_workbooks = {}
         for filename, expected in SHEETS.items():
             parts = package_parts(directory / filename)
             data = workbook_data(parts)
+            all_workbooks[filename] = data
             if tuple(data) != expected:
                 issues.append(f"{filename}: incorrect worksheet inventory/order")
             styles = ET.fromstring(parts["xl/styles.xml"])
             if any(n.get("val") != "Segoe UI" for n in styles.findall("s:fonts/s:font/s:name", NS)):
                 issues.append(f"{filename}: spreadsheet fonts must use Segoe UI")
+            theme = ET.fromstring(parts["xl/theme/theme1.xml"])
+            if any(n.get("typeface") != "Segoe UI" for n in theme.iter() if "typeface" in n.attrib):
+                issues.append(f"{filename}: theme fonts must use Segoe UI")
             tables = [ET.fromstring(v) for k, v in parts.items() if k.startswith("xl/tables/") and k.endswith(".xml")]
             if len(tables) != len(expected) or len({t.get("name") for t in tables}) != len(tables):
                 issues.append(f"{filename}: missing or duplicate named tables")
@@ -183,75 +193,121 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: table filters are missing")
             for sheet_name, sheet in data.items():
                 tree, cells = sheet["tree"], sheet["cells"]
-                if tree.find("s:sheetViews/s:sheetView/s:pane", NS) is None:
-                    issues.append(f"{filename}:{sheet_name}: frozen headers missing")
-                headers = {a: c["value"] for a, c in cells.items() if re.fullmatch(r"[A-Z]+7", a)}
-                for address, label in headers.items():
-                    col = address[:-1]
-                    column = [c for a, c in cells.items() if re.fullmatch(col + r"(?:[89]|[1-9][0-9]+)", a)]
-                    if label == "Status" and any(c["value"] != "Not Started" for c in column):
+                pane = tree.find("s:sheetViews/s:sheetView/s:pane", NS)
+                if pane is None or pane.get("state") != "frozen" or pane.get("ySplit") != "7" or pane.get("xSplit") != "2":
+                    issues.append(f"{filename}:{sheet_name}: frozen headers/identifiers missing")
+                headers = {a[:-1]: c["value"] for a, c in cells.items() if re.fullmatch(r"[A-Z]+7", a)}
+                for address, c in cells.items():
+                    match = re.fullmatch(r"([A-Z]+)([0-9]+)", address)
+                    if not match or int(match[2]) < 8:
+                        continue
+                    col = match[1]
+                    if col in BLANK_COLUMNS[sheet_name] and c["value"] and not c["formula"]:
+                        issues.append(f"{filename}:{sheet_name}: actual/evidence/date fields must be blank")
+                    if c["formula"] and sheet_name != "Resource Allocation":
+                        issues.append(f"{filename}:{sheet_name}: unexpected calculation")
+                    label = headers.get(col)
+                    if label in {"Status", "Engineering status"} and sheet_name != "Issue Log" and c["value"] != "NOT TESTED":
                         issues.append(f"{filename}:{sheet_name}: shell status records an outcome")
-                    if re.search(r"actual|observed|evidence reference|issue reference|executed UTC|ret(e|est)|review date|decision date|explicit confirmation", label, re.I):
-                        if any(c["value"] and not c["formula"] for c in column):
-                            issues.append(f"{filename}:{sheet_name}: actual/evidence fields must be blank")
-                if sheet_name == "Owner UAT" and any(c["value"] != "Pending" for a, c in cells.items() if re.fullmatch(r"D(?:[89]|[1-9][0-9]+)", a)):
-                    issues.append(f"{filename}: owner UAT must remain Pending")
-                if any(c["value"].startswith(("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#NUM!")) for c in cells.values()):
-                    issues.append(f"{filename}:{sheet_name}: cached formula error")
-                if any(label == "Status" for label in headers.values()):
-                    lists = [n.findtext("s:formula1", default="", namespaces=NS).strip('"') for n in tree.findall("s:dataValidations/s:dataValidation", NS)]
-                    if STATUSES not in lists or tree.find("s:conditionalFormatting", NS) is None:
+                    if label == "Owner decision" and c["value"] != "PENDING":
+                        issues.append(f"{filename}: owner UAT must remain PENDING")
+                    if c["value"].startswith(("#REF!", "#DIV/0!", "#VALUE!", "#NAME?", "#NUM!")):
+                        issues.append(f"{filename}:{sheet_name}: cached formula error")
+                for col, label in headers.items():
+                    if label not in {"Status", "Engineering status", "Owner decision"}:
+                        continue
+                    approved = OWNER_DECISIONS if label == "Owner decision" else ISSUE_STATUSES if sheet_name == "Issue Log" else STATUSES
+                    validations = tree.findall("s:dataValidations/s:dataValidation", NS)
+                    matching = [n for n in validations if n.get("sqref", "").startswith(col + "8:") and n.findtext("s:formula1", default="", namespaces=NS).strip('"') == approved]
+                    if not matching or any(n.get("showErrorMessage") != "1" for n in matching) or tree.find("s:conditionalFormatting", NS) is None:
                         issues.append(f"{filename}:{sheet_name}: status dropdown/conditional formatting missing")
-            if filename == FILES[5]:
-                catalog = data["Test Catalog"]["cells"]
-                raw_plan = subprocess.check_output(
-                    ["git", "-C", str(ROOT), "show",
-                     LEGACY_TEST_PLAN_REF + ":docs/testing/TEST-PLAN.md"],
-                    stderr=subprocess.PIPE,
-                )
-                if hashlib.sha256(raw_plan).hexdigest() != LEGACY_TEST_PLAN_SHA256:
-                    raise ValueError("Legacy test-plan integrity mismatch")
-                plan = raw_plan.decode("utf-8")
-                definitions = re.findall(r"### (T\d{2}) — (.*?)\n(.*?)(?=\n### |\n## Coverage index)", plan, re.S)
-                if [tid for tid, _, _ in definitions] != [f"T{i:02}" for i in range(21)]:
-                    raise ValueError("Legacy test-plan definitions unavailable")
-                ids = [catalog.get(f"A{r}", {}).get("value") for r in range(8, 29)]
-                if ids != [f"T{i:02}" for i in range(21)]:
-                    issues.append(f"{filename}: T00-T20 definitions missing or reordered")
-                for row, (tid, title, body) in enumerate(definitions, 8):
-                    expected_result = re.search(r"- Expected: (.*?)\n", body)[1].replace("**", "")
-                    second = re.search(r"- Independent observation: (.*?)(?:\n|$)", body)[1].replace("**", "")
-                    scope = re.search(r"- (?:Future scope|Scope): (.*?)\n", body)[1]
-                    if [catalog.get(f"{c}{row}", {}).get("value") for c in "DEFG"] != [title, scope, expected_result, second]:
-                        issues.append(f"{filename}: {tid} differs from the approved test plan")
-                coverage = data["Requirement Coverage"]["cells"]
-                if [coverage.get(f"A{r}", {}).get("value") for r in range(8, 24)] != [f"R{i:02}" for i in range(1, 17)]:
-                    issues.append(f"{filename}: R01-R16 coverage is incomplete")
-            if filename == FILES[2]:
-                matrix = data["Access Matrix"]["cells"]
-                if [matrix.get(f"A{r}", {}).get("value") for r in range(8, 20)] != [f"C{i:02}" for i in range(1, 13)]:
-                    issues.append(f"{filename}: twelve T12 cases missing")
-            if filename == FILES[4]:
-                events = data["Security Events"]["cells"]
-                if [events.get(f"A{r}", {}).get("value") for r in range(8, 28)] != [f"E{i:02}" for i in range(1, 21)]:
-                    issues.append(f"{filename}: twenty event recording fields missing")
-        for filename in (FILES[1], FILES[3], FILES[7]):
+                visible = "\n".join(c["value"] for c in cells.values())
+                if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|six standard users|two-tier|twenty.event|twelve application|two automation", visible, re.I):
+                    issues.append(f"{filename}:{sheet_name}: obsolete enterprise target or ID")
+        cases = all_workbooks[FILES[2]]["Test Cases"]["cells"]
+        expected_rows = []
+        for t in definitions:
+            expected_rows.append([t["id"], t["requirement"], "OVERALL", t["title"] + "\n" + t["scope"] + "\n" + t["method"], t["expected"], t["second"]])
+            expected_rows.extend([[t["id"], t["requirement"], f'{t["id"]}.{i:02}', action, expectation, detail] for i, (action, expectation, detail) in enumerate(SUBCHECKS[t["id"]], 1)])
+        actual_ids = [c["value"] for a, c in cases.items() if re.fullmatch(r"C(?:[89]|[1-9][0-9]+)", a)]
+        if actual_ids != [r[2] for r in expected_rows]:
+            issues.append("Test Cases: ten tests and all mandatory subchecks must occur once in approved order")
+        for rn, expected in enumerate(expected_rows, 8):
+            if [cases.get(f"{col}{rn}", {}).get("value", "") for col in "ABCDEF"] != expected:
+                issues.append(f"Test Cases: {expected[0]}/{expected[2]} differs from approved test plan/subchecks")
+        coverage = all_workbooks[FILES[2]]["Requirements Coverage"]["cells"]
+        assignment = (root / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8")
+        required = re.findall(r"^\| (FWR-\d{2}) \| ([^|]+) \| FWT-\d{2} \|$", assignment, re.M)
+        if len(required) != 10:
+            raise ValueError("Missing approved requirements")
+        owners = ["01", "01", "02", "02", "02", "02", "03", "03", "03", "03, 04, 05"]
+        for rn, ((rid, required_result), owner) in enumerate(zip(required, owners), 8):
+            expected = [rid, required_result.strip(), rid.replace("FWR", "FSC"), rid.replace("FWR", "FWT"), rid.replace("FWR", "FAC"), owner]
+            if [coverage.get(f"{col}{rn}", {}).get("value") for col in "ABCDEF"] != expected:
+                issues.append(f"Requirements Coverage: {rid} traceability differs from approved assignment")
+        resource = all_workbooks[FILES[0]]["Resource Allocation"]["cells"]
+        if {a: c["formula"] for a, c in resource.items() if c["formula"]} != RESOURCE_FORMULAS:
+            issues.append("Resource Allocation: approved simple totals/input guards changed")
+        for name, expected in (("Virtual Machines", ["OPNsense", "DC1", "WIN1", "APP1"]), ("Network Zones", ["Management", "Corporate", "Restricted"])):
+            cells = all_workbooks[FILES[0]][name]["cells"]
+            values = [c["value"] for a, c in cells.items() if re.fullmatch(r"A(?:[89]|[1-9][0-9]+)", a)]
+            if values != expected:
+                issues.append(f"{name}: approved four-VM/three-zone baseline changed")
+        flows = all_workbooks[FILES[0]]["Allowed Network Flows"]["cells"]
+        architecture = (root / "docs/architecture/ARCHITECTURE.md").read_text(encoding="utf-8")
+        approved_flows = re.findall(r"^\| (FF-\d{2}) \| ([^|]+) \| ([^|]+) \|$", architecture, re.M)
+        if len(approved_flows) != 8:
+            raise ValueError("Missing approved flows")
+        for rn, expected in enumerate(approved_flows, 8):
+            if [flows.get(f"{c}{rn}", {}).get("value") for c in "ABC"] != [v.strip() for v in expected]:
+                issues.append("Allowed Network Flows: approved permission/enforcement changed")
+        events = all_workbooks[FILES[2]]["Security Events"]["cells"]
+        categories = ["Directory logon success", "One directory logon failure", "Application allow", "Authenticated application denial", "Firewall denial"]
+        if [events.get(f"B{r}", {}).get("value") for r in range(8, 13)] != categories:
+            issues.append("Security Events: five approved event categories missing")
+        for filename, prefix, count in ((FILES[2], "A", 7), (FILES[2], "B", 10)):
+            name = "Automation Verification" if prefix == "A" else "Backup & Restore"
+            cells = all_workbooks[filename][name]["cells"]
+            if [cells.get(f"A{r}", {}).get("value") for r in range(8, 8 + count)] != [f"{prefix}{i:02}" for i in range(1, count + 1)]:
+                issues.append(f"{name}: approved exercise check fields missing")
+        for filename in (FILES[1], FILES[4]):
             parts = package_parts(directory / filename)
-            text = plain_word(parts)
+            word_text = plain_word(parts)
             document = ET.fromstring(parts["word/document.xml"])
-            if "Blank template" not in text or "[Enter" not in text or document.find(".//w:pStyle[@w:val='Title']", NS) is None:
+            if "Blank template" not in word_text or "[Enter" not in word_text or document.find(".//w:pStyle[@w:val='Title']", NS) is None:
                 issues.append(f"{filename}: editable template title/answer areas missing")
+            headings = ["".join(p.itertext()) for p in document.findall(".//w:body/w:p", NS) if p.find("w:pPr/w:pStyle[@w:val='Heading1']", NS) is not None]
+            if headings != [f"{i} {s}" for i, s in enumerate(WORD_SECTIONS[filename], 1)]:
+                issues.append(f"{filename}: required Word heading styles/sections missing")
             if document.find(".//w:headerReference", NS) is None or document.find(".//w:footerReference", NS) is None:
                 issues.append(f"{filename}: header/footer missing")
             footer = b"".join(v for k, v in parts.items() if re.fullmatch(r"word/footer\d+\.xml", k))
             if b"PAGE" not in footer or b"NUMPAGES" not in footer:
                 issues.append(f"{filename}: page numbering missing")
-            if filename == FILES[3] and any(f"Stage {s} " not in text for s in "ABCDEFGHIJKL"):
-                issues.append(f"{filename}: stages A-L incomplete")
-            if any(section not in text for section in WORD_SECTIONS[filename]):
-                issues.append(f"{filename}: required submission sections missing")
-    except (OSError, subprocess.CalledProcessError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
-        issues.append("Office template structure/traceability could not be verified")
+            for name, raw in parts.items():
+                if not name.startswith("word/"):
+                    continue
+                tree = ET.fromstring(raw)
+                for node in tree.findall(".//w:rFonts", NS):
+                    if any(value != "Segoe UI" for key, value in node.attrib.items() if key.rsplit("}", 1)[-1] in {"ascii", "hAnsi", "eastAsia", "cs"}):
+                        issues.append(f"{filename}: Word fonts must use Segoe UI")
+            tables = [[["".join(c.itertext()) for c in tr.findall("w:tc", NS)] for tr in t.findall("w:tr", NS)] for t in document.findall(".//w:body/w:tbl", NS)]
+            blank_columns = {0: (2,), 1: (1, 2), 2: (2,), 3: (1,)} if filename == FILES[1] else {0: (1,), 1: (1,), 2: (1,), 3: (2, 3)}
+            for index, columns in blank_columns.items():
+                if any(record[c] for record in tables[index][1:] for c in columns):
+                    issues.append(f"{filename}: actual/score/evidence answer cells must be blank")
+            if filename == FILES[1]:
+                contexts = ["ava /reports/", "ava /maintenance/", "eli /reports/", "eli /maintenance/", "uma /reports/", "uma /maintenance/"]
+                outcomes = ["Allow", "Deny", "Allow", "Allow", "Deny", "Deny"]
+                expected_cases = [[f"C{i:02}", context, outcome, f"FWT-03.{i+3:02}"] for i, (context, outcome) in enumerate(zip(contexts, outcomes), 1)]
+                if tables[4][1:] != expected_cases:
+                    issues.append(f"{filename}: six approved application cases/record references changed")
+            if filename == FILES[4] and tables[3] != [["Assessment area", "Maximum", "Score", "Evidence / evaluator note"]] + [[title, str(score), "", ""] for title, score in RUBRIC] + [["TOTAL", "100", "", ""]]:
+                issues.append(f"{filename}: approved 100-point rubric/blank scores changed")
+            if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|two-tier|twenty.event|twelve application|two automation", word_text, re.I):
+                issues.append(f"{filename}: obsolete enterprise target or ID")
+    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
+        issues.append("Office template structure/approved plan traceability could not be verified")
     return sorted(set(issues))
 
 
@@ -265,7 +321,7 @@ def main() -> int:
         for issue in sorted(set(issues)):
             print("- " + issue)
         return 1
-    print("PASS: eight legacy T5 editable-package shells; 30 worksheets; pinned R01-R16/T00-T20; blank actual/evidence fields; bounded OOXML publication review.")
+    print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
 

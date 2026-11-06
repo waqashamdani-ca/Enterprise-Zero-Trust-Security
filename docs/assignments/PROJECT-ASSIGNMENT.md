@@ -68,7 +68,7 @@ FWR labels a requirement; FWT labels its matching [test](../testing/TEST-PLAN.md
 
 ## Required Deliverables
 
-The Office templates are **planned and not yet available**. Complete these five files when released. Keep working copies and raw evidence private; submit reviewed summaries under `docs/deliverables/`.
+These five files are **available as blank templates** in the [deliverable library](../README.md#editable-lab-deliverable-templates). Complete them during approved lab work. Keep working copies and raw evidence private; submit reviewed summaries under `docs/deliverables/`.
 
 | Filename | What to record |
 | --- | --- |

@@ -334,9 +334,9 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected("docs/security/SECURITY-REQUIREMENTS.md",
                              "FWR-03; FWT-03", "FWR-03; FWT-04", "invalid security")
 
-    def test_ordered_status_and_future_template_status_are_required(self):
+    def test_ordered_status_and_released_template_status_are_required(self):
         self.assert_rejected(self.guide, "Xeon W-2145", "Unspecified CPU", "ordered hardware")
-        self.assert_rejected(self.assignment, "planned and not yet available", "already available", "template availability")
+        self.assert_rejected(self.assignment, "available as blank templates", "complete and validated lab", "template availability")
 
     def test_identity_limits_and_legacy_navigation_are_required(self):
         self.assert_rejected(self.assignment, "separate test accounts", "shared Windows accounts", "application identity")
@@ -346,7 +346,7 @@ class AssignmentContractTests(unittest.TestCase):
     def test_guide_rejects_jargon_unavailable_template_claims_and_missing_context(self):
         self.assert_rejected(self.guide, "## Before beginning the lab",
                              "## Before beginning the lab\n\nT6 stop.", "internal task jargon")
-        self.assert_rejected(self.guide, "planned and not yet available", "already available", "template availability")
+        self.assert_rejected(self.guide, "available as blank templates", "complete and validated lab", "template availability")
         self.assert_rejected(self.guide, "**READ-ONLY - Windows candidate", "**INSPECTION - Windows candidate",
                              "risk/target context")
 

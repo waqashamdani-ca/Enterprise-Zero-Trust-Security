@@ -197,7 +197,7 @@ The additional required revocation demonstration removes eli's maintenance role 
 
 ## Coverage index
 
-Every current requirement has a component/flow, security control, focused test, acceptance criterion and future submission owner. T7 file numbers refer to the exact filenames in the assignment/guide; they are planned, not existing artifacts.
+Every current requirement has a component/flow, security control, focused test, acceptance criterion and submission owner. File numbers refer to the five [released blank templates](../README.md#editable-lab-deliverable-templates) named in the assignment/guide. Template availability supplies no operational result; all test definitions and expected outcomes above are unchanged.
 
 | Requirement | Architecture component / flow | Security control | Test | Acceptance | T7 file |
 | --- | --- | --- | --- | --- | --- |

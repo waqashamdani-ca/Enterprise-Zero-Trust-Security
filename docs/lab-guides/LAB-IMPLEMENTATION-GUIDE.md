@@ -387,7 +387,7 @@ Complete all mandatory test evidence, submit accurate results and obtain a separ
 ### B. Prerequisites
 
 - K validation and remaining L closeout approvals, frozen cases, implementation records, current backup and private evidence custody.
-- The five approved templates must be released before final submission; see [required records](#required-lab-deliverables) for availability. Their creation needs separate authorization.
+- Use the five released blank templates in [required records](#required-lab-deliverables). Fill them only during approved work; template availability supplies no lab result or stage approval.
 
 ### C. Required tools
 
@@ -436,7 +436,7 @@ Use reviewed reverts that preserve finalized records/evidence. End temporary pol
 
 ## Required lab deliverables
 
-The five Office templates are **planned and not yet available** under `docs/deliverables/`. Eight existing legacy shells describe the earlier baseline; preserve them until a separately authorized migration releases the five files below.
+These five files are **available as blank templates** in the [deliverable library](../README.md#editable-lab-deliverable-templates). Complete them during approved work and link reviewed evidence; current actual results remain empty.
 
 | Filename | Owning record |
 | --- | --- |
