@@ -20,6 +20,18 @@ For future work, require **explicit owner approval before each implementation st
 8. Report proposed, implemented, verified, failed, blocked, and accepted states accurately. Attach sanitized evidence to each claimed result. Never turn a planned test into a passing result.
 9. Track architectural choices and changes in [DECISIONS.md](docs/DECISIONS.md), risks in [RISKS.md](docs/RISKS.md), requirements/tests in their respective documents, and individual task outcomes in [reports/](reports/README.md). Keep [FINAL-REPORT.md](docs/FINAL-REPORT.md) for the project-level final report.
 
+## Mandatory writing standards
+
+Apply these standards to public READMEs, assignments, implementation guides, architecture/security documents, task reports, final project reports, and user instructions:
+
+- Explain the business problem and intended reader outcome before listing technologies. State what the project does, why it matters, what actually exists, how it was checked, and what evidence supports the outcome.
+- Use direct, natural professional English. Prefer concrete actions and short explanations. Remove marketing claims, exaggerated adjectives, stock AI phrases, repeated warnings, and unnecessary decoration.
+- Define specialist terms/acronyms on first use where practical, or link the [glossary](docs/GLOSSARY.md). Keep internal technical language where needed for accuracy. Use consistent project, zone, component, requirement, and stage names.
+- Preserve technical commands, configuration values, standards/control mappings, test expectations, and requirement IDs. Improve the explanation around them. Procedures must say what to do, why, how, expected outcome, verification, and recovery; do not replace usable instructions with vague summaries.
+- Use links to the authoritative project document instead of repeating large explanations. Keep the README concise and useful to a hiring manager, IT manager, reviewer, or technical reader. Retain the formal assignment, measurable requirements, deliverables, and 100-point rubric.
+- Distinguish PLANNED, IN PROGRESS, IMPLEMENTED, VALIDATED, and NOT TESTED as defined in the glossary. Never invent implementation, tests, metrics, screenshots, business results, certifications, independent review, production deployment, or owner UAT.
+- Readability work must not edit finalized reports or historical evidence. Record a correction in a new addendum or subsequent task report. Check Markdown links, technical consistency, traceability, public hygiene, and relevant focused tests before publication.
+
 ## Mandatory individual task reports
 
 Every Codex task must create a report during execution and finalize it after the authorized implementation and validation. A task cannot be declared engineering-complete without its corresponding finalized report. Use [the reporting convention](reports/README.md) for the required structure and status vocabulary.
@@ -52,13 +64,14 @@ Never select a software license without owner approval.
 ## Git and GitHub conventions
 
 - Authorized repository: [waqashamdani-ca/enterprise-zero-trust-security](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), **PUBLIC**, default branch `main`.
-- Verify the authenticated identity and repository permissions before writing. Use a GitHub noreply author email for public commits. Never alter global Git configuration as part of a project task.
+- Verify the authenticated identity and repository permissions before writing. Check both author and committer use the GitHub noreply identity for new public commits, including merges. Local Git identity does not establish the email used by a GitHub web/API-created commit. Never alter global Git configuration or account privacy settings silently.
 - Check whether the remote exists before creating it. Inspect existing branches and contents, reconcile changes on a branch, and preserve history. Never force-push or overwrite existing work without explicit owner approval.
 - The initial reviewed Task 001 bootstrap may initialize `main` directly in a new empty repository. Future engineering uses task branches, for example `task/002-hardware-readiness`.
 - Begin from clean `main` and `git pull --ff-only origin main`. Stop on divergence; do not use an automatic merge, destructive reset, or forced update to conceal differences.
 - Stage explicit public-safe paths. Make focused commits with meaningful messages, push the task branch, run applicable CI/security checks, and use a PR for review before merging into `main`.
 - PRs describe the problem, resulting behavior, scope, affected requirement/test IDs, validation evidence, risks, rollback, and applicable owner approval. Stage approval and owner UAT remain distinct records.
 - After merge, fast-forward local `main`. Confirm `git remote -v`, `git status`, `git branch -vv`, `git log -1`, and `git ls-remote origin`; verify the local and remote commit IDs agree.
+- Where repository rules permit, a normal local merge with the verified noreply author/committer can be pushed after exact-head PR checks/review requirements pass. Confirm GitHub records the PR as merged. Never use this method to bypass a required approval, check, or protection. If a permitted merge method cannot preserve the required publication identity, stop that operation for an owner decision.
 - Synchronization is intentional Git activity. Never enable background upload or treat all local files as publishable.
 - Workflows use least privilege (`contents: read` unless a reviewed task requires more), commit-pinned official actions, no persistent checkout credentials, no secrets in fork PR checks, and no lab access. Do not use `pull_request_target` to execute untrusted PR code.
 - Repository rulesets, required checks, reviewer settings, and licensing require explicit owner decisions; do not silently change them.

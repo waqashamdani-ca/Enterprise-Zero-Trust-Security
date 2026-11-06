@@ -8,6 +8,7 @@ Every Codex task in HL-CYB-001 must create and finalize an individual report her
 | --- | --- | --- |
 | T1 / Task 001 | [T1-Report.md](T1-Report.md) | Historical project bootstrap and GitHub setup |
 | T1 addendum 001 | [Reporting governance](T1-Addendum-001-Reporting-Governance.md) | Migration and reporting rules; no Task 2 allocation |
+| T2 | [T2-Report.md](T2-Report.md) | Separately authorized documentation quality and readability review |
 
 Use `reports/T1-Report.md`, `reports/T2-Report.md`, and so on, without leading zeroes, gaps, or reuse. Before allocating a number, inspect the current local and remote reports and reconcile concurrent work. Do not create an empty report to reserve a number. The next report number does not authorize its task: obtain the owner's bounded scope first.
 

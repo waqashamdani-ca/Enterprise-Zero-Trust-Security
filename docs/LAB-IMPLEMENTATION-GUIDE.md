@@ -1,16 +1,22 @@
-# Lab implementation guide: proposed stages A–L
+# Lab implementation guide: stages A–L
 
-**DESIGN BLUEPRINT ONLY. No implementation stage has started.** Task 001 creates this guide and the repository; it does not authorize running these procedures. The owner must explicitly approve each stage separately. Stage A is the recommended next task, pending review and approval.
+**Status: PLANNED. Operational controls are NOT TESTED.** This guide explains how to build and verify the isolated lab after approval. It does not authorize execution. Obtain the owner's approval for each stage; Stage A readiness is the recommended first engineering step.
+
+The [assignment](PROJECT-ASSIGNMENT.md) defines the business requirements. The [architecture](ARCHITECTURE.md) defines the zones and allowed flows. Use the [glossary](GLOSSARY.md) for terms such as bridge, certificate authority, Group Policy, and recovery objectives. Each stage below states its prerequisites, actions, expected result, checks, recovery steps, and completion criteria.
 
 ## How to execute a future approved stage
 
-Before work, record its scope, approval reference/date, operator, hardware/software versions, private target inventory, proposed changes, expected outcomes, tests, stop conditions, and rollback. Create that task's next sequential draft [report](../reports/README.md). Recheck current vendor instructions and compatibility. Use a clean task branch, update the design first, perform only the approved stage, collect private evidence, publish reviewed synthetic summaries, and request separate owner UAT. Finalize the task report after verification; no task is engineering-complete without it. Completing a stage does not authorize the next one.
+Before work, create the next sequential draft [task report](../reports/README.md). Record the approved scope/date/reference, operator, versions, private target inventory, intended changes, expected results, tests, stop conditions, and rollback. Check current vendor instructions and compatibility.
 
-All commands below are **proposed, not executed**. They illustrate verified vendor syntax, not a turnkey deployment script. Run only on the named lab target after stage approval and local help/version checks. Variables such as `$LabDnsAddress` and `$LabCertificatePath` must be populated privately with reviewed lab-only values. Do not paste secrets or real addresses into the repository. GUI labels can change; use the version-specific official documentation in [REFERENCES.md](REFERENCES.md).
+Work from a clean task branch and update the design before changing the lab. Execute only the approved stage, retain raw evidence privately, and publish reviewed synthetic summaries. Finalize the task report after verification and keep owner user acceptance testing (UAT) separate. A task needs its finalized report to be engineering-complete; finishing a stage never authorizes the next one.
 
-Stop a stage if a disk/asset is uncertain, protected connectivity appears, a rollback path is missing, secrets enter output, validation fails, or the approved boundary would be exceeded. Disconnect the approved lab uplink using the console procedure if isolation is in doubt. Preserve private evidence and record the problem. Never "temporarily" bridge the lab to home/production to solve a dependency.
+All commands below are **proposed examples, not executed lab commands**. Their syntax was checked against vendor documentation for the blueprint. Before using one, confirm the approved lab target, installed version, and local help. Set variables such as `$LabDnsAddress` and `$LabCertificatePath` privately using reviewed lab-only values. Never put secrets or actual addresses in Git. Use version-matched [official references](REFERENCES.md), including when screen labels differ from this guide.
+
+Stop if an asset/disk is uncertain, a protected network becomes reachable, rollback is unavailable, output exposes a secret, a check fails, or work would exceed approval. If isolation is in doubt, disconnect the lab uplink through the approved console procedure. Preserve evidence privately and record the issue. Do not connect the lab to home/production to work around a dependency.
 
 ## Stage A — Hardware and virtualization readiness
+
+Establish whether the available devices can host the design safely before approving any installation.
 
 ### Prerequisites
 
@@ -18,8 +24,8 @@ Owner approval for a read-only readiness assessment, access to the supplied devi
 
 ### Procedures
 
-1. Inventory the Dell, Lenovo, HP, and candidate administrator/test laptops. Confirm actual CPU, RAM, storage/free capacity, disk contents, supported operating systems, NIC count/type, power/cooling, and physical console availability. Keep serial numbers and actual addressing private.
-2. Inspect virtualization/SLAT support and firmware settings using existing tools; record uncertainty without changing firmware. Identify any existing hypervisor, encryption/recovery dependency, or irreplaceable data.
+1. Inventory the Dell, Lenovo, HP, and candidate administrator/test laptops. Check CPU, RAM, disk contents/free space, supported operating systems, network interfaces, power/cooling, and physical console access. Keep serial numbers and actual addresses private.
+2. Use existing tools to inspect virtualization/second-level address translation (SLAT) support and firmware settings. Record unknowns without changing firmware. Identify an existing hypervisor, disk encryption/recovery dependency, or data that must be preserved.
 3. Review the proposed [capacity budget](ARCHITECTURE.md#initial-capacity-budget), reserve/free-space requirements, and CPU contention. Verify a backup location with adequate usable space; the supplied HP is a candidate, not a proven backup target.
 4. Draw a private cable/interface map. Identify a lab-only administrator station and offline management segment. Review other adapters, Wi-Fi, VPNs, sharing, and forwarding that could bridge protected networks.
 5. Propose the exact disk for a future Proxmox installation, its data-preservation plan, supported boot mode, media verification method, and recovery procedure. Identify the unresolved egress boundary and any hardware dependency.
@@ -55,16 +61,18 @@ R01/R02 prerequisites are documented; hardware uncertainties and blocking decisi
 
 ## Stage B — Proxmox installation and baseline hardening
 
+Install the lab's virtualization host only after the owner approves the exact disk and recovery plan.
+
 ### Prerequisites
 
 Accepted Stage A; explicit Stage B approval covering exact host/disk and destructive installation; verified backups and recovery media; physical console; supported hardware; official media and matching vendor-published checksum/signature; private administrator credentials and MFA recovery plan. Offline media/update transfer must not introduce production data.
 
 ### Procedures
 
-1. Reconfirm the approved disk immediately before installation. Disconnect unrelated disks where feasible under approval. Stop if labels, capacities, or data differ from the approved record.
+1. Recheck the approved disk's identity immediately before installation to prevent data loss. Disconnect unrelated disks where feasible and authorized. Stop if its labels, capacity, or contents differ from the approved record.
 2. Boot verified Proxmox media from console. Select only the approved storage and a filesystem appropriate for a single disk; do not claim redundancy or create a cluster. Configure the lab-only management interface and private DNS/time plan.
-3. Connect management only to the dedicated offline administrator segment. Do not attach ordinary guests or home uplinks to the management bridge. Keep console access open during access-policy changes.
-4. Use a named lab administrator and appropriate scoped roles; configure supported MFA and a protected console/break-glass recovery method. Limit root use to necessary recovery/setup; do not publish recovery secrets.
+3. Connect management only to the dedicated offline administrator segment. Keep ordinary guests and home uplinks off the management bridge. Leave the physical console available while changing access policy so a mistaken rule does not lock out administration.
+4. Create a named lab administrator with scoped roles. Configure supported multi-factor authentication (MFA) and a protected emergency console/recovery method. Use root only for necessary setup/recovery and keep recovery secrets private.
 5. Review supported update repositories/subscription terms. Apply only approved supported updates using verified offline transfer or a separately approved isolated path; record deferred updates as risk. Never disable integrity checks or use unreviewed install scripts.
 6. Apply host management restrictions for the actual Proxmox firewall backend/version. Preserve a specific administrator allow rule, deny other management sources, and verify effective policy. Do not switch firewall backends blindly.
 7. Record storage/free-space quotas, backup target proposal, local logging/time baseline, and host configuration recovery instructions. Do not create enterprise guests yet.
@@ -91,6 +99,8 @@ R02/R03 baseline evidence, console recovery, supported-version record, private b
 
 ## Stage C — Virtual enterprise networking and isolation
 
+Separate the six zones without introducing an unintended route to home or production.
+
 ### Prerequisites
 
 Accepted Stage B, explicit Stage C approval, private nonoverlapping address plan, bridge/interface map, console rollback, and approved management access. All uplinks remain disconnected unless separately approved.
@@ -98,8 +108,8 @@ Accepted Stage B, explicit Stage C approval, private nonoverlapping address plan
 ### Procedures
 
 1. Confirm `vmbr0` is management only and its physical port reaches only the dedicated lab administrator segment. Check that the administrator station cannot forward via Wi-Fi/another NIC.
-2. Create internal bridges `vmbr10`–`vmbr50` for identity, endpoints, services, monitoring, and remote access. Give them no physical ports and no hypervisor address. Leave bridge names/roles in public docs; keep actual addressing private.
-3. Document per-zone gateway and future firewall vNIC mapping. Disable unintended host routing/forwarding between zones; the planned firewall is the only router. Keep offline-root networking absent.
+2. Create internal bridges `vmbr10`–`vmbr50` for Identity, Endpoints, Services, Monitoring, and Remote access. Give them no physical ports and no hypervisor address. Publish bridge names/roles only; actual addresses remain private.
+3. Record each zone's gateway and planned firewall virtual NIC mapping. Prevent the host from routing/forwarding between zones so traffic cannot bypass the firewall. The offline root CA must have no network connection.
 4. Review IPv6 forwarding, RA/DHCPv6, overlay interfaces, host NAT/bridging, and any inherited defaults. Disable routed IPv6 exposure for the baseline while preserving required local OS behavior.
 5. If an egress interface is proposed, create it disconnected. Verify that it is not connected to the home LAN and cannot bypass the independent protected-network boundary. Resolve DEC-03 before enabling it.
 6. Save a private before/after map and host network backup. Do not start a general guest with a management or uplink adapter to test convenience connectivity.
@@ -126,15 +136,17 @@ R01/R04 topology is reviewed, console rollback is viable, no actual addresses ap
 
 ## Stage D — Virtual OPNsense firewall
 
+Make the firewall the controlled route between zones, permitting only the declared service flows.
+
 ### Prerequisites
 
 Accepted Stage C, explicit Stage D approval, verified official OPNsense media, approved VM budget and exact vNIC-to-zone map, private rule/alias plan, console access, and disconnected WAN. Online egress remains blocked on DEC-03.
 
 ### Procedures
 
-1. Create only the firewall VM within the proposed budget. Attach management and internal interfaces according to the bridge map. Add WAN disconnected; verify vNIC identifiers rather than guessing interface order.
+1. Create the firewall VM within the approved budget. Match its Management and internal interfaces to the bridge map, checking virtual NIC identifiers rather than guessing their order. Add the WAN interface disconnected.
 2. Install from verified media at console. Assign interfaces, private addresses, and explicit gateway/routing behavior. Do not run DHCP on the management/home network or give guests a second default gateway.
-3. Replace installer permissive LAN rules with the [flow matrix](ARCHITECTURE.md#inter-zone-policy-matrix). Add narrow required infrastructure permits and explicit protected-destination denies ahead of approved egress rules; finish with logged default deny.
+3. Replace permissive installer LAN rules with the [flow matrix](ARCHITECTURE.md#inter-zone-policy-matrix). Permit required infrastructure dependencies narrowly. Block protected destinations before approved egress permits, then finish with logged default deny so an unlisted connection stays blocked.
 4. Audit management listeners, anti-lockout rules, floating/group rules, automatic rules, NAT, existing states, IPv6, UPnP/NAT-PMP, and firewall-originated traffic. Keep a specific management allow path and console recovery before narrowing access. NAT never substitutes for a deny policy.
 5. Add private aliases for protected destinations and named allowed services. Review DNS alias refresh/shared-hosting limitations. Do not publish the real alias members. Default external egress is denied, and no inbound forwarding is configured.
 6. Do not blindly toggle "Block private networks" on WAN: behavior depends on the approved uplink. If a private transit source is required, document the exact exception and independent protection before changing it. No exception permits home access.
@@ -162,6 +174,8 @@ R01/R03/R04 evidence passes for the implemented offline scope; any online depend
 
 ## Stage E — Windows Server Evaluation, AD, DNS, and GPO
 
+Build a separate directory for synthetic users and computers, with lab DNS and Windows policy management.
+
 ### Prerequisites
 
 Accepted Stage D, explicit Stage E approval, official supported Windows Server Evaluation media/terms, approved identity VM, private DNS/address/time plan, separate lab passwords and DSRM custody, and supported identity backup/recovery design. Verify current evaluation activation/expiry requirements; no corporate tenant or product key is used.
@@ -170,8 +184,8 @@ Accepted Stage D, explicit Stage E approval, official supported Windows Server E
 
 1. Create the DC VM on the identity bridge only, with approved CPU/RAM/disk, static private addressing, and a lab-only hostname. Patch through the approved path and record edition/build and evaluation deadlines.
 2. Confirm DNS/time are consistent and no corporate suffix, resolver, trust, cloud registration, or identity sync is configured. Plan activation through approved egress if required; if no safe path exists, stop rather than attach the VM to home.
-3. Install AD DS/DNS and create a new `ad.lab.test` forest. Keep DSRM and administrator secrets in the private store. Do not create a DNS delegation into production or select a functional level without version compatibility review.
-4. Create OUs for users, privileged identities, servers, endpoints, and service accounts; three role groups; six synthetic standard users; and two separate privileged lab accounts. Apply delegated group-based rights instead of routine Domain Admin use.
+3. Install Active Directory Domain Services (AD DS) and DNS, then create the new `ad.lab.test` forest. Keep Directory Services Restore Mode (DSRM) and administrator secrets in the private store. Do not delegate DNS into production; check version compatibility before choosing a functional level.
+4. Create organizational units (OUs) for users, privileged identities, servers, endpoints, and service accounts. Add three role groups, six synthetic standard users, and two separate privileged lab accounts. Delegate rights through groups so routine work does not require Domain Admin membership.
 5. Configure lab forward/reverse DNS and the domain time hierarchy. Limit DNS recursion/forwarding to approved sources and upstreams. Domain members will use lab DNS only; avoid routing internal names to external resolvers.
 6. Define GPO baselines for password/lockout, audit policy, host firewall, privileged logon restrictions, and endpoint administration. Pilot in a test OU, review precedence/resultant policy, and expand only after approved checks. Avoid lockout tests that threaten the only recovery administrator.
 7. Establish supported system-state backup and document isolated directory recovery. A VM snapshot is not the directory backup strategy. Do not join corporate devices or enable hybrid/cloud integration.
@@ -205,15 +219,17 @@ R05 is demonstrated in the approved scope, production independence is verified b
 
 ## Stage F — Linux and Windows endpoints
 
+Prepare ordinary lab devices and a synthetic service so later access tests have known targets.
+
 ### Prerequisites
 
 Accepted Stage E, explicit Stage F approval, supported/licensed Windows and Linux media, endpoint VM budgets, private inventory, lab DNS/time, reviewed host firewall baseline, and clean rollback images/backups.
 
 ### Procedures
 
-1. Create a Windows member VM and Linux VM on the endpoint bridge with one NIC each. Use synthetic device names. Do not migrate a real user profile, corporate endpoint, browser session, or credential store.
+1. Create one Windows member VM and one Linux VM on the Endpoints bridge, with one NIC each. Use synthetic device names and clean lab profiles. Do not copy a real profile, corporate endpoint, browser session, or credential store.
 2. Patch and establish named standard users plus separate administration. Join only the approved Windows VM to `ad.lab.test`; Linux directory join is optional and requires a separate design decision rather than assumed parity.
-3. Apply Windows pilot GPO and a scoped Linux baseline. Keep host firewalls enabled, unnecessary services disabled, and inbound management restricted to the approved administrative path.
+3. Apply the Windows pilot Group Policy and the scoped Linux baseline. Keep host firewalls enabled, disable unnecessary services, and allow inbound management only from the approved administrative path. These host restrictions also cover traffic that stays within the zone.
 4. Set lab DNS/time and review network profiles, IPv6 behavior, shared folders/clipboard/media, guest integration, forwarding, and adapters for bypass paths. Export no raw system inventory publicly.
 5. Add the minimal synthetic application/service in its separate service VM if included in Stage F approval. Protect it with application roles rather than assuming that a firewall allow authorizes all data.
 6. Retain local logs, approved backups, and a private baseline record. Capture sanitized baseline differences and unresolved OS/driver constraints.
@@ -246,16 +262,18 @@ R06 and applicable R05/R08 checks pass with separate engineering and owner accep
 
 ## Stage G — Enterprise PKI and identity security
 
+Establish lab certificate trust and prove how valid, untrusted, expired, and revoked certificates behave in the chosen application.
+
 ### Prerequisites
 
 Accepted Stage F, explicit Stage G approval, approved CA design and algorithms/lifetimes, root/issuing VM budgets, supported AD CS media/roles, secure private key/backup custody, reviewed certificate templates, transfer media, and internal CRL/AIA publication plan. Root and issuing CA must be separate from the DC.
 
 ### Procedures
 
-1. Create a standalone offline root VM with **no virtual NIC**. Configure its CA identity, key protection, certificate lifetime, renewal schedule, and backup ceremony using supported AD CS procedures. Power it down except for controlled signing/renewal work.
+1. Create the standalone offline root CA VM with **no virtual NIC**. Use supported Active Directory Certificate Services (AD CS) procedures to configure its identity, key protection, certificate lifetime, renewal schedule, and controlled backup process. Keep it powered off except for approved signing/renewal work.
 2. Create the separate domain-joined issuing CA in the identity zone. Generate its request and transfer only the reviewed request/certificate/CRL artifacts through approved media; never move the root private key to the issuer.
 3. Configure internal AIA/CDP locations and publish the required chain and CRLs with a renewal/calendar owner before issuing leaf certificates. Availability of those endpoints must not require Internet or production DNS.
-4. Restrict CA administration and certificate-template enrollment to named lab roles. Avoid unrestricted subject/SAN supply, unnecessary authentication EKUs, broad enrollment, and private-key export. Record template review and separation-of-duties limits in a one-owner lab.
+4. Restrict CA administration and template enrollment to named lab roles. Prevent unrestricted subject/Subject Alternative Name (SAN) input, unnecessary authentication Extended Key Usages (EKUs), broad enrollment, and private-key export. Record the template review and the limits of separation of duties in a one-owner lab.
 5. Distribute lab trust only to approved lab systems. Issue a short-lived synthetic TLS server certificate for the selected application, bind it, and verify hostname, chain, usage, validity, and private-key protection.
 6. Revoke a dedicated test certificate, publish a new CRL, account for caches, and verify failure in a selected relying application configured to check revocation. Test a separate expired/untrusted certificate without changing the domain clock. Record clients that soft-fail or do not check revocation.
 7. Create encrypted supported CA backups and document isolated restoration, key custody, CRL renewal deadlines, and compromise response. No private key, certificate export, or root trust is placed in home/production or Git.
@@ -288,16 +306,18 @@ R07 passes with issuance and relying-application rejection evidence, backups, re
 
 ## Stage H — Least privilege and Zero Trust policies
 
+Translate each business role into specific resource permissions, then test both permitted and denied actions.
+
 ### Prerequisites
 
 Accepted Stage G, explicit Stage H approval, role/resource inventory, named policy owners, approved twelve-case matrix, lab-only test identities, host/application enforcement capability, and policy backups.
 
 ### Procedures
 
-1. Translate analyst, engineer, administrator, unauthorized, and revoked-user workflows into exact resources, actions, ports, identity groups, and available device/context conditions.
+1. For the analyst, engineer, administrator, unauthorized user, and revoked user, list the exact resource, action, port, group, and available device/context conditions. Each permission needs a business reason.
 2. Create at least twelve allow/deny cases covering each role and resource, same-zone paths, direct-IP/name paths, ordinary-user management denial, and revoked access. Include the administrative path and infrastructure exceptions.
 3. Apply narrow group/resource authorization and service accounts, then matching network/host restrictions. Remove redundant broad permits only after confirming required dependencies and console recovery.
-4. Check additive group memberships, inherited application rights, cached sessions, direct endpoint routes, overlay adapters, local administrators, and service credentials for alternative access paths.
+4. Check whether another group membership, inherited application right, cached session, direct route, overlay adapter, local administrator right, or service credential grants the same access. Removing one permit is ineffective if another path still allows it.
 5. Revoke a dedicated synthetic user's access; measure from the approved policy change to observed resource denial, including existing sessions and new sessions. Define cache/session invalidation and the fifteen-minute target explicitly.
 6. Document which decisions are identity-aware and which are static network rules. Record unavailable device posture or continuous reevaluation as gaps; do not equate segmentation with full Zero Trust.
 
@@ -323,17 +343,19 @@ R08 passes all twelve declared cases and the revocation target, or a documented 
 
 ## Stage I — Lab-only Tailscale and Twingate pilots
 
+Compare two remote-access approaches against the same single-resource business workflow in separate lab environments.
+
 ### Prerequisites
 
 Accepted Stage H, explicit Stage I approval for both sequential pilots, resolved isolated-egress decision, current vendor plan/terms review, independent lab-only identities/tenants, MFA and account recovery, connector/device budgets, and approved pilot resource/ports. No corporate SSO, tailnet, Twingate network, or production-connected client is permitted.
 
 ### Procedures
 
-1. Verify that the proposed external identity cannot automatically enroll in an existing corporate environment. Create/confirm separate lab administration, test-user groups, recovery, audit visibility, and any posture/logging feature availability before enrollment.
+1. Confirm that the external identity will not enroll into an existing corporate environment. Before connecting a device, verify separate lab administration, test-user groups, recovery, audit access, and the plan's actual device-posture/logging features.
 2. Pilot Tailscale first. Replace its initial allow-all policy with reviewed explicit narrow grants/ACLs before enrolling devices. Verify the effective policy rather than assuming omitted or empty policy content denies access. Restrict tag owners and eliminate every additive wildcard path.
 3. Expose one synthetic resource through a scoped dedicated lab component or explicitly approved directly enrolled lab endpoint. No subnet router, exit node, route advertisement, public sharing, or production DNS integration. For direct enrollment, treat overlay host policy as a separate boundary because it can bypass OPNsense.
 4. Review outbound vendor connectivity and local DNS changes, authorize only necessary destinations/protocols, and test permitted, unauthorized, and revoked identities plus offline/recovery behavior. Record plan-specific limits rather than claiming unsupported device posture/MFA coverage.
-5. Disable/disconnect the first pilot and restore the approved DNS/routes before starting Twingate. Do not run competing client interceptors simultaneously.
+5. Disable/disconnect the Tailscale pilot and restore approved DNS/routes before starting Twingate. Running both clients together could change which product handles traffic or DNS and make the comparison unreliable.
 6. Create a separate Twingate lab network and connector in the remote zone using the currently supported vendor deployment method. Keep deployment tokens in the supported private secret mechanism. Define one exact Resource and explicit port restrictions; do not leave all-port/wildcard defaults.
 7. Independently restrict connector-to-resource reachability in OPNsense/host policy, allowing only needed DNS and application dependencies. A connector compromise must not gain directory, management, or protected-network access. No inbound Internet listener/port forward is added.
 8. Repeat the same role/deny/revocation cases, capture permitted vendor audit data privately, and compare identity/device requirements, policy precision, DNS behavior, logging, revocation timing, limitations, and recovery. Revoke unused pilot tokens/devices and close temporary egress permits.
@@ -366,18 +388,20 @@ R09 and applicable R08/R10 tests pass for both pilots with measured limits; plan
 
 ## Stage J — Security monitoring and audit logging
 
+Collect the events needed to explain access decisions and detect when a source stops reporting.
+
 ### Prerequisites
 
 Accepted Stage I or an explicitly approved dependency exception, explicit Stage J approval, available storage/collector VM budget, lab PKI/DNS/time, six-source event inventory, retention/access policy, private evidence location, and approved synthetic event-generation scope.
 
 ### Procedures
 
-1. Confirm local logging from every existing component. Inventory firewall, hypervisor, DC/DNS, Windows endpoint, Linux endpoint, and remote-access audit sources; document provider export/retention constraints and gaps.
+1. Confirm each component retains local logs. List the six required source classes: firewall, hypervisor, DC/DNS, Windows endpoint, Linux endpoint, and remote access. Record each provider's export/retention limits and any missing coverage.
 2. Create the WEC and Linux/syslog collectors in the monitoring zone. Restrict administration and source submission. Configure source-initiated Windows event forwarding with an explicit source-computer ACL and authenticated transport; use TLS where designed. Do not broadly enable remote management.
 3. Configure encrypted/authenticated syslog or supported secure collection for firewall, hypervisor, and Linux events. If a source lacks the selected transport, document an approved isolated-path exception and residual risk; do not claim encryption that is absent.
 4. Select security-relevant events: synthetic authentication failures/success, privilege/group changes, administrative actions, DNS/policy changes, certificate events, allowed/denied flows, and remote-session decisions. Avoid passwords, tokens, message bodies, or customer data.
 5. Normalize UTC timestamps and check each source against the chosen lab time authority. Set source-health/missing-log alerts and restrict log deletion/export. Keep raw logs private.
-6. Generate twenty approved benign synthetic events across all six classes, capture local and collector timestamps, measure search latency, and document dropped/duplicated records. At least nineteen must be searchable within five minutes; every class must be represented.
+6. Generate twenty approved benign synthetic events across all six classes. Compare source and collector timestamps, measure how soon each event is searchable, and record missing/duplicate events. At least nineteen must be searchable within five minutes, with every class represented.
 7. Measure daily ingestion/storage rate and calculate thirty-day retention plus margin within the capacity ledger. Configure rotation/quota and alert thresholds. A calculation proves design capacity only; demonstrate actual aging/rotation separately and label the observation period.
 
 ### Proposed commands
@@ -408,6 +432,8 @@ R10 meets the six-source, 19-of-20 latency, clock, and retention-design targets 
 
 ## Stage K — Functional, negative, and security validation
 
+Check the approved workflows and restrictions against the frozen test plan before accepting the lab's engineering results.
+
 ### Prerequisites
 
 Accepted prior stages or recorded scope exceptions, explicit Stage K authorization identifying synthetic sources/targets and permitted tests, current backups, test windows/stop conditions, the frozen role/flow matrix, and no protected assets in target inventory.
@@ -415,11 +441,11 @@ Accepted prior stages or recorded scope exceptions, explicit Stage K authorizati
 ### Procedures
 
 1. Review [TEST-PLAN.md](TEST-PLAN.md), requirement coverage, installed versions, target list, and expected results. Resolve tests that would touch protected systems by using configuration inspection and lab-owned mocks instead.
-2. Execute required functional workflows for DNS/domain logon/GPO, endpoints, application roles, PKI, and each remote pilot. Do not infer success from a running service or a green vendor dashboard.
+2. Exercise the required DNS, domain logon/Group Policy, endpoint, application-role, PKI, and remote-pilot workflows. Observe the requested action itself; a running service or green dashboard alone does not show that the workflow works.
 3. Execute explicit deny cases for inter-zone, same-zone, ordinary-user management, wrong resource/port, untrusted certificate, and revoked identity. Use bounded connection checks; no broad scan, exploit, brute-force test, or malware is authorized by this guide.
 4. Correlate each observed result with effective policy and independent logs/counters. Check alternative adapters/routes, IPv6, DNS bypass, cached sessions, and overlay enforcement using scoped lab cases.
 5. Run approved certificate-revocation, policy-revocation, logging interruption, and scoped isolation/fail-closed checks without changing home networking or probing production. Stop immediately on unexpected reachability.
-6. Record pass/fail/blocked/NOT RUN, evidence IDs, defects/severity, residual risk, retest scope, and independent observation. Fixes require a bounded approved change; do not alter the expected result merely to pass.
+6. Record PASS, FAIL, or NOT TESTED with the reason, evidence IDs, defects/severity, remaining risk, retest scope, and second observation. Fixes need a bounded approved change. Keep the declared expected result rather than changing it to fit an observation.
 7. Submit engineering results for review, then run separately documented owner UAT for business usability. Do not mark owner acceptance from engineering self-review.
 
 ### Proposed commands
@@ -444,17 +470,19 @@ R14 has an engineering verdict and separate UAT state. Unexecuted tests and acce
 
 ## Stage L — Automation, recovery, and final documentation
 
+Demonstrate repeatable approved changes, recovery of the agreed service scope, and an accurate final evidence record.
+
 ### Prerequisites
 
 Accepted Stage K, explicit Stage L approval, two named automation operations/targets, reviewed credentials mechanism, off-compute encrypted backup storage, supported AD/CA recovery procedures, isolated restore network, approved recovery scope/RPO/RTO, and final-report template.
 
 ### Procedures
 
-1. Select two small useful operations, such as a lab inventory summary and one reviewed baseline-policy deployment. Document target allowlists, expected changes, credential handling, logging, failure behavior, and rollback before code. Do not automate production or secret publication.
+1. Choose two small useful operations, such as a lab inventory summary and one reviewed baseline-policy deployment. Before writing code, define allowed targets, expected changes, credential handling, logs, failure behavior, and rollback. Production and secret publication remain excluded.
 2. Implement using the smallest suitable PowerShell/Python/Ansible tool. Review installed module versions and dependencies before any approved installation. Add focused tests for boundary/target rejection and meaningful failure paths.
 3. For configuration automation, inspect syntax/check results privately, execute on one approved lab target, compare actual desired state through a separate tool, and repeat. Record zero unintended changes on the second run; a no-op check alone is not proof of idempotence.
 4. Configure encrypted off-compute backups with private key custody and verify backup freshness. Include supported directory system-state/CA artifacts for the chosen recovery scope, not just VM snapshots. State excluded assets and a retention/capacity plan.
-5. Restore the approved representative identity/application scope into disconnected networks. Follow the [dependency order](ARCHITECTURE.md#monitoring-recovery-and-residual-limits), prevent duplicate live DC identity, and use supported AD/PKI restore guidance. Measure backup age and full service recovery time against RPO 24 hours/RTO four hours.
+5. Restore the approved representative identity/application scope into disconnected networks. Follow the [dependency order](ARCHITECTURE.md#monitoring-recovery-and-residual-limits), avoid duplicate live DC identities, and use supported AD/PKI restore guidance. Measure backup age against the recovery point objective (RPO) of 24 hours and full scoped recovery time against the recovery time objective (RTO) of four hours.
 6. Validate restored DNS/authentication, certificate/revocation publication, authorization, logs, and data consistency. Restore encrypted backup/key access as part of the drill. Do not reconnect until isolation/policy checks pass.
 7. Complete the requirements/test/evidence index, final limitations and risks, architecture-as-built differences, operating/recovery instructions, remote-pilot comparison, rubric assessment, and evidence-backed achievement statements. Leave owner UAT separate and explicit.
 8. Run local repository checks, manually review every proposed public artifact and history, publish on the task branch, verify CI, and use a PR for review. Synchronize local `main` only after reviewed merge. Stop after the approved scope.

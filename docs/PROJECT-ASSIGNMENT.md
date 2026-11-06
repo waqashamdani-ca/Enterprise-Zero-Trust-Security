@@ -12,33 +12,33 @@
 
 ## Description and background
 
-Design, build in individually approved future stages, and evaluate an isolated enterprise security lab that demonstrates resource-focused Zero Trust principles. The simulated organization, Purple Eye, has engineering, operations, and administrative staff who need different access to a small set of synthetic business services. Remote working, privileged administration, certificate lifecycle management, and investigation of access decisions must be supported without connecting to production.
+Staff need access to business services without gaining unnecessary access to other systems. In this assignment, a synthetic Purple Eye organization has analysts, engineers, and administrators with different responsibilities. The lab must support their approved work, restrict other actions, and produce evidence that explains each access decision.
 
-Traditional network membership is insufficient proof of authorization. The assignment asks the engineer to combine identity, device controls, scoped network access, application authorization, and usable audit evidence. Explain where the lab approximates an enterprise and where it lacks production features such as resilient identity services, continuous device attestation, hardware-protected CA keys, or a staffed monitoring function. See [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final).
+Design an isolated lab, then build and evaluate it in separately approved stages. Apply Zero Trust principles: check identity and permission for the requested resource rather than treating network membership as permission. Combine identity, device controls, network restrictions, application permissions, and audit records. Explain the lab's limits, including the absence of resilient identity services, continuous device attestation, hardware-protected certificate authority keys, or a staffed monitoring function. Use [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final) and the [project glossary](GLOSSARY.md) for terminology.
 
 ## Enterprise scenario and business case
 
-Model three business roles: an analyst who reads synthetic reports, an engineer who maintains a test application, and an administrator who manages infrastructure through a dedicated administrative path. Add an unauthorized synthetic user and a revoked remote user for negative tests. Do not use real employees, customer names, company directories, corporate sign-in, or production business records.
+Model three roles: an analyst reads synthetic reports, an engineer maintains a test application, and an administrator manages infrastructure through a dedicated path. Also create an unauthorized synthetic user and a remote user whose access will be revoked. These accounts support negative tests: checks that an action is denied. Use no real employees, customer names, company directory, corporate sign-in, or production records.
 
-The business value is a repeatable environment for evaluating access restrictions and recovery before considering enterprise designs. Reuse supplied hardware, limit resource consumption, produce reviewable engineering decisions, and show how audit trails support investigations. Demonstrate reduced *allowed reachability* against a documented lab baseline; do not invent breach-reduction percentages, cost savings, availability, or enterprise-wide security claims.
+The business case is a repeatable place to evaluate access restrictions and recovery before considering an enterprise deployment. Reuse the supplied hardware, control resource use, explain design decisions, and show how audit records support an investigation. Compare the connections allowed before and after the lab policies. Report actual observations; do not invent breach-reduction percentages, savings, availability, or organization-wide security outcomes.
 
 ## Purpose, objectives, and learning goals
 
-The project must produce a defensible architecture, an operational lab in later stages, and evidence that its controls meet explicit business requirements. The learner will:
+Produce a justified architecture, an operational lab in later approved stages, and evidence against the stated business requirements. The learner will:
 
-1. Translate role-specific workflows into asset inventories, trust boundaries, measurable controls, and acceptance tests.
-2. Engineer isolated virtualization and stateful segmentation without altering home or production networking.
-3. Build a separate directory, DNS, endpoint baseline, and PKI with recoverable identity operations.
-4. Evaluate identity-aware remote access and show both permitted and denied behavior.
-5. Correlate policy decisions, endpoint events, and network events using synthetic activity.
-6. Automate selected repeatable operations and prove recoverability and accurate documentation.
-7. Communicate tradeoffs, limitations, verified results, and unresolved risks in a public portfolio.
+1. Turn role-specific workflows into an asset inventory, access boundaries, measurable requirements, and acceptance tests.
+2. Separate virtual systems and control their network connections without changing home or production networking.
+3. Build a lab directory, Domain Name System (DNS), endpoint baseline, and public key infrastructure (PKI), with supported recovery procedures.
+4. Compare identity-aware remote-access approaches using permitted and denied cases.
+5. Connect access-policy decisions to device and network audit events using synthetic activity.
+6. Automate selected repeatable operations and verify recovery and documentation accuracy.
+7. Explain tradeoffs, verified results, limits, and unresolved risks in a public portfolio.
 
-CISSP-aligned learning spans security/risk management, asset security, security architecture, communication/network security, identity/access management, assessment/testing, operations, and software development security. This alignment is an educational interpretation, not certification credit or an endorsed course.
+The learning goals relate to Certified Information Systems Security Professional (CISSP) domains: security/risk management, asset security, architecture, network security, identity/access management, assessment/testing, operations, and software development security. This is an educational mapping, not certification credit or an endorsed course.
 
 ## Measurable technical requirements
 
-All requirements below are **PLANNED**, except documentation/bootstrap elements that are explicitly verified in the Task 001 completion report. The test IDs refer to [TEST-PLAN.md](TEST-PLAN.md); acceptance decisions are in [ACCEPTANCE-CRITERIA.md](ACCEPTANCE-CRITERIA.md).
+Lab requirements below are **PLANNED**. Completed repository/documentation work is recorded in the [individual task reports](../reports/README.md), beginning with [T1](../reports/T1-Report.md). Use the requirement IDs unchanged when linking implementation, tests, evidence, and acceptance. The test procedures are in [TEST-PLAN.md](TEST-PLAN.md); approval and acceptance gates are in [ACCEPTANCE-CRITERIA.md](ACCEPTANCE-CRITERIA.md).
 
 | ID | Required outcome and measurement | Future evidence / tests | Stage |
 | --- | --- | --- | --- |
@@ -96,7 +96,7 @@ Map NIST's logical policy engine/administrator/enforcement roles to a combinatio
 | Automation | PowerShell, Python, Ansible | Use the smallest supported tool for the approved operation; avoid overlapping automation ownership |
 | Repository checks | Standard-library Python and GitHub Actions | Add dependencies only for a demonstrated gap with an approved supply-chain review |
 
-These are proposed architecture choices; owner approval and version-specific checks occur at stage entry. Use [official technical references](REFERENCES.md), not unverifiable copied commands.
+These are proposed choices. Confirm owner approval, supported versions, and compatibility before the relevant stage. Use the [official technical references](REFERENCES.md); do not copy an unverified deployment command into an execution record.
 
 ## Security requirements and threat model
 
@@ -110,15 +110,15 @@ The [tailored control matrix](SECURITY-REQUIREMENTS.md#tailored-control-matrix) 
 
 ## Deliverables and final outcomes
 
-Task 001 delivers a reviewable assignment, architecture, approval-gated A–L guide, requirements, threat/control matrix, test/acceptance plan, decision/risk registers, accurate report, safe repository scaffold, validator/tests, and public GitHub bootstrap where authentication permits.
+Task 001 establishes the assignment, architecture, A–L guide, requirements, threat/control matrix, test and acceptance plans, decision/risk registers, repository scaffold, validation code/tests, and safe GitHub publication. Its results are recorded in T1 rather than inferred from this assignment.
 
-Later approved stages deliver the isolated lab, sanitized inventories and design diagrams, role/flow matrices, identity/GPO and PKI baselines, two remote-access comparisons, monitoring and detection evidence, two focused automations, a timed recovery report, a requirements-to-test/evidence index, owner UAT records, and a final limitations-aware portfolio report. No live artifacts are implied by these planned outcomes.
+Later approved stages must deliver the isolated lab; reviewed inventory/design summaries; role and flow matrices; directory, Group Policy (GPO), and PKI baselines; two remote-access comparisons; monitoring evidence; two bounded automations; a timed recovery report; a requirements/test/evidence index; separate owner UAT records; and a project-level final assessment with stated limitations. Each task must also finalize its own report. These are required future deliverables, not completed lab outcomes.
 
 ## Testing and acceptance
 
 Use predeclared synthetic sources, destinations, identities, and expected outcomes. Positive tests prove required workflows; negative tests prove denied reachability or authorization; security tests evaluate scoped controls; recovery tests prove restoration. Tests that would touch a protected network use lab-owned mock destinations and policy inspection instead. Security tests require separate stage approval.
 
-Each test includes an independent observation and a sanitized evidence record. A failure blocks its critical acceptance gate. Record unexecuted tests as NOT RUN, unsupported functions as an explicit gap, and owner-accepted exceptions with residual risk. See [test procedures](TEST-PLAN.md) and [acceptance gates](ACCEPTANCE-CRITERIA.md). Task 001 acceptance covers documentation/Git only.
+Each test needs a second observation and a reviewed public-safe evidence record. A critical failure blocks acceptance. Mark unexecuted tests NOT TESTED, state unsupported functions as gaps, and record any owner-approved exception with its remaining risk. See the [test procedures](TEST-PLAN.md) and [acceptance gates](ACCEPTANCE-CRITERIA.md). Repository checks establish documentation/Git quality only.
 
 ## 100-point evaluation rubric
 

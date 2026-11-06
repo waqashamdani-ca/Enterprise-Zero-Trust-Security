@@ -1,14 +1,16 @@
 # Security requirements and threat model
 
-**Status: proposed controls; operational effectiveness NOT TESTED.** This is a tailored educational design, not a compliance certification or an assertion that controls are implemented.
+**Status: PLANNED controls; operational effectiveness NOT TESTED.** These requirements protect the lab's boundaries, privileged access, and engineering evidence. They define what later implementation must demonstrate; they do not establish compliance or show that a control is already working.
+
+Use this document with the [architecture](ARCHITECTURE.md), [test plan](TEST-PLAN.md), and [glossary](GLOSSARY.md). The tables keep the exact security IDs and standards mappings used for traceability.
 
 ## Assets, actors, and boundaries
 
-Protect home/production separation, administrative authority, directory/service credentials, CA private keys, synthetic resource integrity, policy decisions, audit evidence, recovery material, and public publication. Lab data is synthetic but its secrets are still secrets. Corporate Microsoft 365, PE-DAP, corporate web/hosting, and customer data are excluded assets, never test targets.
+Protect the boundary with home/production, administrator rights, directory/service credentials, certificate authority (CA) keys, synthetic application data, access decisions, audit records, backups, and public repository contents. Synthetic data does not make lab passwords or private keys safe to publish. Corporate Microsoft 365, PE-DAP, corporate web/hosting, and customer data are excluded and are never test targets.
 
-Actors: authorized standard users, separate administrators, a stolen lab account, a compromised endpoint/connector, a mistaken or malicious administrator, an untrusted external client, and a compromised software/dependency source. Boundaries: physical lab versus protected networks; management versus workloads; six virtual zones; host/application authorization inside a zone; directory versus PKI administration; remote vendor control plane versus lab resource; private evidence versus public Git.
+Consider authorized users and administrators, stolen lab accounts, compromised endpoints/connectors, administrator mistakes or misuse, untrusted remote clients, and altered software/dependencies. Check each place where trust changes: physical connectivity, Management versus workloads, the six virtual zones, permissions inside a zone, directory versus PKI administration, the remote-access provider versus the lab resource, and private evidence versus public Git.
 
-Assume an ordinary endpoint can be compromised and vendor defaults can be permissive. Do not assume MFA eliminates theft, a firewall sees overlay/same-zone traffic, encryption implies authorization, or a single owner provides organizational separation of duties. Privileged hypervisor compromise can defeat virtual isolation; physical production independence and a private recovery process limit the consequence but do not remove this risk.
+Assume an ordinary endpoint may be compromised and a vendor default may allow too much access. Multi-factor authentication (MFA) does not eliminate credential theft; the firewall may not see same-zone or overlay traffic; encryption does not grant permission; one project owner cannot provide full organizational separation of duties. A compromised hypervisor administrator could defeat virtual isolation. Physical production separation and private recovery reduce the consequences but do not remove that risk.
 
 ## Mandatory security requirements
 
@@ -59,7 +61,7 @@ NIST SP 800-207 tenet labels below are abbreviated project references: T1 resour
 | R12/R13 repeatability and recovery | T5, T7 | CM-3, CP-9, CP-10 | 4 Secure Configuration; 11 Data Recovery | T18, T19 |
 | R14/R15 assessment, risk, and evidence | T7 | CA-2, CA-7, RA-3 | 8 Audit Log Management; 17 Incident Response Management | T20 and all applicable tests |
 
-Mapping means the project exercises a selected aspect of the control; it is not evidence that an entire NIST control, CIS Control, safeguard, implementation group, or baseline is satisfied. No CIS Safeguard-level or official equivalence claim is made. Standards baseline references: [NIST 800-207](https://csrc.nist.gov/pubs/sp/800/207/final), [NIST 800-53 Rev. 5](https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final), [NIST Release 5.2.0 notice](https://csrc.nist.gov/News/2025/nist-releases-revision-to-sp-800-53-controls), and [CIS Controls v8.1](https://www.cisecurity.org/controls/v8-1). Recheck versions before implementation.
+Each mapping identifies an aspect the project intends to study. It does not show that an entire NIST control, CIS Control, safeguard, implementation group, or baseline is satisfied, and it is not an official equivalence or CIS Safeguard-level mapping. References: [NIST 800-207](https://csrc.nist.gov/pubs/sp/800/207/final), [NIST 800-53 Rev. 5](https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final), [NIST Release 5.2.0 notice](https://csrc.nist.gov/News/2025/nist-releases-revision-to-sp-800-53-controls), and [CIS Controls v8.1](https://www.cisecurity.org/controls/v8-1). Recheck versions before implementation.
 
 ## Publication and incident handling
 

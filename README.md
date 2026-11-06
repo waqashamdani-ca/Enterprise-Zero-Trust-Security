@@ -1,57 +1,53 @@
 # Enterprise Zero Trust Security Architecture
 
-**HL-CYB-001 · Advanced cybersecurity engineering lab · Task 001: planning and repository bootstrap**
+HL-CYB-001 · Advanced cybersecurity engineering lab
 
-Design an isolated, virtual enterprise to study identity, least privilege, segmentation, PKI, remote access, monitoring, and recovery. The business scenario uses a synthetic Purple Eye environment. This is an independent educational project; it has no production trust, corporate identities, customer data, or production connectivity.
+## Project Overview
 
-The repository contains a proposed architecture, an engineering assignment, an approval-gated implementation blueprint, and documentation validation. A published repository or passing documentation CI is not evidence that the lab exists or its security controls work.
+This project designs an isolated enterprise lab where people receive access to the systems needed for their role. It brings identity, network restrictions, certificates, logging, and recovery into one testable engineering assignment.
 
-Task 001 bootstrap publication and initial CI verification are recorded in [the completion evidence](evidence/BOOTSTRAP-VALIDATION.md). Owner review remains pending.
+The scenario uses synthetic Purple Eye users and data, with no production or home-network connection.
 
-## Start here
+## Business Problem
 
-| Document | Purpose |
-| --- | --- |
-| [Project assignment](docs/PROJECT-ASSIGNMENT.md) | Business case, measurable requirements, deliverables, and 100-point rubric |
-| [Implementation guide](docs/LAB-IMPLEMENTATION-GUIDE.md) | Proposed stages A–L, verification, rollback, and owner gates |
-| [Architecture](docs/ARCHITECTURE.md) | Resource budget, trust boundaries, allowed flows, and isolation design |
-| [Security requirements](docs/SECURITY-REQUIREMENTS.md) | Threat model and tailored NIST/CIS mappings |
-| [Test plan](docs/TEST-PLAN.md) | Future functional, negative, security, and recovery validation |
-| [Acceptance criteria](docs/ACCEPTANCE-CRITERIA.md) | Bootstrap acceptance and future engineering/UAT gates |
-| [Decisions](docs/DECISIONS.md) | Proposed decisions, outstanding owner choices, and change history |
-| [Risks](docs/RISKS.md) | Constraints, mitigations, and residual risk |
-| [Task reports](reports/README.md) | Individual, sequential reports and the reporting convention |
-| [Task 1 report](reports/T1-Report.md) | Preserved Task 001 outcomes and evidence |
-| [Project final report template](docs/FINAL-REPORT.md) | Project-wide assessment to complete after approved implementation |
-| [References](docs/REFERENCES.md) | Authoritative sources and command verification references |
-| [Agent governance](AGENTS.md) | Execution boundaries and repository conventions |
+An employee may need to read a report without changing the application or administering its server. Remote access must let that employee reach the approved resource without opening the whole network.
 
-## Scope and safety
+The lab will demonstrate allowed and denied actions, access revocation, and the evidence behind each result. It makes no production-impact or compliance-certification claim.
 
-Task 001 authorizes documentation, scaffolding, local Git initialization, and reviewed publication to the public [GitHub repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security). It does not authorize installing software, provisioning VMs, changing networks, deploying identity services, or running security tests.
+## Project Objectives
 
-All later stages require explicit owner approval for that individual stage. Use lab-only identities and synthetic data. Corporate Microsoft 365, PE-DAP, the corporate website, and current or future production hosting, including AWS Lightsail, are excluded. Never connect a lab domain, PKI, remote-access tenant, or automation identity to production.
+- Design separate security zones and a protected administrative path using the available hardware.
+- Give synthetic users and devices only the resource access required for their role.
+- Test certificate trust, remote access, logging, automation, and recovery in individually approved stages.
+- Publish reviewed engineering evidence and accurate task reports.
 
-The public design uses symbolic network addresses. Actual lab addresses, home network details, vendor tenant identifiers, raw logs, backups, and credentials belong in private owner-controlled storage outside the repository. Google Wifi is treated only as an existing home network; the design does not depend on changing it or assuming enterprise VLAN capabilities.
+## Architecture Overview
 
-## Repository layout
+Proxmox VE will run the virtual machines; OPNsense will control traffic between Management, Identity, Endpoints, Services, Monitoring, and Remote access zones. Active Directory manages lab identities; host/application permissions control resource access. An offline certificate authority protects the root of certificate trust.
 
-```text
-.github/workflows/        Documentation-only CI
-docs/                    Assignment, design, requirements, guide, and status
-infrastructure/          Future reviewed infrastructure definitions
-configurations/          Future sanitized configuration examples
-scripts/                 Local documentation validation
-tests/                   Focused tests of the documentation validator
-evidence/                Reviewed, sanitized evidence and capture conventions
-reports/                 Individual task reports and historical addenda
-```
+Internet access needs a separately approved isolation design. See the [architecture](docs/ARCHITECTURE.md) for the diagram, capacity, and allowed flows, and the [glossary](docs/GLOSSARY.md) for terms.
 
-No infrastructure or production configuration is included in the bootstrap.
+## Technologies Used
 
-## Validate documentation
+The repository currently uses **Git, GitHub, Python, and GitHub Actions** for version control and documentation checks.
 
-Use an already available Python 3.11 or later installation; these commands do not install dependencies or contact the lab:
+Planned lab technologies are Proxmox VE, OPNsense, Windows Server Evaluation, Active Directory, DNS, Group Policy, Linux, public key infrastructure (PKI), Tailscale, Twingate, Ansible, and PowerShell. Their presence in the design does not mean they are installed or configured.
+
+## Key Security Capabilities
+
+Planned controls include access denied unless permitted, separate ordinary/admin identities, resource-scoped remote access, certificate issuance/revocation, central audit records, and encrypted backups with a timed restore. Each has a requirement and future test.
+
+Production Microsoft 365 identities, PE-DAP, customer data, the corporate website, and production hosting, including AWS Lightsail, are excluded. Actual addresses, credentials, tenant details, raw logs, and backups stay outside public Git.
+
+## Implementation Status
+
+Repository setup, planning documents, task reporting, and documentation validation have been implemented and checked. **Lab implementation is PLANNED; operational controls are NOT TESTED.** Owner user acceptance testing (UAT) remains pending.
+
+[T1](reports/T1-Report.md) preserves the bootstrap results. [Its reporting addendum](reports/T1-Addendum-001-Reporting-Governance.md) records the reporting migration. [T2](reports/T2-Report.md) records the documentation review. No implementation stage starts without separate owner approval.
+
+## Testing and Validation
+
+Use an existing Python 3.11 or later installation:
 
 ```powershell
 python scripts/validate_docs.py
@@ -59,36 +55,27 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-The standard-library validator checks required structure, local Markdown destinations and heading anchors, stage completeness, requirement traceability, rubric totals, and selected public-publication risks. It scans Git's proposed tracked/untracked, nonignored file set and rejects sensitive filenames, binary artifacts, private addresses, and selected credential patterns. It is a focused guardrail with known limits; a manual review of staged contents remains mandatory. External references are checked during bootstrap research, not fetched on every CI run.
+The checks cover documentation, local links, traceability, report history, and selected publication risks; they do not test the lab. Before completion, also run `python scripts/validate_docs.py --require-finalized`. Review public content manually: the scanner is not exhaustive, and CI does not fetch external references.
 
-The workflow uses read-only repository permissions, an official checkout action pinned to a verified commit, no stored checkout credentials, no deployment jobs, and no lab secrets or remote-access connection.
+CI uses read-only permissions, a commit-pinned checkout, no retained credentials, and no lab access. The [test plan](docs/TEST-PLAN.md) defines future functional, denied-access, security, and recovery checks.
 
-## Task reporting
+## Project Documentation
 
-Every task must produce a report in `reports/`: `T1-Report.md`, `T2-Report.md`, and the next unique sequential number. Reports record scope, changes, executed tests and actual results, security review, GitHub operations, unresolved issues, completion/UAT status, and the next task's prerequisites and approval. A task is not engineering-complete until its report is finalized.
+- [Assignment](docs/PROJECT-ASSIGNMENT.md): business case, requirements, deliverables, and assessment rubric.
+- [Implementation guide](docs/LAB-IMPLEMENTATION-GUIDE.md): stages A–L, checks, rollback, and approval gates.
+- [Architecture](docs/ARCHITECTURE.md) and [security requirements](docs/SECURITY-REQUIREMENTS.md): boundaries, access rules, threats, and standards mappings.
+- [Acceptance criteria](docs/ACCEPTANCE-CRITERIA.md), [decisions](docs/DECISIONS.md), and [risks](docs/RISKS.md): evaluation and unresolved choices.
+- [Task reports](reports/README.md) and [bootstrap evidence](evidence/BOOTSTRAP-VALIDATION.md): work performed and evidence available.
+- [Project final report template](docs/FINAL-REPORT.md), [glossary](docs/GLOSSARY.md), and [references](docs/REFERENCES.md): project assessment, terminology, and authoritative sources.
 
-Drafts use `Report state: DRAFT`; finalized reports use `Report state: FINALIZED` and become immutable. Corrections and later evidence go in a separate addendum or the next authorized task's report. The [reporting guide](reports/README.md) defines the A–H structure. Owner UAT remains pending until the owner explicitly accepts the work. Before completion, run `python scripts/validate_docs.py --require-finalized`. The project final report template summarizes the eventual project and does not hold individual task reports.
+## Reporting and GitHub Workflow
 
-## GitHub workflow
+Every task needs a sequential, finalized report before engineering completion. Finalized reports are immutable; corrections use an addendum or later task report. Owner UAT remains separate.
 
-The owner account is `waqashamdani-ca`; the repository is public, and the default branch is `main`. After the reviewed bootstrap, use a branch such as `task/002-hardware-readiness` for each bounded engineering task. Make focused commits, push that branch, run relevant checks, and open a pull request. Review engineering evidence and obtain the required owner approval before merging. Document UAT separately from engineering verification.
+Use a task branch, focused commits, CI, and a reviewed pull request before merging; then fast-forward local `main`. Synchronization is intentional Git activity. [AGENTS.md](AGENTS.md) defines the workflow, approvals, writing standards, and prohibition on background upload. Protection/reviewer settings remain owner decisions.
 
-Start future work from a clean, synchronized `main`:
+## Author and Repository Information
 
-```powershell
-git switch main
-git pull --ff-only origin main
-git switch -c task/002-hardware-readiness
-```
+Maintained under [waqashamdani-ca](https://github.com/waqashamdani-ca) in the public [enterprise-zero-trust-security repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), with `main` as the default branch.
 
-After reviewing changes, stage explicit paths, inspect `git diff --cached`, run the local checks, commit, and push with `git push -u origin task/002-hardware-readiness`. Open a PR with the problem, scope, verification, risks, rollback, and owner approval record. After a reviewed merge, synchronize local `main` with another fast-forward-only pull. Stop on divergence and reconcile through a reviewed branch. Never force-push, reset away work, or overwrite an existing repository without explicit approval.
-
-Synchronization consists of intentional commits, pushes, PRs, and pulls. It is not background upload or automatic transmission of local files. Inspect `git remote -v`, `git status`, `git branch -vv`, `git log -1`, and `git ls-remote origin` when confirming synchronization. Branch protection and required reviewers are an open owner decision; documented conventions alone do not enforce them.
-
-## Current next task
-
-Owner review of Task 001, followed by a separately approved, read-only **Stage A hardware and isolation readiness assessment**. No installation or Project Stage 1 work begins as part of this bootstrap.
-
-## License
-
-No software license has been selected. Public visibility does not establish an open-source license; the owner must approve licensing before a license file is added.
+No software license has been selected. The next engineering task is an owner-approved, read-only hardware and isolation readiness assessment; this documentation work does not authorize it.
