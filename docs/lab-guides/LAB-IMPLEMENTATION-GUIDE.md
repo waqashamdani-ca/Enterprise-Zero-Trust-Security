@@ -1,53 +1,67 @@
 # Lab implementation guide: five phases
 
-**T6 baseline, 2026-11-06. Implementation PLANNED; operational controls NOT TESTED; owner user acceptance testing (UAT) PENDING.**
+**HL-CYB-001 | Implementation PLANNED | Operational controls NOT TESTED | Owner user acceptance testing (UAT) PENDING**
 
-This guide supports the [four-week assignment](../assignments/PROJECT-ASSIGNMENT.md). Read the [architecture](../architecture/ARCHITECTURE.md), [security controls](../security/SECURITY-REQUIREMENTS.md) and [test plan](../testing/TEST-PLAN.md) together. T6 changes documents only; none of the implementation examples below has been executed.
+Build an isolated lab that lets an analyst read reports, an engineer read maintenance instructions and an unassigned user receive a denial. This guide explains how to prepare, configure and check the [four-week assignment](../assignments/PROJECT-ASSIGNMENT.md). No installation or working control is established by these instructions.
 
-## How to execute a future approved stage
+## Before beginning the lab
 
-Before each stage record owner approval/date, exact assets, permitted changes, validation, private evidence handling and rollback in a new draft [task report](../reports/INDEX.md). Verify current installed-version guidance, media integrity and lawful terms. Five phases organize work; they retain the separate A-L approvals in [AGENTS.md](../../AGENTS.md).
+1. Read the [architecture](../architecture/ARCHITECTURE.md), [security requirements](../security/SECURITY-REQUIREMENTS.md) and [test plan](../testing/TEST-PLAN.md). FWR identifies a requirement; FWT identifies its test. Keep actual results empty until execution.
+2. Before **each stage A-L**, obtain explicit owner approval naming scope, exact assets, permitted changes, validation, private evidence handling and rollback. Record its reference/date in the private change record and a sanitized [engineering report](../reports/INDEX.md). A document, previous approval or pull request does not approve the next stage.
+3. Confirm selected versions, media integrity, lawful terms and installed help. Navigation below follows vendor documentation reviewed on 2026-11-06. Verify labels against the installed release; stop and resolve a mismatch before applying changes.
 
-| Phase | Existing approval stages retained | Week |
+| Phase | Separate stage approvals | Week |
 | --- | --- | --- |
-| 1: Infrastructure and Network | A readiness, B host, C networking, D virtual firewall; each separately | 1 |
-| 2: Identity and Endpoint Security | E directory, F endpoint/server baselines | 2 |
-| 3: Zero Trust Access Controls | G simple CA, H application roles, I Tailscale | 2-3 |
-| 4: Monitoring, Automation and Recovery | J monitoring; L automation/recovery portion | 3-4 |
+| 1: Infrastructure and Network | A readiness; B host; C networking; D virtual firewall | 1 |
+| 2: Identity and Endpoint Security | E directory; F endpoint/server baselines | 2 |
+| 3: Zero Trust Access Controls | G simple CA; H application roles; I Tailscale | 2-3 |
+| 4: Monitoring, Automation and Recovery | J monitoring; explicitly approved L automation/recovery portion | 3-4 |
 | 5: Validation and Final Submission | K validation; remaining L closeout portion | 4 |
 
-T6 replaces old stage quantities, not approval gates. Only the explicitly approved automation/recovery portion of L may precede K; prior approval does not authorize remaining changes. Allow about 8-12 focused hours weekly after readiness/approvals. Pause dependent work on delivery, isolation, activation or recovery gaps and revise dates.
+Only the approved automation/recovery portion of L may precede K. Allow 8-12 focused hours weekly after readiness approval. Delivery, isolation, activation or recovery gaps move dates; they do not relax controls.
 
-All implementation examples are **proposed future commands/configuration**, with targets stated. Set symbolic variables privately to reviewed lab-only values outside Git. Stop on uncertain assets/disks, unexpected protected connectivity, secret output, missing rollback or failed safety checks. Use approved console isolation and retain private evidence. Never execute a guide merely because it exists.
+**Command labels:** READ-ONLY inspects state; CONFIGURATION CHANGE writes settings/files; DESTRUCTIVE / HIGH-RISK can erase data, change trust or expose connectivity. Every example is proposed reference text for a future approved stage. Run only on its named lab target. Copy commands from Markdown; PDF wrapping is visual. Replace symbolic addresses, paths and selected service names privately; never paste credentials into commands or Git.
+
+**Stop and recover:** uncertain disks/assets, unexpected home/production connectivity, secret output, failed safety checks or missing rollback stop the affected work. Disconnect approved egress using the agreed console procedure, preserve private evidence and obtain a bounded correction approval. No probes of home or production are permitted.
 
 ## Phase 1: Infrastructure and Network
 
-### Prerequisites
+### A. Objective
 
-Stage A read-only approval first. Existing owner-described hardware: Dell Precision 5820 (W-2125, 80 GB RAM, 512 GB SSD), Lenovo laptop, HP desktop, test laptops and Google Wifi; thermal paste available.
+Prepare compatible hardware and build one recoverable Proxmox host, one virtual firewall and three isolated zones. Complete readiness before any installer is opened.
 
-**Ordered:** Xeon W-2145, Samsung 1 TB SSD, Sabrent PCIe adapter, Intel I350-T4 NIC, GL.iNet Beryl AX and TP-Link managed switch. Reference: latest owner procurement plan and 2026-11-06 procurement correction. **Delivered:** unconfirmed; expected November 7 for non-CPU items and November 12, 2026 for CPU. **Installed:** no T6 installation evidence or assumption that Proxmox/other lab software exists. **Validated:** no hardware-readiness/operational-lab evidence. Do not reorder these items.
+### B. Prerequisites
 
-Before installation confirm delivery, physically inspect parts, verify compatibility, inventory existing data/services, establish backup/recovery readiness and obtain exact owner approval for destructive changes. Verify CPU/cooler/firmware and SSD/adapter/slot compatibility. Preserve original Windows disk and existing services; shutdown/migration requires separate approval. Extra hardware does not mandate physical OPNsense, VLANs or extra zones.
+- Stage A read-only approval; separate B-D approvals before their changes.
+- **Existing:** owner-described Dell Precision 5820 (W-2125, 80 GB RAM, 512 GB SSD), Lenovo laptop, HP desktop, test laptops, Google Wifi and available thermal paste. This is not a readiness finding.
+- **Ordered:** Xeon W-2145, Samsung 1 TB SSD, Sabrent PCIe adapter, Intel I350-T4 NIC, GL.iNet Beryl AX and TP-Link managed switch, per the latest owner procurement plan and 2026-11-06 correction. Do not reorder them.
+- **Delivered:** unconfirmed. Expected dates remain November 7, 2026 for non-CPU items and November 12 for the CPU; estimates are not receipt.
+- **Installed:** unconfirmed; do not assume Proxmox or other lab software exists. **Validated:** no hardware-readiness or operational evidence.
+- Before installation: confirm delivery, inspect condition/part identity, verify CPU/cooler/firmware and SSD/adapter/slot compatibility, inventory existing data/services, verify backup/recovery and obtain exact destructive-target approval.
+- Preserve the original Windows disk and existing data/services. Shutdown or migration needs its own approval. Extra hardware does not require VLANs, physical OPNsense or extra zones.
 
-### Required tools
+### C. Required tools
 
-Existing inventory/firmware/storage screens, physical console, private parts/disk/cable ledger, verified official media/checksums, private credential store and recovery media. No new inspection software during read-only A.
+Existing firmware/storage screens, physical console, private disk/cable ledger, official verified installation media, credential store and recovery media. Stage A installs no inspection software. Use [Proxmox documentation](https://github.com/proxmox/pve-docs/blob/master/pve-gui.adoc) matched to the selected release.
 
-### Implementation instructions
+### D. Step-by-step implementation
 
-1. **A:** inspect CPU/RAM/virtualization, disk identity/contents/free space, NICs and console. Compare supplied/observed facts and date each hardware status separately. Do not open an installer.
-2. Inventory current services/data and availability needs. Verify backup/recovery; exclude protected workloads before any approved host transition.
-3. Recalculate the [capacity ledger](../architecture/ARCHITECTURE.md#initial-capacity-budget): four VMs, 20 GiB guest RAM/176 GiB disks, 12 GiB host RAM and 80 GiB free disk reserved, plus media/restore space. Issue no-go if it cannot fit.
-4. Map cables/bridges and administrator adapters. No forwarding via Wi-Fi, another NIC or VPN; no workload bridge physical uplink. Keep external access disconnected.
-5. **B:** after exact-disk/destructive-install approval and verified recovery, boot official verified Proxmox media at console. Recheck disk identity immediately before selection; never use the preserved Windows disk or unapproved substitute.
-6. Configure one host with named scoped administration, supported MFA/recovery and isolated management. Record build/updates/storage and console recovery. Root is for necessary setup/recovery. No cluster.
-7. **C:** create vmbr0 Management, vmbr10 Corporate and vmbr20 Restricted. Only vmbr0 has the verified isolated physical admin segment/host IP. Save prior settings and apply from console.
-8. **D:** create OPNsense (2 vCPU/4 GiB/16 GiB), one NIC per zone. Match recorded virtual MAC/interface identities; install verified media. Optional WAN remains disconnected; no inbound forwarding.
-9. Apply [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix), replacing broad installer permits with exact source/destination/service allows. Keep the named management allow path before narrowing rules.
-10. Inspect automatic/floating/group/anti-lockout rules, states, NAT, DNS, IPv6, firewall-originated traffic and UPnP/NAT-PMP. Save encrypted private config. Internet dependencies await approved independently isolated egress.
+1. **A - READ-ONLY, existing candidate at its console:** compare observed CPU/RAM/virtualization, disk identity/contents/free space and NICs with the private ledger. Date Existing/Ordered/Delivered/Installed/Validated separately. If a required part or recovery copy cannot be verified, record a no-go.
+2. Review current services, data and availability needs with the owner. Confirm recovery media and access to the backup. Exclude protected workloads before host transition.
+3. Recalculate the [capacity budget](../architecture/ARCHITECTURE.md#initial-capacity-budget): four VMs, 20 GiB guest RAM/176 GiB disks, 12 GiB host RAM and 80 GiB free storage reserved, plus media and temporary restore space. Thin provisioning does not create capacity.
+4. Draw the cable/bridge map. Dedicate the admin path to the lab. Inspect Wi-Fi, other NICs, VPNs and Internet sharing; disable unapproved forwarding under the relevant approval. Keep external access disconnected. A Beryl AX/home-LAN uplink or NAT alone does not prove independent isolation.
+5. **B - DESTRUCTIVE / HIGH-RISK, physical host console:** boot verified Proxmox media only after exact-disk and backup/recovery approval. Match the installer target to the approved model/capacity/serial in the private ledger immediately before selection. Never select the preserved Windows disk or a substitute. If ambiguous, exit before confirming installation.
+6. After approved installation, verify the host boots locally. From the dedicated isolated admin station, open its displayed management address. Select the host in the left tree, then **Disks** and the storage object's **Summary** to compare actual capacity/identity. Use **Datacenter > Storage** to inspect the selected storage; creating/wiping storage requires exact approval.
+7. Configure named scoped administration and supported multi-factor authentication (MFA)/recovery. Use root only for necessary setup/recovery. Record build, updates and console recovery. Do not create a cluster.
+8. **C - CONFIGURATION CHANGE, host web interface with console available:** select the host, **System > Network**. Inspect vmbr0; create/edit Linux bridges vmbr10 and vmbr20. Only vmbr0 has the approved isolated physical admin port and host address. Corporate/Restricted have no physical ports, host addresses or uplink. Save the old settings; review pending changes before **Apply Configuration** or the installed release's equivalent.
+9. **D - CONFIGURATION CHANGE, Proxmox:** choose **Create VM**; select the approved node/unused VM ID, verified OPNsense ISO and approved storage. Set 2 vCPU, 4 GiB RAM, 16 GiB disk. Verify supported virtual disk/NIC types for the selected guest release. Do not start until its interfaces are reviewed.
+10. Select the firewall VM, **Hardware**. Assign one virtual NIC to each of vmbr0/vmbr10/vmbr20, using **Add > Network Device** as needed. Record each MAC and bridge. Open **Console**, start the VM and install only to its virtual disk. Optional WAN stays disconnected; no inbound forwarding.
+11. In the [OPNsense interface settings](https://docs.opnsense.org/manual/interfaces.html), open **Interfaces > Assignments**. Match devices to recorded MACs, name the three zones and enter the approved private interface addresses. Device names vary. Review and apply from console-supported access; inspect private/bogon settings for the actual interface role.
+12. In **Firewall > Rules**, select the traffic's incoming interface and implement [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix). Enter action, interface, direction, protocol, exact source/destination and destination service; log relevant denies. Keep the named management allow before narrowing broad installer permits. Current [rule guidance](https://docs.opnsense.org/manual/firewall.html) distinguishes modern rules from legacy screens: verify sort order, quick behavior and effective automatic/floating/group rules.
+13. Inspect states, NAT, DNS, routed IPv6, firewall-originated traffic and UPnP/NAT-PMP. Retest approved affected flows after handling only their stale states; do not clear all states casually. Keep FF-07 egress disconnected until independently isolated access is separately approved.
+14. Open **System > Configuration > Backups**; export a [password-protected configuration](https://docs.opnsense.org/manual/backups.html) to approved private storage. Confirm its date/recovery custody. Check relevant denies under **Firewall > Log Files > Live View**, filtering by lab interface/source/service.
 
-Proposed read-only inventory on **approved Windows candidates**, output private:
+**READ-ONLY - Windows candidate, local PowerShell; standard user normally sufficient, approved elevation only if access is denied.** These queries show local hardware and adapter settings. No replacement values. Output stays private:
 
 ```powershell
 Get-CimInstance -ClassName Win32_ComputerSystem
@@ -55,106 +69,129 @@ Get-CimInstance -ClassName Win32_Processor
 Get-NetIPConfiguration -All
 ```
 
-Use version-matched [Proxmox/OPNsense guidance](../governance/REFERENCES.md); no shortcut disk-selection or packet-filter-disable command.
+**Confirm:** compare CPU/RAM and adapter/gateway data with firmware/screens and the cable map. Missing permissions or inconsistent values block readiness; these queries do not prove physical delivery, disk safety or network isolation.
 
-### Expected results
+### E. Expected results
 
-Verified readiness and, only after B-D approvals, one recoverable host/firewall, three zones and no protected-network path. Hardware states reflect observations.
+Readiness is evidenced first. After separately approved B-D work, one host/firewall and three zones have a recoverable admin path, measured capacity and no protected-network path.
 
-### Verification steps
+### F. Verification checklist
 
-FWT-01/FWT-02: compare cables/bridges/NICs/routes/IPv6/aliases and effective policy with permitted/denied bounded flows to known listening **lab-owned mocks**; inspect logs/counters. Repurpose approved guests/console, no permanent extra VMs. Never probe home/production. Verify named administration, ordinary-user denial and console recovery.
+- FWT-01/FWT-02: compare cables, bridge/NIC membership, routes, IPv6, private aliases and effective rules.
+- Demonstrate permitted/denied bounded flows to known listening **lab-owned mocks**, with matching logs/counters. Repurpose approved guests/console; add no permanent VM and never probe home/production.
+- Confirm named administration, ordinary-user denial and console recovery. A disconnected target alone does not prove a deny rule.
 
-### Troubleshooting
+### G. Troubleshooting
 
-Lost administration: inspect interface mapping/specific allow from console. Unexpected permit: disconnect approved egress, inspect states/automatic rules/forwarding. Uncertain disk/compatibility/backup blocks installation; no substitute disk/home uplink.
+Lost administration: use console to inspect MAC/bridge mapping and the specific management allow. Unexpected permit: disconnect approved egress and inspect state/automatic rules/forwarding. Uncertain compatibility, disk or backup means no installation; do not substitute a disk or home uplink.
 
-### Rollback procedures
+### H. Rollback / recovery
 
-A is read-only. For B-D restore specific saved host/firewall/network settings from console; keep egress disconnected until reverified. Destructive reinstall/hardware changes need explicit rollback coverage. Preserve data/evidence.
+A changes nothing. For B-D, use the approved console plan to restore saved host/network/firewall settings and reverify isolation before egress. Destructive reinstall or hardware recovery needs explicit coverage; preserve the original disk, data and evidence.
 
 ## Phase 2: Identity and Endpoint Security
 
-### Prerequisites
+### A. Objective
 
-Phase 1 verified; E/F approvals; supported lawful Windows Server/Windows/Linux media, approved update/activation path, private DNS/address/time and recovery custody.
+Create the Windows lab directory and supported Windows/Linux guests. Keep standard work separate from administration and Windows logon separate from application authorization.
 
-### Required tools
+### B. Prerequisites
 
-Proxmox console; Server Manager, Active Directory Users and Computers, DNS/Group Policy Management; supported Linux/Windows firewall/settings tools and baseline checklist.
+- Phase 1 verified; E directory and F endpoint/server approvals.
+- Supported lawful Windows Server, domain-capable Windows endpoint and Linux media; guest CPU/disk/virtual TPM requirements checked.
+- Approved update/activation path, private addresses/DNS/time, recovery credentials and selected Linux network/firewall backend. Missing safe activation remains a blocker.
 
-### Implementation instructions
+### C. Required tools
 
-1. Create DC1 in Corporate (2 vCPU/6 GiB/64 GiB), WIN1 in Corporate (2/6/64), APP1 in Restricted (2/4/32). Each has one zone NIC; check supported CPU/disk/virtual TPM needs before installation.
-2. Install approved OSs, record builds/update status/evaluation deadlines and configure lab DNS/time. Missing safe activation remains a dependency.
-3. On DC1 set fixed private address/name, install AD Domain Services/DNS and create ad.lab.test. Use secure Directory Services Restore Mode prompts/private custody; no corporate trust/cloud join/sync.
-4. Create user/privileged/computer organizational units. Add standard **ava**, **eli**, **uma**, plus one separate named privileged admin. Three project security groups: **LabReaders** (ava, eli), **LabMaintainers** (eli), **LabAdmins** (admin). Delegate only required rights. Secure built-in/service accounts separately; they are not extra project personas.
-5. Join WIN1 to the lab domain; use lab DNS only. Add APP1's DNS record; APP1 uses approved lab DNS/time without a domain join.
-6. Pilot Group Policy for host firewall, supported antivirus, audit logon/account changes (including DC Kerberos Authentication Service success/failure), sensible password/lockout and standard/admin separation. Protect recovery accounts; no lockout/password-attack experiment.
-7. Enable APP1 host firewall; HTTPS only from approved sources, administration only from the dedicated path. Disable unnecessary listeners/forwarding; retain logs.
-8. Inspect resultant policy/local Administrators. Record supported directory recovery as a dependency; snapshots do not prove AD disaster recovery.
+Proxmox Console; Server Manager; Active Directory Users and Computers; DNS Manager; Group Policy Management; Windows Security/firewall console; the selected Linux distribution's supported network/firewall interface. Record actual package/service names and configuration paths during approval; do not add a different manager to match an example.
 
-Proposed **DC1 elevated PowerShell**, E approval only; changes configuration and may reboot:
+### D. Step-by-step implementation
+
+1. In Proxmox **Create VM**, select the approved node, unused VM ID, media and storage. Create DC1 on vmbr10 (2 vCPU/6 GiB/64 GiB), WIN1 on vmbr10 (2/6/64) and APP1 on vmbr20 (2/4/32). Review each **Hardware > Network Device** bridge/MAC and single zone NIC before first start. Use **Console** for installation/recovery.
+2. Install the approved operating systems only to their virtual disks. Name the guests DC1/WIN1/APP1; record builds, update status and evaluation deadlines. Configure approved lab time; never use corporate activation keys or protected services.
+3. On DC1, use **Server Manager > Local Server** to review its name and Ethernet settings. Set its approved fixed address/prefix, zone-firewall gateway and lab-only DNS plan through the adapter properties. Confirm identity/address/time at console before promotion.
+4. **E - DESTRUCTIVE / HIGH-RISK, DC1 local Administrator:** open **Server Manager > Manage > Add Roles and Features**, select role-based installation and DC1, then **Active Directory Domain Services** with management tools. After installation use the notification **Promote this server to a domain controller**, choose **Add a new forest**, and enter **ad.lab.test**. Retain DNS; securely enter the Directory Services Restore Mode recovery password. Review paths/prerequisites and allow the approved reboot. [Microsoft deployment guidance](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/install-active-directory-domain-services--level-100-) governs installed-version choices. Use the GUI or equivalent commands below, not both as repeated deployment.
+5. On DC1, **Server Manager > Tools > Active Directory Users and Computers**: expand ad.lab.test, create organizational units for users, privileged identities and lab computers. In the chosen unit use **New > User** for ava, eli, uma and the separate named privileged administrator; set prompted private passwords. Secure built-in/service accounts separately; they are not extra project personas.
+6. Use **New > Group**, Security type and approved scope, to create LabReaders, LabMaintainers and LabAdmins. In group **Properties > Members**, put ava/eli in LabReaders, eli in LabMaintainers and only the privileged administrator in LabAdmins. Assign only approved administrative rights; a custom group name alone grants none. Inspect unintended privileged memberships.
+7. In **Server Manager > Tools > DNS**, expand DC1 > **Forward Lookup Zones > ad.lab.test**. Inspect DC/service records. Use **New Host (A or AAAA)** for app, entering APP1's approved Restricted address. Confirm name/address in the [DNS record view](https://learn.microsoft.com/en-us/windows-server/networking/dns/manage-resource-records?tabs=dns-manager); do not configure corporate forwarding.
+8. On WIN1, set its adapter to lab DNS only. Open **System Properties > Computer Name > Change**, select **Domain**, enter ad.lab.test and provide only the approved lab join credential. Review the domain-join confirmation, restart, then sign in as a standard lab user. The [join procedure](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/join-computer-to-domain) varies by Windows edition/release; no cloud/production join.
+9. **F - CONFIGURATION CHANGE, DC1 Group Policy Management:** link the approved endpoint pilot policy to lab computer units. Under **Computer Configuration > Policies > Windows Settings > Security Settings**, configure scoped firewall/audit settings using the release's [Windows Firewall with Advanced Security](https://learn.microsoft.com/windows/security/operating-system-security/network-security/windows-firewall/tools) node. Keep profiles enabled, supported antivirus, separate privileges and recovery access. Apply approved [domain password/lockout policy](https://learn.microsoft.com/windows/security/threat-protection/security-policy-settings/password-policy) through a GPO linked at the ad.lab.test domain root; an OU-only link does not enforce domain-account passwords. Audit logon/account changes and DC Kerberos Authentication Service success/failure.
+10. On WIN1, inspect **Windows Security > Firewall & network protection** and the effective policy. In **Computer Management > Local Users and Groups > Groups > Administrators**, confirm standard lab users are absent. Inspect resultant policy in the approved policy view; never test lockout through repeated password attempts.
+11. On APP1's Proxmox console, configure its approved address/prefix, Restricted gateway, DC1 DNS and lab time using the selected distribution's recorded network interface/configuration. Match the NIC by MAC. For an approved Ubuntu release using [Netplan](https://ubuntu.com/server/docs/configuring-networks/), preserve the existing /etc/netplan YAML before editing those fields with the approved privileged editor; verify its activation/recovery procedure first. Inspect effective addresses/routes/resolver after applying. APP1 does not join AD.
+12. In APP1's recorded host-firewall tool, preserve the current rules, allow HTTPS only from approved local/overlay sources and administration only from the dedicated path, then enable/review default-deny input and disabled forwarding. Apply from console; verify listeners/rules separately. Tailscale rule precedence is checked again in Phase 3. Exact backend/menu/activation commands require the installed distribution's documentation before approval.
+
+**DESTRUCTIVE / HIGH-RISK - DC1, elevated Windows PowerShell as local Administrator, E approval.** Alternative to step 4: installs AD tools and creates the lab forest, prompting securely for recovery credentials and potentially rebooting. Keep ad.lab.test as the approved synthetic name; no private replacement value or inline password:
 
 ```powershell
 Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
 Install-ADDSForest -DomainName 'ad.lab.test' -InstallDNS
 ```
 
-Check selected-version parameters/prompts in [Microsoft guidance](../governance/REFERENCES.md#active-directory-dns-and-policy). Proposed read-only **WIN1 member** check: `Test-ComputerSecureChannel -Verbose`; not a DC health test.
+**Confirm:** review role/forest prerequisite output, complete the approved reboot and inspect AD/DNS in Server Manager. A feature-install success alone does not prove promotion. If prerequisites fail, stop; do not add bypass flags or demote/rebuild casually.
 
-### Expected results
+**READ-ONLY - WIN1 domain member, elevated Windows PowerShell, lab administrator.** Run `Test-ComputerSecureChannel -Verbose` to check the member's lab-domain channel. No replacements; expect True and a healthy-channel message. Confirm separately through standard logon and DNS/policy views. False means inspect DNS/time/rules first; do not add -Repair without approval. This [command is not a DC health check](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/test-computersecurechannel?view=powershell-5.1).
 
-One directory, three standard users/groups, separate privileged admin, Windows member and hardened Linux server. AD Windows sign-in and app permissions are verified separately.
+### E. Expected results
 
-### Verification steps
+One lab AD/DNS/Group Policy directory, three standard users/groups, one separate privileged administrator, a Windows member and a hardened Linux app server. Application roles remain separate.
 
-FWT-03/FWT-04: compare directory/DNS/groups with WIN1 standard logon, name resolution, resultant policy and harmless privileged-action denial. Inspect firewall/patch/antivirus state and trust/cloud/resolver settings; never contact protected assets.
+### F. Verification checklist
 
-### Troubleshooting
+- FWT-03/FWT-04: compare directory counts, memberships and DNS to standard WIN1 logon/name resolution and resultant policy.
+- Inspect patch/antivirus/firewall state, single zone NICs, trust/cloud/resolver settings and standard-user privilege denial with an approved harmless admin control.
+- Record supported directory recovery as a dependency. A snapshot is not proof of AD disaster recovery.
 
-Join/logon/policy failure: inspect lab DNS/service records, time and AD/host rules. WIN1/DC1 share Corporate, so OPNsense does not mediate their traffic. No corporate DNS/credentials or broad permits.
+### G. Troubleshooting
 
-### Rollback procedures
+Join/logon/policy failure: inspect lab DNS/service records, time and host rules. WIN1/DC1 share Corporate, so OPNsense does not mediate that traffic. A missing Linux backend/path or rejected setting requires vendor/version review, not a broad permit or firewall disable.
 
-Restore only changed pilot policy/group/host settings, preserving console/admin access. Forest rebuild/demotion or directory restore needs a separately approved supported plan; do not casually revert DC snapshots.
+### H. Rollback / recovery
+
+Restore only changed pilot policy, memberships and host/network settings through retained console/admin access. Forest demotion/rebuild or directory restoration requires a separately approved supported plan; do not casually revert DC snapshots.
 
 ## Phase 3: Zero Trust Access Controls
 
-### Prerequisites
+### A. Objective
 
-Phase 2 verified; G/H/I approvals; app.ad.lab.test, frozen six-case matrix and private keys/passwords/trust scope. Tailscale requires approved independently isolated Internet, separate lab tailnet/identities, supported MFA/recovery and current terms; otherwise remote checks stay NOT TESTED.
+Protect two synthetic HTTPS paths with separate application accounts, then restrict remote access to that one application. Demonstrate real denial after role/device revocation.
 
-### Required tools
+### B. Prerequisites
 
-Supported Apache HTTP Server 2.4 file/group authorization and TLS, OpenSSL 3.x, lab browser/clients, AD group view and Tailscale console/client. Verify distribution package/config paths and installed help before approved installation.
+- Phase 2 verified; separate G certificate, H application and I remote-access approvals.
+- app.ad.lab.test and the frozen [six-case matrix](../testing/TEST-PLAN.md#six-application-access-cases); private key/password custody and approved lab-client trust.
+- For Tailscale: independently isolated approved Internet, separate lab tailnet/identities, supported MFA/recovery and current lawful terms. Otherwise remote work remains NOT TESTED.
 
-### Implementation instructions
+### C. Required tools
 
-1. On APP1 create root-owned synthetic pages in /srv/labapp/reports and /srv/labapp/maintenance. Maintenance-page reading is the restricted engineering workflow; expose no shell/real operational change.
-2. **G:** create one encrypted CA key/public root on an approved isolated signing workstation; keep files offline outside Git. Transfer reviewed CSR/public certificates via approved media. No CA VM/separate issuer.
-3. Generate APP1 key/CSR, restrict key permissions, inspect/sign the CSR offline with CA:FALSE, serverAuth, proper key usage and DNS SAN app.ad.lab.test. Return public leaf only.
-4. Import public CA into approved lab clients; inspect hostname/dates. No home/production trust change or DC time manipulation.
-5. **H:** create Apache accounts ava/eli/uma with prompted app passwords different from AD. Restrict hashed password/group files outside the document tree. Manually mirror LabReaders/LabMaintainers; LabAdmins is infrastructure-only. This is not AD SSO/automatic synchronization.
-6. Configure one HTTPS virtual host, correct key/leaf, no plain HTTP/public access, listing off, two protected paths and secret-free access/error logs. Syntax-check before supported activation/reload.
-7. Execute the six [FWT-03 cases](../testing/TEST-PLAN.md#six-application-access-cases). Remove eli from app LabMaintainers and corresponding AD role; authenticated and fresh maintenance requests must fail. Record time/cache treatment. Restore only under approval.
-8. **I:** confirm separate lab tailnet/MFA/recovery, replace permissive defaults, inspect all grants/ACLs/tag owners, then enroll APP1/one approved client. Grant exact APP1 TCP 443 only.
-9. Keep subnet advertisements, exit nodes, public sharing, Tailscale SSH/Funnel/Serve and forwarding off. Inspect effective overlay host rules/vendor precedence; OPNsense alone cannot prove overlay restriction.
-10. Map app.ad.lab.test privately to APP1 overlay address on the remote client; local clients use zone address. Test permitted/unauthorized/wrong listening port, remove client authorization/grants, and verify existing/fresh session denial. Record actual time and stop on broader access.
+Existing approved signing workstation, OpenSSL 3.x, APP1 Apache HTTP Server 2.4, local administrator/editor, lab browsers, AD group view and Tailscale client/admin console. Verify installed help, modules, package paths and service controls before changes; no CA, connector or extra permanent VM.
 
-Proposed **offline signer**, G approval; private path variables, interactive encrypted-key prompt:
+### D. Step-by-step implementation
+
+#### Create and check the lab certificate
+
+1. **G - CONFIGURATION CHANGE, offline signing workstation:** prepare private owner-only storage outside Git. The CA key stays encrypted/offline. Define the approved private paths below; inspect existing contents to avoid overwriting keys/certificates/serial state.
+2. Generate one root CA using the command below. Keep the prompted passphrase in approved recovery custody. Copy only the public root to authorized transfer media.
+3. On APP1, generate its service key and certificate signing request (CSR) in restricted storage. Inspect request identity and intended paths, then transfer the reviewed CSR to the offline signer. Never transfer APP1's private key.
+4. On the signer, create the leaf extension file below and sign the reviewed CSR. Return the public leaf and root to APP1/approved clients. Inspect chain, hostname and dates before configuring the service.
+5. On approved Windows lab clients, import only the public CA into the selected lab trust store, using **Manage computer certificates > Trusted Root Certification Authorities > Certificates > All Tasks > Import** for explicitly approved computer-wide trust; [Microsoft's store guidance](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store) explains the certificate console. Check the root fingerprint against the signer. Never import into a home/production trust store or move DC time to test expiry.
+
+**CONFIGURATION CHANGE - offline signer, local POSIX shell as the private signing-file owner; root not required.** `LabCaKeyPath` and `LabCaCertPath` are reviewed new private key/public-root paths. Creates a 3072-bit encrypted CA key and 365-day self-signed root; password entry is interactive. [OpenSSL req](https://docs.openssl.org/3.5/man1/openssl-req/) documents the selected-version options:
 
 ```sh
 openssl req -x509 -newkey rsa:3072 -sha256 -days 365 -keyout "$LabCaKeyPath" -out "$LabCaCertPath" -subj "/CN=HL-CYB-001 Lab CA" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign"
 ```
 
-Proposed **APP1** key/CSR; restrict filesystem access to the unencrypted service key:
+**Confirm:** inspect CA constraints/key usage and public-root identity with the selected OpenSSL certificate view; confirm the key is encrypted without displaying it. Stop on overwrite/path/passphrase problems.
+
+**CONFIGURATION CHANGE - APP1 Linux console, root or approved administrator controlling the service-key directory.** `LabAppKeyPath` and `LabAppCsrPath` are approved new paths. Creates a 2048-bit unencrypted service key and CSR, not a signed certificate. Restrict owner/read permissions before generation and retain only required service access:
 
 ```sh
 openssl req -new -newkey rsa:2048 -noenc -keyout "$LabAppKeyPath" -out "$LabAppCsrPath" -subj "/CN=app.ad.lab.test"
 ```
 
-Private reviewed leaf extension file on **offline signer**:
+**Confirm:** inspect CSR subject and key-file ownership/permissions privately. -noenc intentionally leaves the service key unencrypted; filesystem restrictions and encrypted backup protect it. Do not expose key contents.
+
+**CONFIGURATION CHANGE - offline signer, signing-file owner; root not required.** Save this exact extension content at the private `LabLeafExtensionsPath`; it is a configuration file, not a shell command:
 
 ```ini
 basicConstraints=critical,CA:FALSE
@@ -163,7 +200,9 @@ extendedKeyUsage=serverAuth
 subjectAltName=DNS:app.ad.lab.test
 ```
 
-Proposed **offline signer**, signing and inspection:
+**Confirm:** CA:FALSE, serverAuth, key usage and the app.ad.lab.test DNS subject alternative name (SAN) match the intended leaf. A different hostname requires review before signing.
+
+**CONFIGURATION CHANGE followed by READ-ONLY - offline signer, same file owner.** The first command signs the reviewed CSR for 90 days and maintains the private `LabSerialPath`; `LabAppCertPath` is the new public leaf. The remaining commands inspect chain/hostname/dates/SAN without changing files. All other path variables are those above:
 
 ```sh
 openssl x509 -req -in "$LabAppCsrPath" -CA "$LabCaCertPath" -CAkey "$LabCaKeyPath" -CAcreateserial -CAserial "$LabSerialPath" -days 90 -sha256 -extfile "$LabLeafExtensionsPath" -out "$LabAppCertPath"
@@ -171,16 +210,28 @@ openssl verify -CAfile "$LabCaCertPath" -verify_hostname app.ad.lab.test "$LabAp
 openssl x509 -in "$LabAppCertPath" -noout -dates -ext subjectAltName
 ```
 
-Browser TLS is a second observation. Certificate revocation infrastructure is excluded; app/device revocation remains mandatory.
+**Confirm:** [chain verification](https://docs.openssl.org/3.5/man1/openssl-verify/) returns OK; displayed SAN and dates match. Inspect the [issued certificate's](https://docs.openssl.org/3.5/man1/openssl-x509/) CA:FALSE/serverAuth properties too. Stop on failed verification; do not bypass browser warnings. A real browser TLS session is the second observation. Certificate-revocation infrastructure is excluded; account/device revocation remains required.
 
-Proposed **APP1** password creation: `htpasswd -B -c /etc/labapp/users ava` once, then `htpasswd -B /etc/labapp/users eli` and similarly uma. -c overwrites records; never reuse it to add users. Passwords stay interactive. Private group file:
+#### Configure and verify application roles
+
+1. **H - CONFIGURATION CHANGE, APP1 root/approved service administrator:** create root-owned synthetic pages under /srv/labapp/reports and /srv/labapp/maintenance. Maintenance means reading instructions, not obtaining a shell or making a real operational change.
+2. Install/configure only the approved Apache package/modules through the approved media/update path. Verify TLS, file authentication and group authorization modules. Use the distribution's configuration directory; [Ubuntu's example](https://ubuntu.com/server/docs/how-to/web-services/install-apache2/) uses /etc/apache2 with sites-available/sites-enabled and mods-available/mods-enabled. Other distributions differ; record actual activation and log/service paths.
+3. Create /etc/labapp outside the document tree with restricted ownership. As root, `htpasswd -B -c /etc/labapp/users ava` creates the bcrypt password file once. This is **DESTRUCTIVE / HIGH-RISK if the file already exists**: -c overwrites records. Add eli with `htpasswd -B /etc/labapp/users eli`, and uma the same way without -c. Prompts take distinct app passwords, never AD passwords. No private value belongs in the command line.
+4. Save the group file below as /etc/labapp/groups. Make both files readable only by the required administrator/service account. Inspect the three account names and memberships privately without displaying hashes. A failed [htpasswd](https://httpd.apache.org/docs/2.4/programs/htpasswd.html) write is not success; preserve the old file and resolve permissions first.
+5. Save the reviewed virtual host fragment below in the distribution's site configuration. Match public certificate/key paths to the approved files. Add Listen 443 once, disable default/plain-HTTP sites and directory listing, and configure secret-free access/error logs. Verify the package's activation procedure before reload.
+6. Run the syntax check described below, activate/reload through the recorded service control, then open https://app.ad.lab.test/reports/ and /maintenance/ from the approved lab client. Execute C01-C06 with known valid app credentials, recording allowed content or the intended denial.
+7. Remove eli from application LabMaintainers and the corresponding AD group under the approval. Retry both an authenticated browser and a fresh maintenance request; both must deny. Record time/cache treatment and correlated authorization logs. Restore membership only if approved.
+
+**CONFIGURATION CHANGE - APP1, root/approved editor.** Group-file content, not shell commands:
 
 ```text
 LabReaders: ava eli
 LabMaintainers: eli
 ```
 
-Proposed **APP1 Apache 2.4 fragment**, after modules/paths are verified; add Listen 443 once and disable default/plain-HTTP sites:
+AD manages Windows lab identities. The app uses **separate test accounts, distinct passwords and manually assigned roles**. LabAdmins is infrastructure-only. AD changes alone do not revoke app permissions; enterprise single sign-on and automatic synchronization are excluded.
+
+**CONFIGURATION CHANGE - APP1 Apache 2.4 site file, root/approved editor.** The paths are the approved lab layout; adapt only through review if the selected package differs. This fragment enables TLS and authorizes each child directory by its group:
 
 ```apache
 <VirtualHost *:443>
@@ -210,48 +261,73 @@ Proposed **APP1 Apache 2.4 fragment**, after modules/paths are verified; add Lis
 </VirtualHost>
 ```
 
-Default AuthMerging Off lets child authorization replace parent denial; inspect inherited/global policy. No broad Require valid-user. Configure package-appropriate logs. Proposed APP1 check: `apachectl configtest` (wrapper may differ); Syntax OK does not prove authorization. Proposed enrolled-device inspection: `tailscale status`, output private. See [primary references](../governance/REFERENCES.md).
+[AuthMerging Off](https://httpd.apache.org/docs/2.4/mod/mod_authz_core.html) lets child authorization replace the parent denial. Inspect inherited/global settings; do not replace group checks with broad Require valid-user.
 
-### Expected results
+**READ-ONLY - APP1 Linux, root/approved service administrator:** `apachectl configtest` parses configuration; the distribution's wrapper may differ. No replacement values after selecting the correct wrapper. Expect Syntax OK, then use the recorded service control for the separately approved **CONFIGURATION CHANGE** reload. Confirm service status in that control and actual HTTPS/role behavior. Syntax OK alone proves neither authorization nor a running service; restore the saved site if parsing/reload fails.
 
-One CA/leaf, two protected paths, six role cases, app revocation and separate remote permit/deny/revoke evidence. No live AD integration/universal MFA/enterprise certificate lifecycle claim.
+#### Restrict and revoke remote access
 
-### Verification steps
+1. **I - DESTRUCTIVE / HIGH-RISK enrollment/trust change:** sign into the separate lab Tailscale admin console with the approved owner identity/MFA. Confirm recovery and isolated egress first. Open its access-policy editor and preserve the old policy privately.
+2. Before enrollment, save a reviewed [deny-all policy](https://tailscale.com/docs/reference/examples/acls#deny-all) with explicit `"acls": []` and no grant/SSH allows. Do not leave the policy empty or reset to defaults. Inspect every additive grant/ACL and tag owner; an extra allow can broaden access.
+3. Use the official selected-OS client enrollment flow on APP1 and one approved lab client; verify the tailnet identity before completing sign-in. Compare both **Machines** entries. After identifying exact APP1, add the reviewed [grant](https://tailscale.com/docs/reference/syntax/grants) for the approved lab source, exact APP1 destination and `tcp:443`. No production identity, key or tailnet is used.
+4. Keep subnet advertisements, exit nodes, public sharing, Tailscale SSH/Funnel/Serve and forwarding off. Inspect effective Linux overlay rules and vendor precedence. OPNsense alone cannot establish overlay restriction.
+5. Map app.ad.lab.test privately to APP1's overlay address on the remote client; local clients retain the zone address. Do not publish addresses. Verify allowed HTTPS, unauthorized context and wrong resource/listening port using the frozen FWT-06 scope.
+6. Remove client authorization/grants or use **Machines > approved client's menu > Remove**, confirming the exact lab device. Compare [device removal](https://tailscale.com/docs/features/access-control/device-management/how-to/remove) and effective policy to existing/fresh request denial. Record actual elapsed time. Stop on broader access; do not add allow-all or broad routes.
 
-FWT-03/FWT-05/FWT-06: compare page behavior to effective roles/logs; allowed content renders, unauthorized content does not, with intended denial (normally 403 here). Inspect chain/name/dates and untrusted-client failure. Inspect vendor/host rules plus actual wrong-port denial to known listening lab service. Revoke existing/new requests, recording state/cache handling.
+**READ-ONLY - enrolled APP1 or approved lab client, local terminal/PowerShell; standard operator where supported.** `tailscale status` shows connection/device state; no replacements. Expect only the approved lab context. Compare to Machines and the actual permitted/denied sessions. Output contains private addresses/identity data; keep it private. A status listing does not prove access control.
 
-### Troubleshooting
+### E. Expected results
 
-TLS: check SAN/chain/dates/trust/private DNS; clicking through warnings is not PASS. App: check spelling, group file, inherited rules/logs/browser credentials; AD alone does not update app roles. Remote: inspect lab tailnet, grants, overlay rules and approved egress; no broad routes/allow-all.
+One CA/leaf, two protected paths, six role cases, real app revocation and one-resource remote permit/deny/revoke evidence. No AD SSO, universal MFA or enterprise certificate-lifecycle claim.
 
-### Rollback procedures
+### F. Verification checklist
 
-Restore saved app/group settings, syntax-check/reload. Remove trust only from approved clients as needed. Disable remote grant/device, stop client, restore lab DNS/routes and close temporary egress under approval. Preserve failures; exposed keys invoke the owner's authorized credential process.
+- FWT-03/FWT-05/FWT-06: compare effective app roles/logs with allowed content and authenticated denials, normally 403 for this configuration.
+- Check chain/name/dates and rejection by an otherwise working untrusted lab client.
+- Compare vendor/host policy to actual remote HTTPS, wrong listening-port denial and revoked existing/new sessions. Record cache/state treatment and actual time.
+
+### G. Troubleshooting
+
+TLS: inspect SAN/chain/dates/trust/private DNS; warning bypass is not PASS. App: inspect group spelling, inherited rules, logs and cached browser credentials; AD does not update app roles. Remote: inspect lab tailnet, additive policy, overlay rules and approved egress; never relax to broad routes.
+
+### H. Rollback / recovery
+
+Restore saved site/group settings, syntax-check and reload through the recorded control. Remove trust only from approved lab clients. Disable remote grant/device, stop the client and restore private DNS/routes/egress under approval. Preserve failures; exposed keys use the owner's authorized credential process.
 
 ## Phase 4: Monitoring, Automation and Recovery
 
-### Prerequisites
+### A. Objective
 
-J and specific L automation/recovery approvals, private records, one operation/target, encrypted off-compute storage, disconnected restore bridge and temporary capacity. Approval identifies exact APP1 targets; no AD/host disaster recovery implied.
+Explain five benign security events, automate one local capacity summary and prove an isolated APP1 restore with measured limits.
 
-### Required tools
+### B. Prerequisites
 
-Firewall live log, DC1 Event Viewer, Apache logs, existing PowerShell/Python, Proxmox Backup/Restore UI, encrypted storage, hashes and independent clock. No SIEM/collector VM.
+- J monitoring and the specific L automation/recovery approvals; no implicit approval of remaining closeout.
+- Private event records, one approved local target/output, encrypted off-compute storage, recovery-key access and temporary restore capacity.
+- Approved disconnected restore bridge/VM ID and exact APP1 scope. No AD, CA or host disaster-recovery claim.
 
-### Implementation instructions
+### C. Required tools
 
-1. Use firewall, DC1 Security and Apache access/error sources. Two sources require approved selection covering all five categories. Restrict log access/export, rotate within disk capacity and record UTC/time differences.
-2. Generate five benign events: directory success, one single failed logon in disposable synthetic context, app allow, authenticated app denial and firewall denial to a known lab listener. No password attack.
-3. Record source/type/context, source/observer times and private evidence ID. Investigate one denial: requested action, rejecting rule/group, working control, correlated evidence and conclusion. On DC1 use the approved account-logon audit view: Kerberos 4768 success and 4771 failed pre-authentication are candidate records; confirm actual event generation from WIN1 and avoid cached/offline logon as the success observation. No enterprise latency/retention target.
-4. Define one **local WIN1 capacity-summary operation** using PowerShell/Python. Review hostname/domain allowlist, read-only inputs, private output and invalid target/path rejection before future coding. No remote credentials; one JSON/CSV outside Git.
-5. Run the future approved operation, compare output to Windows storage UI and repeat. Measurements may change; only intended output may be replaced, with no configuration/account/network change. Test rejection safely.
-6. Define APP1 backup manifest: pages, Apache config, hashed accounts/groups, server key/leaf and public root. Use one consistent full-VM backup on **encrypted off-compute storage**; ordinary Proxmox archive format alone is not encryption.
-7. Stop APP1 cleanly for the approved backup mode/target. Verify completion/readable manifest/private recovery-key access. Preserve the only valid backup; same-disk snapshots do not qualify.
-8. Restore to an approved temporary VM ID with NICs disconnected, original APP1 off and copied Tailscale inactive. This copy serves the required test only; never connect duplicate identities.
-9. Measure restore start to usable-service/data checks. By console/isolated client compare hashes/content, HTTPS and allowed/denied roles. If needed repurpose WIN1 onto a disconnected test bridge under approval, then restore attachment. No Management/home connection.
-10. Record age, actual recovery time, scope/verdict/exclusions. APP1 restore does not prove AD/CA/host recovery or enterprise RPO/RTO. Leave copy disconnected; resuming original/deleting copy needs approved cleanup.
+OPNsense Live View, DC1 Event Viewer, Apache access/error logs, existing PowerShell/Python, Proxmox Backup/Restore, encrypted media, existing hash tools and an independent clock. No SIEM or collector VM.
 
-Proposed **WIN1 only, L automation approval**, save as a reviewed private script. Pass an existing approved private output directory outside every Git checkout. This one operation reads local capacity and replaces only its named summary; it changes no lab configuration.
+### D. Step-by-step implementation
+
+1. **J - CONFIGURATION CHANGE, source log settings:** select firewall, DC1 Security and Apache access/error sources. Using only two requires an approved selection that still covers all five categories. Restrict record access/export and bound rotation to disk capacity; record source/observer UTC and clock differences.
+2. In OPNsense **Firewall > Log Files > Live View**, filter the named lab source/destination/service and inspect the rejecting rule. Logging must be enabled for that rule or the relevant global setting. Existing states may not produce a new-rule log.
+3. On DC1 open **Event Viewer > Windows Logs > Security > Filter Current Log**. After confirming the approved audit settings, filter candidate Kerberos events 4768/4771. Produce a real online WIN1 lab-domain logon and one single failed logon in a disposable synthetic context, then match actual records. Cached/offline sign-in is not directory success; no password attack.
+4. On APP1 open the recorded package-specific Apache access/error logs with the approved privileged viewer. Produce an app allow and authenticated app denial. Produce one firewall denial to a known listening lab service within the frozen scope. These are five distinct categories, not five duplicate requests.
+5. Record event type/context, source/observer time and private evidence ID. Investigate one denial: requested resource/action, rejecting rule/group, working allowed control, correlated source record and conclusion. Retain the actual evidence; no enterprise latency/retention target applies.
+6. **L automation - CONFIGURATION CHANGE to one private output, WIN1:** review the proposed capacity-summary script below before saving it privately. Approve the exact hostname/domain/output directory and rejection checks. No remote credentials or configuration change is required.
+7. Run it in local PowerShell as described below, compare bytes to **File Explorer > This PC > drive Properties** or the approved storage view, then repeat. Only WIN1-capacity.json may be replaced. Inspect configuration/side effects and safely confirm invalid targets/paths produce no output; changing free space does not itself show a defect.
+8. **L recovery - DESTRUCTIVE / HIGH-RISK restore, Proxmox:** define the APP1 manifest: pages, Apache configuration, hashed users/groups, server key/leaf and public root. Verify encrypted **off-compute** backup storage and separate recovery-key custody. Ordinary Proxmox archives are not encryption; same-disk snapshots do not qualify.
+9. In Proxmox, inspect **Datacenter > Storage** and the approved storage's capacity/status. Stop if the planned encrypted target is unavailable; do not format substitute media. Cleanly shut down APP1 through its console and confirm stopped state.
+10. Select APP1 > **Backup > Backup now**, choose the approved storage and reviewed stop/consistency mode, then run the backup. Open the task log and confirm completion/manifest coverage/readability. Keep APP1 off for the restore drill and preserve the only valid backup.
+11. Select the approved backup storage > **Backups**, choose the exact APP1 archive and **Restore**. Enter the approved unused temporary VM ID and target storage; review all fields before confirming. Do not overwrite the original ID or select automatic start/live restore. [Proxmox backup guidance](https://github.com/proxmox/pve-docs/blob/master/vzdump.adoc) governs release-specific behavior.
+12. Before starting the restored copy, inspect **Hardware > Network Device** and disconnect every NIC; set **Options > Start at boot** off. Keep original APP1 off. Start the copy via **Console** and disable its copied Tailscale service through the recorded OS service control before any isolated attachment.
+13. Record restore start and time to usable service using the independent clock. Compare hashes/content to the private manifest. Check HTTPS and allowed/denied roles through console or an approved existing client on a disconnected test bridge. If repurposing WIN1, record and later restore its bridge attachment; never attach the copy to Management/home.
+14. Record backup age, elapsed recovery, scope/verdict and exclusions. Leave the copy disconnected. Resuming the original or deleting the copy needs approved cleanup; a temporary recovery copy adds no permanent baseline VM.
+
+**CONFIGURATION CHANGE - WIN1, local Windows PowerShell; standard user with permission to query local capacity and write the approved directory.** Proposed private script; save/run only after L approval. It reads capacity and replaces one named JSON output. `OutputDirectory` must be an existing reviewed private directory outside every Git checkout. The hostname/domain checks stay WIN1/ad.lab.test:
 
 ```powershell
 param([Parameter(Mandatory)][string]$OutputDirectory)
@@ -274,54 +350,61 @@ $capacity | ConvertTo-Json |
     Set-Content -LiteralPath (Join-Path $directory.FullName 'WIN1-capacity.json') -Encoding utf8
 ```
 
-Keep the script/output private until reviewed; a path check is not a substitute for approved target/storage selection. Independently compare byte values to the storage UI, inspect the intended output replacement after two runs, and confirm rejected targets/paths do not write an output.
+**Run/confirm:** from WIN1, `& $LabCapacityScriptPath -OutputDirectory $LabCapacityOutputDirectory` invokes the reviewed script. Set those two variables privately to the approved script file/directory; no credential argument is used. Expect WIN1-capacity.json containing DeviceID, Size and FreeSpace in bytes. Compare to the storage UI, inspect the intended replacement after two runs and verify safe rejection. Stop on target/path/units errors. The path check does not replace review of actual storage, links or permissions.
 
-Proposed **read-only APP1** log inspection:
+**READ-ONLY - APP1 Linux console, approved log-reader; root/elevation only when journal permissions require it.** This systemd query shows records since local midnight without a pager; no replacement values:
 
 ```sh
 journalctl --since today --no-pager
 ```
 
-Apache request logs have a separate package path. Keep output private. T6 creates/runs no lab automation.
+**Confirm:** match timestamps/service messages to the approved action and recorded timezone. Apache request logs use a separate verified package path; an empty system journal is not proof of no web requests. Keep output private; if permission/time filters hide records, resolve the view before producing another event.
 
-### Expected results
+### E. Expected results
 
-Five events, one explained denial, one safe repeat-run operation and one successful isolated restore with measured limits.
+Five attributable events, one explained denial, one safely repeatable operation and one successful isolated APP1 restore with actual measured limits.
 
-### Verification steps
+### F. Verification checklist
 
-FWT-07/FWT-08/FWT-09: compare logs to actual actions, automation to another OS view/unchanged configuration, restore output to independent clock/hashes/real HTTPS roles. Keys/backup bytes remain private.
+- FWT-07: compare each source record to the actual approved action and a separate policy/group observation.
+- FWT-08: compare output to the OS storage view, inspect unchanged configuration and verify repeat/rejection behavior.
+- FWT-09: compare backup/restore log to independent clock, hashes/content and real restored HTTPS/role behavior. State that AD/CA/host recovery and enterprise RPO/RTO were not tested.
 
-### Troubleshooting
+### G. Troubleshooting
 
-Missing logs: inspect audit/filter/time/rotation. Automation mismatch: inspect target/path/units before retry. Failed restore: preserve original/backup, inspect decryption/storage/version/mode in isolation; do not reconnect to bypass dependencies.
+Missing logs: inspect audit selection, filters, time and rotation. Automation mismatch: inspect target/path/units before retry. Restore failure: keep original and backup safe, inspect decryption/storage/version/mode in isolation and preserve the failure. Do not reconnect to bypass a dependency.
 
-### Rollback procedures
+### H. Rollback / recovery
 
-Restore specific changed audit/rotation settings without clearing logs. Remove only intended automation output if approved. Keep copy off/disconnected; resume original only via approved isolation/recovery. Never overwrite sole backup/delete evidence.
+Restore only changed audit/rotation settings without clearing logs. Remove only the intended summary if approved. Keep the restore copy off/disconnected and resume the original only through approved cleanup/isolation checks. Never overwrite the sole backup or delete evidence.
 
 ## Phase 5: Validation and Final Submission
 
-### Prerequisites
+### A. Objective
 
-K/remaining L closeout approval, frozen cases, implementation records, current backup, synthetic targets and private custody. T7 files must exist before final project submission; this does not authorize T7 in T6.
+Complete all mandatory test evidence, submit accurate results and obtain a separate owner acceptance decision.
 
-### Required tools
+### B. Prerequisites
 
-[Ten-test catalog](../testing/TEST-PLAN.md), [acceptance criteria](../testing/ACCEPTANCE-CRITERIA.md), clients/policy/log views, evidence index and future T7 files. Git/Python tools support publication only.
+- K validation and remaining L closeout approvals, frozen cases, implementation records, current backup and private evidence custody.
+- The five approved templates must be released before final submission; see [required records](#required-lab-deliverables) for availability. Their creation needs separate authorization.
 
-### Implementation instructions
+### C. Required tools
 
-1. Freeze expectations and execute every subcheck. Record actual result/time/version/verifier/evidence and second observation. Never change expectation to hide failure.
-2. Cover six app cases/revocation, Tailscale permit/deny/revoke, HTTPS, events, automation and restore with bounded lab-owned requests. No scans/protected targets.
-3. Mark subchecks PASS, FAIL or NOT TESTED. Timeout without working control/intended denial evidence is insufficient. Preserve failures; corrections/retests need bounded approval.
-4. Map ten FWR requirements to evidence/defects. Missing mandatory checks block engineering completion; critical failures block acceptance. Independent human review requires another participant.
-5. Complete the five future T7 files below when separately created; own details once and cross-reference. [Project final report](../final-report/FINAL-REPORT.md) remains a template until real implementation/reporting is authorized.
-6. Review public artifacts/metadata, complete tracked set, staged diff/new history. Keep secrets, addresses, logs, inventories, backups/keys and filled private working records outside Git.
-7. Run repository checks, visually inspect changed PDFs, publish branch/PR, verify exact-head CI/review rules, merge with verified noreply identities and fast-forward main. Compare live IDs.
-8. Record the owner's explicit workflow UAT reference/date separately. No score/engineering/CI pass supplies acceptance. Stop at scope boundary.
+[Ten-test catalog](../testing/TEST-PLAN.md), [acceptance criteria](../testing/ACCEPTANCE-CRITERIA.md), approved lab clients/policy/log views, evidence index and released submission templates. Repository Git/Python checks support publication only.
 
-Repository-only T6 checks, not operational tests:
+### D. Step-by-step implementation
+
+1. Freeze versions, lab-owned targets, synthetic user contexts, expected outcomes, second observations and rollback. Follow each FWT subcheck; do not change an expectation to hide failure.
+2. Execute the ten approved tests within the stage scope, including six app cases/revocation, remote permit/deny/revoke, HTTPS, events, automation and restore. No scans or protected targets.
+3. Record actual action/result/time/version/verifier/evidence and a second observation. Mark each subcheck PASS, FAIL or NOT TESTED. A timeout without a working control and intended-denial evidence is insufficient.
+4. Map FWR-01 through FWR-10 to test evidence and defects. Missing mandatory checks block engineering completion; critical safety failures block acceptance. Preserve failures and obtain bounded remediation/retest approval.
+5. Complete the five [required records](#required-lab-deliverables) when released. Store each detail once and cross-reference it. The [project final report](../final-report/FINAL-REPORT.md) remains a template until real implementation/reporting is authorized.
+6. On the approved publication workstation, review the complete proposed public set, file contents/metadata, staged diff and new history. Keep credentials, actual addresses, private inventory, logs, keys/backups and filled private working records outside Git. Independent human review requires another participant.
+7. Run documentation-only checks below, inspect all changed PDF pages and resolve findings. Follow the [publication workflow](../../AGENTS.md#git-and-github-conventions): reviewed task branch/commits, pull request, completed-head CI/reviews/rules, normal permitted merge with verified noreply author/committer, then fast-forward main and compare live commit IDs. Do not force or bypass requirements.
+8. Ask the owner to assess the intended workflows and understandable evidence/recovery records. Record the explicit UAT confirmation reference/date separately. No score, engineering check or CI pass supplies acceptance. Stop at the approved boundary.
+
+**READ-ONLY validation - Windows publication workstation, repository root, existing pinned documentation Python environment; administrator access not required.** These commands inspect documentation/Office packages, render fresh PDFs in memory for comparison and run temporary documentation fixtures. They do not execute lab examples. No replacement values after selecting the approved environment:
 
 ```powershell
 python scripts/validate_docs.py --require-finalized
@@ -331,37 +414,41 @@ python -m unittest discover -s tests -v
 git diff --check
 ```
 
-### Expected results
+**Confirm:** all checks exit successfully; the finalized-report gate accepts the evidence record, PDFs match their Markdown and history/Office preservation checks pass. Read actual output; do not treat these checks as lab-security results. If dependencies are absent, use the [build guide](../governance/DOCUMENTATION-BUILD.md); if a check fails, correct editable source and inspect again before publication.
 
-Complete evidence, accurate grading, sanitized submission and separate owner decision. T6 delivers documentation/publication only; operational actuals remain empty.
+### E. Expected results
 
-### Verification steps
+Complete evidence, accurate grading, sanitized submission and a separate owner decision. Planned work earns no implementation credit; unexecuted actuals remain empty.
 
-FWT-10 checks traceability, public hygiene, GitHub/CI and defects. The [single rubric](../assignments/PROJECT-ASSIGNMENT.md#success-criteria) totals 100; plans earn no implementation credit and UAT stays PENDING until explicit confirmation.
+### F. Verification checklist
 
-### Troubleshooting
+- FWT-10: trace every mandatory test/subcheck, requirement/control, evidence item and defect to the correct record.
+- Use the assignment's [single 100-point rubric](../assignments/PROJECT-ASSIGNMENT.md#success-criteria), unchanged at 25/25/20/20/10.
+- Verify actual PR/CI/merge/local-remote synchronization. Owner UAT stays PENDING without explicit confirmation.
 
-Correct editable source/build code and regenerate for link/PDF errors; no hand-edited hashes. Satisfy PR reviews/checks without force/bypass. Incomplete UAT stays pending.
+### G. Troubleshooting
 
-### Rollback procedures
+Fix link/PDF problems in editable Markdown/build code and regenerate; never hand-edit hashes. Satisfy reviews/checks without bypass. Missing templates, operational evidence or UAT remain pending and block the corresponding completion claim.
 
-Reviewed reverts preserve finalized reports/evidence. End temporary policies/tests only under approved cleanup. Never rewrite history/delete owner work/start a stage to close a report.
+### H. Rollback / recovery
 
-## Five future T7 deliverables
+Use reviewed reverts that preserve finalized records/evidence. End temporary policies/tests only under approved cleanup. Never rewrite history, delete owner work or start another stage just to close a report.
 
-The **approved T7 target, not yet created**, is under `docs/deliverables/`. Existing eight T5 shells remain unchanged and describe the retired baseline; T7 needs separate authorization.
+## Required lab deliverables
 
-| File | Owning record |
+The five Office templates are **planned and not yet available** under `docs/deliverables/`. Eight existing legacy shells describe the earlier baseline; preserve them until a separately authorized migration releases the five files below.
+
+| Filename | Owning record |
 | --- | --- |
-| `01-Lab-Environment-and-Architecture.xlsx` | Status, four VMs/three zones, flows/capacity |
-| `02-Identity-and-Zero-Trust-Implementation.docx` | AD/groups, endpoints, HTTPS, six cases/app and remote revocation |
-| `03-Security-Monitoring-and-Testing.xlsx` | Five events, investigation, tests, automation/restore |
+| `01-Lab-Environment-and-Architecture.xlsx` | Readiness, four VMs/three zones, flows and capacity |
+| `02-Identity-and-Zero-Trust-Implementation.docx` | AD/groups, endpoints, HTTPS, six app cases and remote revocation |
+| `03-Security-Monitoring-and-Testing.xlsx` | Five events, investigation, tests, automation and restore |
 | `04-Troubleshooting-and-Lessons.xlsx` | Defects, fixes/retests and lessons |
 | `05-Final-Project-Submission.docx` | Results/index, rubric, limits and separate UAT |
 
 ## Historical requirement and test transition
 
-FWR/FWT identify T6. Old R01-R16/T00-T20 keep their meanings in frozen reports/history/T5 shells; no historical PASS transfers to a new operational test. Old quantities below are historical, not current work.
+FWR/FWT identify the current four-week requirements/tests. Earlier R01-R16/T00-T20 retain their meanings in frozen reports/history and legacy templates; no historical PASS transfers to a new operational test. Old quantities below are historical, not current work.
 
 | Earlier requirement | New requirement | Consolidation or retirement |
 | --- | --- | --- |
@@ -390,7 +477,3 @@ FWR/FWT identify T6. Old R01-R16/T00-T20 keep their meanings in frozen reports/h
 | T00, T17, T20 | FWT-10 | Publication/traceability/separate UAT |
 
 See [decisions](../governance/DECISIONS.md), [risks](../governance/RISKS.md) and [end-to-end coverage](../testing/TEST-PLAN.md#coverage-index). High availability/clustering remain excluded.
-
-## T6 stop
-
-Finish sources/PDFs, checks, Markdown-only report and reviewed GitHub synchronization. Do not install hardware/software, select disks, create VMs, change networks, deploy AD/enroll Tailscale, run security tests or begin T7. Await owner review.

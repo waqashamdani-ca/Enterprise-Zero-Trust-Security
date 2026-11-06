@@ -253,9 +253,9 @@ class PdfArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unreviewed inline HTML"):
             docs.render_pdf(docs.ASSIGNMENT, content, {docs.ASSIGNMENT})
 
-    def test_assignment_edit_does_not_change_other_sources_or_pdfs(self):
-        base = "36a2eb0a5e65dd344b165dda158d75b129f5585b"
-        allowed = {docs.ASSIGNMENT, docs.ASSIGNMENT[:-3] + ".pdf",
+    def test_guide_edit_does_not_change_other_sources_or_pdfs(self):
+        base = "a3d7b1c6effde3bd5b18ab1a4b529c07a7cc7c61"
+        allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf",
                    "docs/governance/DOCUMENTATION-BUILD.md", "docs/governance/DOCUMENTATION-BUILD.pdf",
                    "docs/reports/INDEX.md", docs.MANIFEST}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
@@ -264,6 +264,42 @@ class PdfArtifactTests(unittest.TestCase):
                 continue
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
             self.assertEqual((ROOT / name).read_bytes(), old, name)
+
+    def test_guide_pdf_keeps_filenames_whole_and_preserves_navigation(self):
+        content = (ROOT / docs.GUIDE).read_bytes()
+        sources = set(docs.discover_sources(ROOT))
+        data = docs.render_pdf(docs.GUIDE, content, sources)
+        reader = docs.PdfReader(io.BytesIO(data))
+        pages = [p.extract_text() for p in reader.pages]
+        text = "\n".join(pages)
+        self.assertNotRegex(text, r"\b(?:T6[AB]?|T7|Codex)\b")
+        self.assertIn("Guide contents", pages[0])
+        self.assertIn("PLANNED", pages[0])
+        self.assertIn("NOT TESTED", pages[0])
+        self.assertTrue(any(all(name in p.splitlines() for name in validator.DELIVERABLE_FILENAMES)
+                            for p in pages))
+        for n, title in enumerate(validator.PHASE_TITLES, 1):
+            self.assertIn(docs.anchor_for(f"Phase {n}: {title}", set()), reader.named_destinations)
+        self.assertIn("required-lab-deliverables", reader.named_destinations)
+        self.assertEqual(docs.inspect_pdf(data, docs.GUIDE, content, sources)["text_token_coverage"], 1.0)
+        compact_pages = [re.sub(r"\s+", "", p) for p in pages]
+        for token in docs.MARKDOWN(content.decode()):
+            if token["type"] == "list" and token.get("attrs", {}).get("ordered"):
+                for item in token["children"]:
+                    step = docs.normalize(docs.plain(item["children"][0]["children"]))
+                    self.assertTrue(any(re.sub(r"\s+", "", step) in p for p in compact_pages),
+                                    "Numbered step split across pages: " + step[:70])
+
+    def test_guide_reference_blocks_retain_their_exact_command_behavior(self):
+        base = "a3d7b1c6effde3bd5b18ab1a4b529c07a7cc7c61"
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.GUIDE]).decode()
+        current = (ROOT / docs.GUIDE).read_text(encoding="utf-8")
+        fences = r"^```([^\n]*)\n(.*?)^```"
+        self.assertEqual(re.findall(fences, current, re.M | re.S), re.findall(fences, old, re.M | re.S))
+        for command in ("Test-ComputerSecureChannel -Verbose", "apachectl configtest", "tailscale status",
+                        "htpasswd -B -c /etc/labapp/users ava", "htpasswd -B /etc/labapp/users eli"):
+            self.assertIn(command, old)
+            self.assertIn(command, current)
 
     def test_all_eight_office_files_remain_byte_identical_to_t5(self):
         baseline = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
