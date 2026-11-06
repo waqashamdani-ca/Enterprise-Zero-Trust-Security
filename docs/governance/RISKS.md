@@ -22,6 +22,7 @@
 | RK-16 | Directory/CA snapshot rollback corrupts identity or revocation state / medium / high | Supported system-state/CA backups, isolated restores, dependency order, no duplicate live DC | Recovery procedures must match selected software versions; engineer |
 | RK-17 | Existing public commits contain non-noreply author/committer email metadata / observed / privacy policy finding | T2 identified owner README edits and the GitHub-generated PR 1 merge; addresses withheld from reports. Verify noreply identity for both fields on every new commit/merge; preserve existing history | Removing historical metadata requires a separate owner-approved history change; account email/privacy preference is an owner decision |
 | RK-18 | Generated PDFs drift from source, lose navigation/content, or render unreadably / medium / medium | Pinned toolchain, source/output hashes, deterministic fresh rebuild, text/link/page checks, and representative rendered-page inspection | Automated extraction does not replace visual review; owner PDF/UAT acceptance remains separate |
+| RK-19 | Moving immutable reports breaks their relative links or obscures history verification / medium / medium | Preserve all eleven pre-T4 file hashes; check finalized history at both paths; provide tested navigation aliases and a current index; exclude the entire new directory from PDF generation | Historical index/path prose stays frozen; a few links open an alias before the maintained source; future moves require the same checks; documentation maintainer |
 
 ## Handling and escalation
 

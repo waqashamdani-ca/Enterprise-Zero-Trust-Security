@@ -30,14 +30,14 @@ REQUIRED_FILES = (
     "docs/governance/REFERENCES.md", "infrastructure/README.md",
     "configurations/README.md", "scripts/validate_docs.py",
     "tests/test_validate_docs.py", "evidence/README.md",
-    "reports/README.md", "reports/T1-Report.md",
+    "docs/reports/README.md", "docs/reports/INDEX.md", "docs/reports/T1-Report.md",
     "docs/README.md", "docs/guides/GLOSSARY.md", "docs/governance/DOCUMENTATION-BUILD.md",
     "scripts/build_docs.py", "tests/test_build_docs.py", "requirements-docs.txt",
     "docs/documentation-manifest.json",
 )
 REQUIRED_DIRS = (
     ".github/workflows", "docs", "infrastructure", "configurations",
-    "scripts", "tests", "evidence", "reports",
+    "scripts", "tests", "evidence", "docs/reports",
     "docs/assignments", "docs/lab-guides", "docs/architecture", "docs/security",
     "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
@@ -46,16 +46,32 @@ STAGE_FIELDS = (
     "Verification", "Troubleshooting", "Rollback", "Completion criteria",
 )
 PDF_MANIFEST = "docs/documentation-manifest.json"
-PDF_ALIASES = {"docs/DECISIONS.md", "docs/RISKS.md"}
+PDF_ALIASES = {
+    "docs/DECISIONS.md", "docs/RISKS.md", "docs/docs/DECISIONS.md", "docs/docs/RISKS.md",
+    "docs/docs/README.md", "docs/docs/final-report/FINAL-REPORT.md",
+    "docs/evidence/BOOTSTRAP-VALIDATION.md", "docs/docs/documentation-manifest.json",
+}
+REPORT_PREFIXES = ("docs/reports/", "reports/")
 # Optional, byte-frozen archives already published at the T3 baseline. These
 # exceptions never admit new report PDFs or require a current Markdown pairing.
 REPORT_ARCHIVE_BASELINE = "d1b575761c090c35dac535ec331a1e32f9bd5fe6"
 ARCHIVED_REPORT_PDFS = {
-    "reports/README.pdf": "8dac0d69a194a43a550f086e409cb763245bbd583d9e1e1fe94db6bb933d6567",
-    "reports/T1-Addendum-001-Reporting-Governance.pdf": "e684fa1f73c0cf8aa9029dc0ae13c2fbab3bb1c26a77ae5a00925d5d5f3bde56",
-    "reports/T1-Report.pdf": "c42f42e0b548c0996a66f6431da09fcf85995dd5e0841b9358e58f01fb206dd9",
-    "reports/T2-Report.pdf": "36ec642bee80564ac9e50bb5c24900211f70908d5a2fb29d6c51f26d2d6e5856",
-    "reports/T3-Report.pdf": "4ab8ce03f2009e8cfbfe44c4b9803780043f3b7203b7373cb0f1aa64e3a8ab5d",
+    "docs/reports/README.pdf": "8dac0d69a194a43a550f086e409cb763245bbd583d9e1e1fe94db6bb933d6567",
+    "docs/reports/T1-Addendum-001-Reporting-Governance.pdf": "e684fa1f73c0cf8aa9029dc0ae13c2fbab3bb1c26a77ae5a00925d5d5f3bde56",
+    "docs/reports/T1-Report.pdf": "c42f42e0b548c0996a66f6431da09fcf85995dd5e0841b9358e58f01fb206dd9",
+    "docs/reports/T2-Report.pdf": "36ec642bee80564ac9e50bb5c24900211f70908d5a2fb29d6c51f26d2d6e5856",
+    "docs/reports/T3-Report.pdf": "4ab8ce03f2009e8cfbfe44c4b9803780043f3b7203b7373cb0f1aa64e3a8ab5d",
+}
+# Owner-authorized T4 relocation is a path-only exception, never a content waiver.
+REPORT_MIGRATION_BASELINE = "0d28d105a517606e7a0a1cdaf4939f166b2f3a53"
+MIGRATED_REPORT_FILES = {
+    **ARCHIVED_REPORT_PDFS,
+    "docs/reports/README.md": "b1db4ef489bd607171966fc5dc1f81778374b95cd3a3946018f09220add2e7ed",
+    "docs/reports/T1-Addendum-001-Reporting-Governance.md": "792d74c5dd486cb1ceea0a639d46d585f6b3576402476624125cfd3239c0689e",
+    "docs/reports/T1-Report.md": "428c869a9c4c3d2d5b7e03881b719a264690e515256214514b25fe2c46a4fca6",
+    "docs/reports/T2-Report.md": "6ffbf30e74f5456c7b2b4f78555722a98dfabac97475367fd16adbe84e8c9dab",
+    "docs/reports/T3-Addendum-001-Markdown-Only-Reporting.md": "502cee8541f417263e008a9205e71c7cab27fcca05e1ad9d8067e140a2289ea8",
+    "docs/reports/T3-Report.md": "e5542bbdef113b8debc45150dc33b78586105c7492227ea4e3c8033e1135f761",
 }
 REPORT_SECTIONS = (
     "A. Task Information", "B. Implementation Summary",
@@ -63,18 +79,18 @@ REPORT_SECTIONS = (
     "E. GitHub Operations", "F. Outstanding Issues",
     "G. Completion Status", "H. Next Task",
 )
-REPORT_NAME = re.compile(r"reports/T([1-9][0-9]*)-Report\.md")
-ADDENDUM_NAME = re.compile(r"reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
+REPORT_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Report\.md")
+ADDENDUM_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
-    "Description and background", "Enterprise scenario and business case",
-    "Purpose, objectives, and learning goals", "Measurable technical requirements",
-    "Scope, exclusions, assumptions, and constraints",
-    "Prerequisites and dependencies", "Expected architecture and trust boundaries",
-    "Technologies and implementation alternatives",
-    "Security requirements and threat model", "Standards alignment",
-    "Deliverables and final outcomes", "Testing and acceptance",
-    "100-point evaluation rubric", "GitHub publication requirements",
-    "Evidence-backed resume achievement objectives", "Authoritative references",
+    "Project Overview", "Project Objectives", "Project Scope", "Technologies and Resources",
+    "Project Requirements", "Expected Deliverables", "Implementation Approach",
+    "Success Criteria", "References",
+)
+DELIVERABLE_FILENAMES = (
+    "01-Lab-Environment.xlsx", "02-Architecture-and-Network-Design.docx",
+    "03-Identity-and-Access-Management.xlsx", "04-Zero-Trust-Implementation.docx",
+    "05-Security-Monitoring.xlsx", "06-Testing-and-Validation.xlsx",
+    "07-Troubleshooting-and-Lessons.xlsx", "08-Final-Lab-Submission.docx",
 )
 ALLOWED_EXTENSIONS = {".md", ".py", ".yml", ".yaml"}
 ALLOWED_SPECIAL_NAMES = {".gitignore", ".gitattributes"}
@@ -236,7 +252,7 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
     if path.suffix.lower() == ".pdf":
         return issues + generated_pdf_issues(root, relative), None
     if (path.suffix.lower() not in ALLOWED_EXTENSIONS and path.name not in ALLOWED_SPECIAL_NAMES
-            and relative not in {PDF_MANIFEST, "requirements-docs.txt"}):
+            and relative not in {PDF_MANIFEST, "requirements-docs.txt", "docs/docs/documentation-manifest.json"}):
         issues.append(f"{relative}: unreviewed file type; extend policy only after artifact review")
     if path.stat().st_size > 1024 * 1024:
         return issues + [f"{relative}: exceeds 1 MiB public-text limit"], None
@@ -255,7 +271,7 @@ def generated_pdf_issues(root: Path, relative: str) -> list[str]:
         path = root / relative
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):
             return [f"{relative}: unsafe PDF path"]
-        if relative.lower().startswith("reports/"):
+        if relative.lower().startswith(REPORT_PREFIXES):
             expected = ARCHIVED_REPORT_PDFS.get(relative)
             if expected is None:
                 return [f"{relative}: new report PDFs are prohibited; task reports must be Markdown only"]
@@ -290,11 +306,11 @@ def pdf_inventory_issues(paths: list[str], texts: dict[str, str]) -> list[str]:
         entries = manifest["documents"]
         sources = [entry["source"] for entry in entries]
         expected = {name for name in texts if name.endswith(".md") and name not in PDF_ALIASES
-                    and not name.lower().startswith("reports/")}
+                    and not name.lower().startswith(REPORT_PREFIXES)}
         if manifest.get("schema") != 1 or set(sources) != expected or len(sources) != len(expected):
-            return ["generated PDF manifest must cover each maintained document outside reports/ exactly once"]
-        if any(entry["pdf"].lower().startswith("reports/") for entry in entries):
-            return ["reports/ must not appear in the generated PDF inventory"]
+            return ["generated PDF manifest must cover each maintained document outside docs/reports/ exactly once"]
+        if any(entry["pdf"].lower().startswith(REPORT_PREFIXES) for entry in entries):
+            return ["docs/reports/ must not appear in the generated PDF inventory"]
         if any(entry["pdf"] not in paths for entry in entries):
             return ["required generated PDF missing from publication set"]
         return []
@@ -310,6 +326,8 @@ def structure_issues(root: Path, paths: list[str]) -> list[str]:
     for relative in REQUIRED_DIRS:
         if not (root / relative).is_dir():
             issues.append(f"required directory missing: {relative}")
+    if (root / "reports").exists() or any(name.startswith("reports/") for name in paths):
+        issues.append("legacy reports/ must be absent after migration; duplicate report locations are prohibited")
     return issues
 
 
@@ -324,10 +342,27 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     assignment_ids = re.findall(r"^\|\s*(R\d{2})\s*\|", assignment, re.M)
     if set(assignment_ids) != required_ids or len(assignment_ids) != 16:
         issues.append("assignment must declare R01–R16 exactly once")
-    rubric = assignment.partition("## 100-point evaluation rubric")[2].split("\n## ", 1)[0]
+    rubric = assignment.partition("## Success Criteria")[2].split("\n## ", 1)[0]
     scores = re.findall(r"^\|[^|]+\|\s*(\d+)\s*\|", rubric, re.M)
     if not scores or sum(map(int, scores)) != 100:
         issues.append("assignment rubric must total exactly 100 points")
+    deliverables = assignment.partition("## Expected Deliverables")[2].split("\n## ", 1)[0]
+    names = re.findall(r"^\|\s*`([^`]+)`\s*\|", deliverables, re.M)
+    if tuple(names) != DELIVERABLE_FILENAMES or len(set(names)) != 8:
+        issues.append("assignment must declare the eight approved unique deliverable filenames in order")
+    mapped = set()
+    for row in deliverables.splitlines():
+        match = re.match(r"\|\s*`([^`]+)`\s*\|\s*([^|]+)\|(.+)\|$", row)
+        if not match:
+            continue
+        extension = Path(match[1]).suffix
+        if {".xlsx": "Excel (.xlsx)", ".docx": "Word (.docx)"}.get(extension) != match[2].strip():
+            issues.append(f"{match[1]}: deliverable extension/Office format mismatch")
+        mapped.update(re.findall(r"\bR\d{2}\b", match[3]))
+    if mapped != required_ids:
+        issues.append("assignment deliverables must cover all R01-R16 requirements")
+    if "`docs/deliverables/`" not in deliverables:
+        issues.append("assignment must state the docs/deliverables/ submission location")
     guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
     sections = re.split(r"^## Stage ([A-L])[^\n]*\n", guide, flags=re.M)
     stage_parts = iter(sections[1:])
@@ -368,7 +403,7 @@ def report_issues(texts: dict[str, str], require_finalized: bool = False) -> lis
     numbers = []
     addenda: dict[int, list[int]] = {}
     for name, content in texts.items():
-        if not name.startswith("reports/") or name == "reports/README.md":
+        if not name.startswith("docs/reports/") or name in {"docs/reports/README.md", "docs/reports/INDEX.md"}:
             continue
         report = REPORT_NAME.fullmatch(name)
         addendum = ADDENDUM_NAME.fullmatch(name)
@@ -404,7 +439,7 @@ def report_issues(texts: dict[str, str], require_finalized: bool = False) -> lis
 
 
 def finalized_history_issues(root: Path, texts: dict[str, str]) -> list[str]:
-    """Compare current reports with every committed finalized version, offline."""
+    """Compare both historical report locations with the canonical current bytes."""
     def git(*args: str) -> bytes:
         return subprocess.check_output(["git", "-C", str(root), *args], stderr=subprocess.PIPE)
 
@@ -412,14 +447,20 @@ def finalized_history_issues(root: Path, texts: dict[str, str]) -> list[str]:
         return ["report immutability requires complete Git history (fetch-depth: 0)"]
     frozen: dict[str, set[str]] = {}
     objects: dict[str, bytes] = {}
-    for commit in git("log", "--all", "--format=%H", "--", "reports").decode().splitlines():
-        for entry in git("ls-tree", "-r", "-z", commit, "--", "reports").split(b"\0"):
+    for commit in git("log", "--all", "--format=%H", "--", "reports", "docs/reports").decode().splitlines():
+        seen = set()
+        for entry in git("ls-tree", "-r", "-z", commit, "--", "reports", "docs/reports").split(b"\0"):
             if not entry:
                 continue
             metadata, raw_name = entry.split(b"\t", 1)
             name = raw_name.decode("utf-8")
+            if name.startswith("reports/"):
+                name = "docs/" + name  # T4 permits relocation, never a renamed basename.
             if not (REPORT_NAME.fullmatch(name) or ADDENDUM_NAME.fullmatch(name)):
                 continue
+            if name in seen:
+                return [f"{name}: duplicate report locations in committed history"]
+            seen.add(name)
             _, kind, oid = metadata.decode().split()
             if kind != "blob":
                 return [f"{name}: unexpected report object in history"]
@@ -432,10 +473,22 @@ def finalized_history_issues(root: Path, texts: dict[str, str]) -> list[str]:
     for name, hashes in frozen.items():
         if len(hashes) != 1:
             issues.append(f"{name}: finalized report was changed in committed history")
-        elif name not in texts:
+        elif name not in texts or not (root / name).is_file():
             issues.append(f"{name}: finalized report deleted or renamed")
-        elif hashlib.sha256(texts[name].encode("utf-8")).hexdigest() not in hashes:
+        elif hashlib.sha256((root / name).read_bytes()).hexdigest() not in hashes:
             issues.append(f"{name}: finalized report modified; use a separate addendum")
+    return issues
+
+
+def report_migration_issues(root: Path) -> list[str]:
+    """Freeze the complete owner-requested migration, including its old index."""
+    issues = []
+    for name, expected in MIGRATED_REPORT_FILES.items():
+        path = root / name
+        if not path.is_file():
+            issues.append(f"{name}: missing migrated historical file")
+        elif path.is_symlink() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+            issues.append(f"{name}: migrated historical file differs from frozen pre-T4 bytes")
     return issues
 
 
@@ -460,6 +513,7 @@ def main() -> int:
     issues.extend(completeness_issues(texts))
     issues.extend(pdf_inventory_issues(paths, texts))
     issues.extend(report_issues(texts, args.require_finalized))
+    issues.extend(report_migration_issues(ROOT))
     try:
         issues.extend(finalized_history_issues(ROOT, texts))
     except (OSError, subprocess.CalledProcessError, UnicodeError):
@@ -473,7 +527,7 @@ def main() -> int:
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
     print("PASS: structure, local links/anchors, stage fields, R01–R16/T00–T20 coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
-    print("PASS: purpose-folder structure, Markdown-only reports, source/hash-matched document PDFs, and frozen archives.")
+    print("PASS: docs/reports/ migration, eleven historical file hashes, Markdown-only reporting, and source/hash-matched document PDFs.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")
     return 0
 

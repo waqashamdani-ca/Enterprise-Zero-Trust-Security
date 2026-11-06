@@ -23,8 +23,8 @@ The final project report remains a clearly identified template. All infrastructu
 
 ## Task reports and other instructions
 
-[The task-report index](../reports/README.md) links the sequential Markdown-only reports and addenda. The entire `reports/` directory, including its index, is excluded from PDF generation. Finalized Markdown remains immutable. Existing report PDFs are retained as optional historical archives and are not regenerated or required for later reports.
+[The task-report index](reports/INDEX.md) links the sequential Markdown-only reports and addenda. The entire `docs/reports/` directory, including its indexes, is excluded from PDF generation. Finalized Markdown remains immutable. Existing report PDFs are retained as historical archives and are not regenerated or required for later reports.
 
 PDF editions also accompany the root [project overview](../README.pdf) and [agent governance](../AGENTS.pdf), [infrastructure guidance](../infrastructure/README.pdf), [configuration guidance](../configurations/README.pdf), [evidence handling](../evidence/README.pdf), and [bootstrap evidence](../evidence/BOOTSTRAP-VALIDATION.pdf). [This library index](README.pdf) is available as PDF too.
 
-The two root-level decision/risk compatibility pages preserve old links in immutable reports. They point to the maintained governance documents and are not duplicate PDF sources. The generated manifest lists every approved source/PDF pair and its content hashes.
+Compatibility pages under this directory preserve old decision/risk links and the relative links in relocated immutable reports. The aliases under `docs/docs/` and `docs/evidence/` point to maintained sources or unchanged evidence; they receive no PDFs. The manifest alias is a small JSON navigation record, not a duplicate manifest. The generated manifest lists every approved source/PDF pair and its content hashes.

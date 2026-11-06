@@ -47,7 +47,15 @@ MANIFEST = "docs/documentation-manifest.json"
 ALIASES = {
     "docs/DECISIONS.md": "docs/governance/DECISIONS.md",
     "docs/RISKS.md": "docs/governance/RISKS.md",
+    "docs/docs/DECISIONS.md": "docs/governance/DECISIONS.md",
+    "docs/docs/RISKS.md": "docs/governance/RISKS.md",
+    "docs/docs/README.md": "docs/README.md",
+    "docs/docs/final-report/FINAL-REPORT.md": "docs/final-report/FINAL-REPORT.md",
+    "docs/docs/documentation-manifest.json": "docs/documentation-manifest.json",
+    "docs/evidence/BOOTSTRAP-VALIDATION.md": "evidence/BOOTSTRAP-VALIDATION.md",
 }
+REPORT_PREFIXES = ("docs/reports/", "reports/")
+ASSIGNMENT = "docs/assignments/PROJECT-ASSIGNMENT.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
 WIDTH, HEIGHT = letter
@@ -74,7 +82,7 @@ def discover_sources(root: Path = ROOT) -> list[str]:
     # automatic documentation source simply because they end with .md.
     inventory = subprocess.check_output(["git", "-C", str(root), "ls-files", "--cached", "--others", "--exclude-standard", "-z"])
     for name in sorted(set(inventory.decode("utf-8").split("\0")) - {""}):
-        if not name.endswith(".md") or name.lower().startswith("reports/"):
+        if not name.endswith(".md") or name.lower().startswith(REPORT_PREFIXES):
             continue
         path = root / name
         if not path.is_file():
@@ -140,7 +148,7 @@ def resolve_link(source: str, target: str, sources: set[str]) -> str:
     name = ALIASES.get(name, name)
     if name == source and parsed.fragment:
         return "#" + unquote(parsed.fragment)
-    markdown_report = name.lower().startswith("reports/") and name.endswith(".md")
+    markdown_report = name.lower().startswith(REPORT_PREFIXES) and name.endswith(".md")
     if name.endswith(".md") and not markdown_report:
         if name not in sources:
             raise ValueError(f"Unknown PDF source link from {source}: {name}")
@@ -308,6 +316,9 @@ class Builder:
         self.section_title = "Document"
         self.style = ParagraphStyle("body", fontName="Vera", fontSize=9.3, leading=13.2, spaceAfter=7)
         self.cell_style = ParagraphStyle("cell", parent=self.style, fontSize=8.25, leading=10.8, spaceAfter=0)
+        if source == ASSIGNMENT:
+            self.style = ParagraphStyle("assignment-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=7)
+            self.cell_style = ParagraphStyle("assignment-cell", parent=self.style, fontSize=8.7, leading=11.5, spaceAfter=0)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
                                         borderWidth=0.4, borderPadding=6, leftIndent=7, rightIndent=7, spaceAfter=11)
@@ -379,7 +390,11 @@ class Builder:
         rows = [head] + [row["children"] for row in token["children"][1]["children"]]
         headers = [plain(cell["children"]) for cell in head]
         count = len(headers)
-        if count == 2:
+        if self.source == ASSIGNMENT and headers == ["ID", "Required outcome and measurement", "Tests"]:
+            widths = [32, 408, 64]
+        elif self.source == ASSIGNMENT and headers[0] == "Deliverable filename":
+            widths = [209, 66, 229]
+        elif count == 2:
             widths = [62, 442] if max(len(plain(row[0]["children"])) for row in rows) < 12 else [133, 371]
         elif count == 3:
             widths = [144, 42, 318] if headers[1] == "Points" else ([45, 250, 209] if headers[0] in {"Stage", "Security ID"} else [205, 143, 156])
@@ -408,6 +423,14 @@ class Builder:
             ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5),
             ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ]))
+        if self.source == ASSIGNMENT:
+            table.setStyle(TableStyle([
+                ("GRID", (0, 0), (-1, -1), 0, colors.white),
+                ("LINEBELOW", (0, 0), (-1, 0), 0.7, colors.HexColor("#849aa9")),
+                ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#d9e0e5")),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ]))
         self.table_count += 1
         caption = Paragraph(f"Table {self.table_count}. {html.escape(self.section_title)}", ParagraphStyle("caption", parent=self.style, fontName="Vera-Italic", fontSize=8.3, leading=11, keepWithNext=0, spaceBefore=3, spaceAfter=4))
         # Keep enough room for caption/header/first row without asking a
@@ -483,8 +506,8 @@ def source_tokens(tokens: list[dict]) -> set[str]:
 
 
 def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
-    if source.lower().startswith("reports/"):
-        raise ValueError("Task reports are Markdown only; reports/ is excluded from PDF generation")
+    if source.lower().startswith(REPORT_PREFIXES):
+        raise ValueError("Task reports are Markdown only; docs/reports/ is excluded from PDF generation")
     tokens = MARKDOWN(content.decode("utf-8"))
     if not tokens or tokens[0]["type"] != "heading":
         raise ValueError(f"Document must start with a title: {source}")
@@ -492,7 +515,16 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     builder = Builder(source, sources)
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    if formal:
+    if source == ASSIGNMENT:
+        first_section = next(i for i, token in enumerate(tokens) if token["type"] == "heading" and token["attrs"]["level"] == 2)
+        story.extend([Spacer(1, 45), Paragraph("CYBERSECURITY ENGINEERING", ParagraphStyle("assignment-label", parent=builder.style, fontSize=9, textColor=colors.HexColor("#475c6c"), spaceAfter=18)), builder.heading(tokens[0], cover=True), Spacer(1, 20)])
+        story.extend(builder.blocks(tokens[1:first_section]))
+        story.extend([Spacer(1, 23), Paragraph("Assignment contents", ParagraphStyle("assignment-contents", parent=builder.style, fontName="Vera-Bold", fontSize=11, spaceAfter=8))])
+        contents = TableOfContents()
+        contents.levelStyles = [ParagraphStyle("assignment-toc", fontName="Vera", fontSize=9.3, leading=13, spaceBefore=3)]
+        story.extend([contents, PageBreak()])
+        tokens = [tokens[0], *tokens[first_section:]]
+    elif formal:
         cover_status = ""
         if source.startswith(("docs/lab-guides/", "docs/architecture/", "docs/security/")):
             cover_status = "PLANNED - operational controls NOT TESTED"
@@ -504,7 +536,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         story.append(PageBreak())
     else:
         story.append(builder.heading(tokens[0]))
-    if sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
+    if source != ASSIGNMENT and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
         story.append(Paragraph("Contents", ParagraphStyle("contents-title", parent=builder.style, fontName="Vera-Bold", fontSize=17, leading=22, spaceAfter=14)))
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
@@ -538,7 +570,7 @@ def inspect_pdf(data: bytes, source: str, content: bytes, sources: set[str] | No
             raise ValueError(f"Missing searchable text/footer in {source}, page {number}")
         lines = [line.strip() for line in text.splitlines()[2:] if line.strip()]
         lines = [line for line in lines if not re.fullmatch(r"(?:Page \d+|Source version [0-9a-f]{12})", line)]
-        if lines and number < len(reader.pages) and "Contents" not in lines:
+        if lines and number < len(reader.pages) and not {"Contents", "Assignment contents"}.intersection(lines):
             last = re.sub(r"^\d+(?:\.\d+)*\.\s+", "", normalize(lines[-1]))
             if last in heading_names:
                 raise ValueError(f"Orphan heading at page end: {source}, page {number}: {last}")

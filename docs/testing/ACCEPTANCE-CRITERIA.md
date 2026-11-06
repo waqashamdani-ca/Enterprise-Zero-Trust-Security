@@ -1,6 +1,6 @@
 # Acceptance criteria and approval gates
 
-Acceptance answers two different questions: did the engineer verify the approved work, and did the owner accept it for its intended use? Keep those decisions separate. Repository/documentation checks have evidence in the [task reports](../../reports/README.md); lab implementation is PLANNED and its operational controls are NOT TESTED.
+Acceptance answers two different questions: did the engineer verify the approved work, and did the owner accept it for its intended use? Keep those decisions separate. Repository/documentation checks have evidence in the [task reports](../reports/INDEX.md); lab implementation is PLANNED and its operational controls are NOT TESTED.
 
 The criteria below define what evidence a reviewer needs. A passing continuous integration (CI) run checks the repository; owner user acceptance testing (UAT) needs explicit confirmation. See the [glossary](../guides/GLOSSARY.md) for these terms.
 
@@ -20,8 +20,8 @@ The criteria below define what evidence a reviewer needs. A passing continuous i
 | B10 | `origin` is correct, local `main` tracks remote `main`, status is clean, and local/remote SHA match; report URL/user/branch/SHA/CI/blockers | Required Git synchronization commands and remote read-back |
 | B11 | No software install, VM creation, infrastructure/network/identity change, or security-test execution occurred; stop after Task 001 | Executed-action review and explicit completion report |
 | B12 | Open decisions/risks and one recommended next task are reported; owner UAT is not inferred | Final report; owner review remains pending |
-| B13 | Every completed task has a unique sequential finalized A–H report in `reports/`; historical finalized reports are preserved | Reporting validator, source comparison, Git history review |
-| B14 | Maintained user-facing documents outside `reports/` have faithful searchable PDF editions; task reports/addenda require Markdown only; final project report remains a template | Document source/PDF manifest and fresh rebuild, report exclusion/archive regression checks, text/navigation/page checks, representative visual QA, and CI |
+| B13 | Every completed task has a unique sequential finalized A–H report in `docs/reports/`; historical finalized reports are preserved | Reporting validator, source comparison, Git history review |
+| B14 | Maintained user-facing documents outside `docs/reports/` have faithful searchable PDF editions; task reports/addenda require Markdown only; final project report remains a template | Document source/PDF manifest and fresh rebuild, report exclusion/archive regression checks, text/navigation/page checks, representative visual QA, and CI |
 
 If GitHub authentication/permissions block publication, B09/B10 remain blocked and the local reviewed repository plus precise owner action are delivered. Do not present a local-only repository as published. If the target already exists, preserve and reconcile its branches/content without force-pushing.
 
@@ -56,4 +56,4 @@ Record the owner/reviewer, date, business workflows checked, observed usability,
 
 ## Current gate
 
-Task 001 technical results are recorded in [T1-Report.md](../../reports/T1-Report.md), its separately recorded addenda, and the final chat completion response. Every future task must finalize its own [individual report](../../reports/README.md) before engineering completion. [FINAL-REPORT.md](../final-report/FINAL-REPORT.md) remains the project-level template. Owner UAT: **PENDING**. Stages A–L: **NOT STARTED / NOT APPROVED FOR EXECUTION**. No next task starts without the owner's scope-specific authorization.
+Task 001 technical results are recorded in [T1-Report.md](../reports/T1-Report.md), its separately recorded addenda, and the final chat completion response. Every future task must finalize its own [individual report](../reports/INDEX.md) before engineering completion. [FINAL-REPORT.md](../final-report/FINAL-REPORT.md) remains the project-level template. Owner UAT: **PENDING**. Stages A–L: **NOT STARTED / NOT APPROVED FOR EXECUTION**. No next task starts without the owner's scope-specific authorization.

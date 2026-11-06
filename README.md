@@ -43,7 +43,7 @@ Production Microsoft 365 identities, PE-DAP, customer data, the corporate websit
 
 Repository setup, planning documents, task reporting, and documentation validation have been implemented and checked. **Lab implementation is PLANNED; operational controls are NOT TESTED.** Owner user acceptance testing (UAT) remains pending.
 
-[T1](reports/T1-Report.md) preserves the bootstrap results. [Its reporting addendum](reports/T1-Addendum-001-Reporting-Governance.md) records the reporting migration. [T2](reports/T2-Report.md) records the documentation review. No implementation stage starts without separate owner approval.
+[T1](docs/reports/T1-Report.md) preserves the bootstrap results. [Its reporting addendum](docs/reports/T1-Addendum-001-Reporting-Governance.md) records the reporting migration. [T2](docs/reports/T2-Report.md) records the documentation review. No implementation stage starts without separate owner approval.
 
 ## Testing and Validation
 
@@ -67,12 +67,12 @@ Use the [documentation library](docs/README.md) for source/PDF pairs, including 
 - [Implementation guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md): stages A–L, checks, rollback, and approval gates.
 - [Architecture](docs/architecture/ARCHITECTURE.md) and [security requirements](docs/security/SECURITY-REQUIREMENTS.md): boundaries, access rules, threats, and standards mappings.
 - [Acceptance criteria](docs/testing/ACCEPTANCE-CRITERIA.md), [decisions](docs/governance/DECISIONS.md), and [risks](docs/governance/RISKS.md): evaluation and unresolved choices.
-- [Task reports](reports/README.md) and [bootstrap evidence](evidence/BOOTSTRAP-VALIDATION.md): work performed and evidence available.
+- [Task reports](docs/reports/INDEX.md) and [bootstrap evidence](evidence/BOOTSTRAP-VALIDATION.md): work performed and evidence available.
 - [Project final report template](docs/final-report/FINAL-REPORT.md), [glossary](docs/guides/GLOSSARY.md), and [references](docs/governance/REFERENCES.md): project assessment, terminology, and authoritative sources.
 
 ## Reporting and GitHub Workflow
 
-Every task needs a sequential, finalized Markdown-only report (`reports/Ti-Report.md`) before engineering completion. Reports and addenda do not receive PDFs; the entire reporting directory is excluded from PDF generation. Existing report PDFs are archived artifacts. Finalized Markdown reports remain immutable; corrections use an addendum or later task report. Owner UAT remains separate.
+Every task needs a sequential, finalized Markdown-only report (`docs/reports/Ti-Report.md`) before engineering completion. Reports and addenda do not receive PDFs; the entire reporting directory is excluded from PDF generation. Existing report PDFs are archived artifacts. Finalized Markdown reports remain immutable; corrections use an addendum or later task report. Owner UAT remains separate.
 
 Use a task branch, focused commits, CI, and a reviewed pull request before merging; then fast-forward local `main`. Synchronization is intentional Git activity. [AGENTS.md](AGENTS.md) defines the workflow, approvals, writing standards, and prohibition on background upload. Protection/reviewer settings remain owner decisions.
 
@@ -80,4 +80,4 @@ Use a task branch, focused commits, CI, and a reviewed pull request before mergi
 
 Maintained under [waqashamdani-ca](https://github.com/waqashamdani-ca) in the public [enterprise-zero-trust-security repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), with `main` as the default branch.
 
-No software license has been selected. The next engineering task is an owner-approved, read-only hardware and isolation readiness assessment; this documentation work does not authorize it.
+No software license has been selected. The recommended next task is T5: create the eight Word/Excel shells named in the assignment, after separate owner approval. Stage A hardware/isolation readiness remains the first infrastructure stage and needs its own approval.
