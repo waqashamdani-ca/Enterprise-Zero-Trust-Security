@@ -51,4 +51,4 @@ The owner later checks analyst report access, engineer maintenance-page access, 
 
 ## Current gate
 
-T6 is documentation only. No hardware/software installation, VM/network/directory change, Tailscale enrollment or lab/security-test execution is authorized. T7 requires separate approval to migrate the eight unchanged Office shells into the five planned files. See [task reports](../reports/INDEX.md) for observed results; the [project final report](../final-report/FINAL-REPORT.md) remains a template.
+The five [editable submission templates](../README.md#editable-lab-deliverable-templates) are available after the owner-authorized consolidation. They supply no operational evidence, stage approval or owner acceptance. Lab implementation remains PLANNED and operational tests NOT TESTED; each stage still requires its own approval. See [task reports](../reports/INDEX.md) for repository engineering results; the [project final report](../final-report/FINAL-REPORT.md) remains a template.

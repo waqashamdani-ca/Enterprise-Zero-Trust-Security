@@ -23,23 +23,21 @@ The final project report remains a clearly identified template. All infrastructu
 
 ## Editable lab deliverable templates
 
-The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) defines the five approved future T7 filenames. They are not yet created. T7 requires separate owner approval to reconcile the eight existing files below.
+The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) defines these five active blank templates. Complete them during approved lab work. Actual observations, execution dates, evidence, results and scores start empty; engineering tests start NOT TESTED and owner acceptance starts PENDING.
 
-These are **legacy T5 blank shells**, byte-preserved in T6. Their old requirements, counts, rubric and stage prompts describe the retired baseline and do not govern current implementation. Do not use them as current answer sheets until approved T7 migration. Their original actual/evidence fields remain empty.
-
-| Editable template | Historical requirements | Historical T5 purpose |
+| Editable template | Requirements | Owning record |
 | --- | --- | --- |
-| [01-Lab-Environment.xlsx](deliverables/01-Lab-Environment.xlsx) | R02 | Hardware, VMs, software, stage checklist and planned/actual resource ledger |
-| [02-Architecture-and-Network-Design.docx](deliverables/02-Architecture-and-Network-Design.docx) | R01, R03, R04, R15 | Business roles, zones, diagrams, flows, threats, decisions and limitations |
-| [03-Identity-and-Access-Management.xlsx](deliverables/03-Identity-and-Access-Management.xlsx) | R05, R06, R08 | Synthetic identities, groups, permissions, authentication, privilege, endpoint baselines and revocation timing |
-| [04-Zero-Trust-Implementation.docx](deliverables/04-Zero-Trust-Implementation.docx) | R03, R04, R07, R09, R12, R13 | Stage A-L configuration references, certificate lifecycle, sequential pilots, two automations and recovery procedures |
-| [05-Security-Monitoring.xlsx](deliverables/05-Security-Monitoring.xlsx) | R10 | Log sources, twenty event timestamps, detections, investigations, coverage, clock offsets and retention sizing |
-| [06-Testing-and-Validation.xlsx](deliverables/06-Testing-and-Validation.xlsx) | R01, R13, R14 | All R01-R16 mappings and T00-T20 definitions, individual cases, actual results/evidence, recovery measurements, exceptions and separate owner UAT |
-| [07-Troubleshooting-and-Lessons.xlsx](deliverables/07-Troubleshooting-and-Lessons.xlsx) | R14, R15 | Issues, impact, investigation, correction/rollback, verification and lessons |
-| [08-Final-Lab-Submission.docx](deliverables/08-Final-Lab-Submission.docx) | R11, R15, R16 | Assessment, supporting-file references, measured-outcome summary, rubric, public hygiene and GitHub record |
+| [01 Environment and architecture](deliverables/01-Lab-Environment-and-Architecture.xlsx) | FWR-01, FWR-02 | Readiness/procurement separate from installation; four VMs, three zones, flows and capacity |
+| [02 Identity and Zero Trust implementation](deliverables/02-Identity-and-Zero-Trust-Implementation.docx) | FWR-03 to FWR-06 | AD and separate application roles, endpoints, HTTPS, six cases and Tailscale/revocation summaries |
+| [03 Security monitoring and testing](deliverables/03-Security-Monitoring-and-Testing.xlsx) | FWR-01 to FWR-10 | Five event categories, one denial investigation, ten tests/91 mandatory subchecks, coverage, one automation/restore, evidence and separate owner acceptance |
+| [04 Troubleshooting and lessons](deliverables/04-Troubleshooting-and-Lessons.xlsx) | FWR-10 | One issue log with cause, correction, verification/retest and lesson |
+| [05 Final project submission](deliverables/05-Final-Project-Submission.docx) | FWR-10 | Results summarized by reference, limitations, 100-point rubric and supporting deliverables |
 
+Use Segoe UI answer areas and status dropdowns; add table rows when records grow. The testing workbook owns detailed execution so other files reference it. PASS requires every mandatory subcheck and evidence; blocked or missing work cannot become a passing test or an approved omission. Keep private working copies and originals outside Git and publish reviewed summaries only.
 
-Run `python scripts/validate_office_templates.py` to inspect the unchanged legacy packages. Native Office/layout validation belongs to [T5](reports/T5-Report.md); T6 does not reopen, edit or regenerate these files. Keep future working records private.
+Run `python scripts/validate_office_templates.py` for bounded offline package/content checks. Native Microsoft Office editing, dropdown/filter behavior, recalculation and visual QA are separate observations recorded in [T7](reports/T7-Report.md); CI checks no lab control or owner acceptance. These editable files have no PDF editions.
+
+The eight verified blank T5 shells were retired by normal Git changes. Their complete [original template directory](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/tree/6f5352bb6d5e2eca37ac2384703367543530b952/docs/deliverables) and [T5 report snapshot](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/blob/6f5352bb6d5e2eca37ac2384703367543530b952/docs/reports/T5-Report.md) preserve historical links and definitions. Old targets/results do not govern this baseline. Finalized reports remain unchanged.
 
 ## Task reports and other instructions
 

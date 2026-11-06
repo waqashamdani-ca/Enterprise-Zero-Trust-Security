@@ -253,14 +253,16 @@ class PdfArtifactTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Unreviewed inline HTML"):
             docs.render_pdf(docs.ASSIGNMENT, content, {docs.ASSIGNMENT})
 
-    def test_guide_edit_does_not_change_other_sources_or_pdfs(self):
-        base = "a3d7b1c6effde3bd5b18ab1a4b529c07a7cc7c61"
-        allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf",
-                   "docs/governance/DOCUMENTATION-BUILD.md", "docs/governance/DOCUMENTATION-BUILD.pdf",
-                   "docs/reports/INDEX.md", docs.MANIFEST}
+    def test_office_migration_preserves_unaffected_sources_pdfs_and_frozen_records(self):
+        base = "d408c4571105bd42396dd5e71aae22f4f3d9290c"
+        sources = {"README.md", "docs/README.md", docs.ASSIGNMENT, docs.GUIDE,
+                   "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
+                   "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
+                   "docs/governance/DOCUMENTATION-BUILD.md"}
+        allowed = sources | {n[:-3] + ".pdf" for n in sources} | {"docs/reports/INDEX.md", docs.MANIFEST}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
         for name in files:
-            if name in allowed or not name.endswith((".md", ".pdf", ".docx", ".xlsx")):
+            if name in allowed or name.startswith("docs/deliverables/") or not name.endswith((".md", ".pdf", ".docx", ".xlsx")):
                 continue
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
             self.assertEqual((ROOT / name).read_bytes(), old, name)
@@ -301,17 +303,28 @@ class PdfArtifactTests(unittest.TestCase):
             self.assertIn(command, old)
             self.assertIn(command, current)
 
-    def test_all_eight_office_files_remain_byte_identical_to_t5(self):
-        baseline = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
+    def test_five_active_templates_replace_eight_recoverable_originals_in_history(self):
+        baseline = "6f5352bb6d5e2eca37ac2384703367543530b952"
         names = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
                                          baseline, "--", "docs/deliverables"]).decode().splitlines()
         self.assertEqual(len(names), 8)
         current = sorted(str(p.relative_to(ROOT)).replace("\\", "/")
                          for p in (ROOT / "docs/deliverables").iterdir())
-        self.assertEqual(current, sorted(names))
+        self.assertEqual(current, sorted("docs/deliverables/" + n for n in validator.DELIVERABLE_FILENAMES))
+        self.assertFalse(set(current) & set(names))
+        expected = {
+            "01-Lab-Environment.xlsx": "afb0a0ecaec2c76b665d83382414074f79debd0bc6b8f4394c365fb89abe5656",
+            "02-Architecture-and-Network-Design.docx": "81b41b07cc6f5cb36ca1b4303bb4a5ad6c6a0222b23980299ce52af83a926c66",
+            "03-Identity-and-Access-Management.xlsx": "2c0fc70f5776bd7b4559a095fb965cdd08ca43c217d2170ef01579cae250d251",
+            "04-Zero-Trust-Implementation.docx": "cf600aeb6903ca167f43f3a0d12a17d4cd73f1fd978c05b8287931bf793c5985",
+            "05-Security-Monitoring.xlsx": "c9a1839a440689ae0bfff6556136dbda7d1d4b9c25c632224eb5e3cf716f6248",
+            "06-Testing-and-Validation.xlsx": "2c1ad86eaba5e26bc3ed401e71797fab6e45e199bb5554fca860b66289734530",
+            "07-Troubleshooting-and-Lessons.xlsx": "95e5e8ad44035b325cd13d5c4310fdf7573e7b8870d39b8fd2cbcc90b62c93a7",
+            "08-Final-Lab-Submission.docx": "49087edf0b43626d41c563a651b3495ee67d600d75cb67be5664c8b34f8d9dba",
+        }
         for name in names:
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", baseline + ":" + name])
-            self.assertEqual((ROOT / name).read_bytes(), old, name)
+            self.assertEqual(hashlib.sha256(old).hexdigest(), expected[Path(name).name], name)
 
 
 if __name__ == "__main__":

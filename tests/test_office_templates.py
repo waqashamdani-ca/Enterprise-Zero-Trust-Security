@@ -27,6 +27,10 @@ def fixture():
     with tempfile.TemporaryDirectory(dir=base) as temporary:
         root = Path(temporary)
         shutil.copytree(ROOT / "docs/deliverables", root / REL)
+        for relative in ("docs/testing/TEST-PLAN.md", "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/architecture/ARCHITECTURE.md"):
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
         yield root
 
 
@@ -106,7 +110,12 @@ class OfficeTemplateTests(unittest.TestCase):
             self.assertTrue(any("external data" in x for x in office.package_issues(root, REL + path.name)))
         with fixture() as root:
             path = root / REL / office.FILES[0]
-            rewrite(path, "xl/_rels/workbook.xml.rels", lambda b: b.replace(b"/xl/styles.xml", b"/xl/missing.xml"))
+            def missing(raw):
+                tree = ET.fromstring(raw)
+                child = next(n for n in tree if n.get("Type", "").endswith("/styles"))
+                child.set("Target", "missing.xml")
+                return ET.tostring(tree)
+            rewrite(path, "xl/_rels/workbook.xml.rels", missing)
             self.assertTrue(office.package_issues(root, REL + path.name))
 
     def test_secret_split_across_word_runs_is_redacted(self):
@@ -148,33 +157,32 @@ class OfficeTemplateTests(unittest.TestCase):
 
     def test_fabricated_status_or_actual_result_rejected(self):
         with fixture() as root:
-            path = root / REL / office.FILES[5]
-            rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "H8", "Pass"))
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, "G8", "PASS"))
             self.assertTrue(any("records an outcome" in x for x in office.template_set_issues(root)))
         with fixture() as root:
-            path = root / REL / office.FILES[5]
-            rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "I8", "Synthetic unsupported result"))
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, "H8", "Synthetic unsupported result"))
             self.assertTrue(any("actual/evidence" in x for x in office.template_set_issues(root)))
 
     def test_test_plan_drift_and_owner_acceptance_rejected(self):
         with fixture() as root:
-            path = root / REL / office.FILES[5]
-            rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "F8", "Changed expectation"))
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, "E8", "Changed expectation"))
             self.assertTrue(any("approved test plan" in x for x in office.template_set_issues(root)))
         with fixture() as root:
-            path = root / REL / office.FILES[5]
-            rewrite(path, "xl/worksheets/sheet7.xml", lambda b: set_cell(b, "D8", "Accepted"))
-            self.assertTrue(any("UAT must remain Pending" in x for x in office.template_set_issues(root)))
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet8.xml", lambda b: set_cell(b, "C8", "ACCEPTED"))
+            self.assertTrue(any("UAT must remain PENDING" in x for x in office.template_set_issues(root)))
 
-    def test_missing_legacy_plan_fails_closed(self):
+    def test_missing_current_plan_fails_closed(self):
         with fixture() as root:
-            with patch.object(office.subprocess, "check_output",
-                              side_effect=subprocess.CalledProcessError(1, ["git"])):
-                self.assertTrue(any("could not be verified" in x for x in office.template_set_issues(root)))
+            (root / "docs/testing/TEST-PLAN.md").unlink()
+            self.assertTrue(any("could not be verified" in x for x in office.template_set_issues(root)))
 
     def test_removed_status_dropdown_rejected(self):
         with fixture() as root:
-            path = root / REL / office.FILES[6]
+            path = root / REL / office.FILES[3]
             def remove(raw):
                 tree = ET.fromstring(raw)
                 for node in tree.findall("s:dataValidations", office.NS):
@@ -182,6 +190,113 @@ class OfficeTemplateTests(unittest.TestCase):
                 return ET.tostring(tree)
             rewrite(path, "xl/worksheets/sheet1.xml", remove)
             self.assertTrue(any("dropdown" in x for x in office.template_set_issues(root)))
+
+    def test_missing_subcheck_and_changed_case_outcome_rejected(self):
+        for column, value in (("C", "FWT-03.MISSING"), ("E", "Allow")):
+            with self.subTest(column=column), fixture() as root:
+                path = root / REL / office.FILES[2]
+                data = office.workbook_data(office.package_parts(path))["Test Cases"]["cells"]
+                address = next(a for a, c in data.items() if a.startswith("C") and c["value"] == "FWT-03.05")
+                rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, column + address[1:], value))
+                self.assertTrue(any("subcheck" in x or "approved test plan" in x for x in office.template_set_issues(root)))
+
+    def test_plan_change_and_requirement_mapping_drift_rejected(self):
+        with fixture() as root:
+            p = root / "docs/testing/TEST-PLAN.md"
+            p.write_text(p.read_text().replace("No unapproved protected path or integration", "Different approved expectation", 1))
+            self.assertTrue(any("approved test plan" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "D8", "FWT-02"))
+            self.assertTrue(any("traceability differs" in x for x in office.template_set_issues(root)))
+
+    def test_missing_formula_guard_and_prepopulated_hardware_state_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet5.xml", lambda b: set_cell(b, "D10", formula="SUM('Virtual Machines'!I8:I11)"))
+            self.assertTrue(any("input guards" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "E8", "VALIDATED"))
+            self.assertTrue(any("must be blank" in x for x in office.template_set_issues(root)))
+
+    def test_legacy_target_extra_sheet_and_wrong_font_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "J8", "six security zones"))
+            self.assertTrue(any("obsolete enterprise" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/workbook.xml", lambda b: b.replace(b'Hardware &amp; Readiness', b'Unnecessary Sheet'))
+            self.assertTrue(office.template_set_issues(root))
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/styles.xml", lambda b: b.replace(b'Segoe UI', b'Other Font', 1))
+            self.assertTrue(any("fonts must use Segoe UI" in x for x in office.template_set_issues(root)))
+
+    def test_word_answer_score_heading_and_page_fields_rejected(self):
+        for target, index, column, value in ((office.FILES[1], 0, 2, "Unsupported observation"), (office.FILES[4], 3, 2, "25"), (office.FILES[4], 3, 1, "24")):
+            with self.subTest(target=target, column=column), fixture() as root:
+                path = root / REL / target
+                def change(raw):
+                    tree = ET.fromstring(raw)
+                    tables = tree.findall(".//w:body/w:tbl", office.NS)
+                    cell = tables[index].findall("w:tr", office.NS)[1].findall("w:tc", office.NS)[column]
+                    paragraph = cell.find("w:p", office.NS)
+                    for node in list(paragraph):
+                        paragraph.remove(node)
+                    run = ET.SubElement(paragraph, "{" + office.NS["w"] + "}r")
+                    ET.SubElement(run, "{" + office.NS["w"] + "}t").text = value
+                    return ET.tostring(tree)
+                rewrite(path, "word/document.xml", change)
+                self.assertTrue(any("blank" in x or "rubric" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[1]
+            rewrite(path, "word/document.xml", lambda b: b.replace(b'Heading1', b'Normal', 1))
+            self.assertTrue(any("heading styles" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[1]
+            rewrite(path, "word/footer1.xml", lambda b: b.replace(b'NUMPAGES', b'UNAPPROVED'))
+            self.assertTrue(any("page numbering" in x for x in office.template_set_issues(root)))
+            self.assertTrue(any("active Word field" in x for x in office.package_issues(root, REL + path.name)))
+
+    def test_undeclared_compatibility_prefix_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[1]
+            def incompatible(raw):
+                tree = ET.fromstring(raw)
+                tree.set("{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable", "undeclared")
+                return ET.tostring(tree)
+            rewrite(path, "word/document.xml", incompatible)
+            self.assertTrue(any("compatibility prefix" in x for x in office.package_issues(root, REL + path.name)))
+
+    def test_network_flow_and_word_case_expectations_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "C8", "Allow all services"))
+            self.assertTrue(any("permission/enforcement" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[1]
+            def wrong_case(raw):
+                tree = ET.fromstring(raw)
+                case_table = tree.findall(".//w:body/w:tbl", office.NS)[4]
+                expected = case_table.findall("w:tr", office.NS)[1].findall("w:tc", office.NS)[2]
+                expected.find(".//w:t", office.NS).text = "Deny"
+                return ET.tostring(tree)
+            rewrite(path, "word/document.xml", wrong_case)
+            self.assertTrue(any("six approved application cases" in x for x in office.template_set_issues(root)))
+
+
+class FrozenTemplateLinkTests(unittest.TestCase):
+    def test_only_unchanged_t5_report_resolves_retired_targets(self):
+        from scripts import validate_docs as docs
+        relative = "docs/reports/T5-Report.md"
+        original = (ROOT / relative).read_text(encoding="utf-8")
+        self.assertEqual(docs.link_issues(ROOT, relative, original), [])
+        self.assertTrue(any("missing local link" in x for x in docs.link_issues(ROOT, relative, original + "\nChanged")))
+        self.assertTrue(docs.link_issues(ROOT, "docs/README.md", "[retired](deliverables/01-Lab-Environment.xlsx)"))
+        with patch.object(docs.subprocess, "run", side_effect=OSError("missing history")):
+            self.assertTrue(any("missing local link" in x for x in docs.link_issues(ROOT, relative, original)))
 
 
 if __name__ == "__main__":
