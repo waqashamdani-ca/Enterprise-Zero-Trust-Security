@@ -1,6 +1,8 @@
 # T6 - Four-week focused lab specification alignment
 
-Report state: DRAFT
+Report state: FINALIZED
+
+Evidence cutoff: 2026-11-06 10:45:40 UTC (2026-11-06 05:45:40, America/Toronto). Finalization date: 2026-11-06, America/Toronto. The report-finalization commit, its CI, merge and final main synchronization are outside this cutoff.
 
 ## A. Task Information
 
@@ -59,7 +61,7 @@ The engineering verifier was Codex. Second observations below were performed by 
 | Independent baseline SHA-256 comparison | 25 Office/report/archive/evidence files byte-identical to pre-T6 baseline; all eight Office files also compared directly to committed T5 bytes | PASS |
 | Poppler rendering and manual visual review | All pages of 14 changed PDFs rendered; title/contents/tables/diagram/commands/transitions reviewed; refined pages re-rendered. No remaining clipping/overlap/unreadable content observed | PASS |
 | git diff --check | No whitespace errors | PASS |
-| --require-finalized completion gate | Pending until this report is finalized at an observed evidence cutoff | NOT TESTED |
+| --require-finalized completion gate | Required after the final marker and before completed-head merge; outside this evidence cutoff, with observed result reported in the final chat response | NOT TESTED at cutoff |
 | Operational FWT-01 through FWT-10, implementation approvals and owner UAT | No lab action performed; actual/evidence placeholders empty; none of these repository checks supplies an operational verdict | NOT TESTED |
 
 Initial failures were retained privately and resolved: the first run encountered Windows-sandbox fixture access/cleanup errors and a five-page assignment. The same fixture tests ran normally under the approved unsandboxed documentation-only scope; a compact title/contents layout met four pages. A subsequent legacy-plan drift negative test exposed that the old Office checker silently parsed zero definitions from the new plan. It now reads the committed T5 plan at b838c00bc7d4478251662fc2086059d38a2c7ffd, verifies SHA-256 c01a987e29cfcfe637d5f25bbdbd8fecef526ae8175c0a6f9f3b604063e27811, requires all 21 old definitions and fails closed on missing history. No scanner was disabled. Code slice notation that resembled IPv6 literals was rewritten to remove the false finding.
@@ -80,22 +82,28 @@ Residual risks are documented in the current risk register: delivery/compatibili
 
 Authenticated user waqashamdani-ca has push/admin permission to the existing public repository, default main. Origin retains the authorized URL/case-insensitive repository match. main has no protection and rulesets are empty at preflight; settings unchanged. Both new author/committer identities were verified as the owner's GitHub noreply identity.
 
-Branch: task/006-four-week-lab-scope. Baseline: b838c00bc7d4478251662fc2086059d38a2c7ffd. At this draft cutoff, the T6 content commit, push, PR, CI and merge are pending. Publication uses explicit paths and normal non-force Git updates. A future finalization records only outcomes already observed; later final-head CI/merge/synchronization belong in the final chat response.
+Branch: task/006-four-week-lab-scope. Baseline: b838c00bc7d4478251662fc2086059d38a2c7ffd. Content commit [8ecede87f5c0e2b5af53a964c3b00c89f60787f9](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/8ecede87f5c0e2b5af53a964c3b00c89f60787f9) was published normally after reviewing all 37 explicitly staged paths, matching index/file bytes, the complete candidate set, diff and new history. Both author and committer are the verified noreply identity. The branch is clean and tracks its matching live remote head. Original main remains at the synchronized T5 baseline until merge.
+
+[PR 7](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/7) is OPEN and mergeable at this cutoff. [Push workflow 42204766114](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42204766114) and [PR workflow 42204827279](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42204827279) both completed SUCCESS at content head 8ecede87f5c0e2b5af53a964c3b00c89f60787f9. PR logs independently confirm 80 candidates, 19 PDF pairs/78 pages and 58 tests. No reviews or reviewer requests exist at this observation; no independent approval is claimed.
+
+The connector read metadata but PR creation returned integration HTTP 403; the already authenticated owner GitHub CLI created the authorized PR. This was a connector-permission limit, not a rejected safety approval. Origin's lowercase URL redirects to the same verified case-renamed repository and is preserved.
+
+This final report's publication, its own commit/CI and any merge/synchronization are future to the cutoff. Recheck exact head, CI, requests/threads/rules before a normal local merge preserving noreply author/committer; do not bypass a requirement. Confirm GitHub records merge, fast-forward original local main preserving owner deletions, and compare live remote IDs. Report those later observed outcomes in the final chat response without editing this finalized record.
 
 ## F. Outstanding Issues
 
 T7 must migrate the eight unchanged Office shells into the five approved exact filenames and new IDs/rubric. Those future files are deliberately not created. Final lab submission cannot pass until separately authorized T7 and implementation/evidence exist.
 
-Delivery, physical inspection, compatibility/cooler/firmware, current data/service inventory, off-compute recovery media, exact destructive targets, isolated egress, current software/provider terms and individual stage approvals remain pending. The four-week estimate starts after prerequisites and may move without weakening safety. The original checkout still has five owner PDF deletions and must not be described as clean. Independent human review NOT TESTED; owner UAT PENDING.
+Delivery, physical inspection, compatibility/cooler/firmware, current data/service inventory, off-compute recovery media, exact destructive targets, isolated egress, current software/provider terms and individual stage approvals remain pending. The four-week estimate starts after prerequisites and may move without weakening safety. Final report publication/final-head CI/merge/synchronization remain outside this cutoff. The original checkout still has five owner PDF deletions and must not be described as clean. Independent human review NOT TESTED; owner UAT PENDING.
 
 ## G. Completion Status
 
 | Area | State |
 | --- | --- |
-| T6 documentation and local engineering verification | IMPLEMENTED / VALIDATED for the checks above; report/publication in progress |
+| T6 documentation and local engineering verification | IMPLEMENTED / VALIDATED at cutoff; final-head publication verification still pending |
 | Independent second observations | PASS for PDF render/content, byte preservation and GitHub preflight methods; same engineering verifier |
 | Independent human review | NOT TESTED |
-| Report / publication | DRAFT; initial publication and finalized completion gate pending |
+| Report / publication | FINALIZED at cutoff; initial PR/push CI PASS; final report publication, completed-head gate/CI, merge and main synchronization pending |
 | Lab hardware/software/controls | PLANNED / NOT TESTED; no implementation action |
 | Owner UAT / acceptance | PENDING; no explicit confirmation received |
 
