@@ -14,10 +14,13 @@ Use this index for the current location and reporting rules. Every task in HL-CY
 | T4 | [T4 report](T4-Report.md) | Assignment redesign, submission filenames and report-folder migration |
 | T5 | [T5 report](T5-Report.md) | Eight editable Word/Excel lab deliverable shells and their validation |
 | T6 | [T6 report](T6-Report.md) | Four-week project specification/PDF alignment and ordered-hardware status; Office files unchanged |
+| T6A | [T6A report](T6A-Report.md) | Owner-authorized assignment language/design/layout follow-up; T6 scope preserved |
 
 ## Numbering and required content
 
 Use `docs/reports/T1-Report.md`, `docs/reports/T2-Report.md`, and subsequent numbers without gaps, reuse or renumbering. Inspect local and remote work before allocation. A new number does not authorize a task. Corrections to finalized records use a separately numbered addendum such as `T4-Addendum-001-Correction.md`, with the same parent task ID and no new task number.
+
+The owner explicitly authorized `T6A-Report.md` as a companion to finalized T6. It uses Task ID T6A, preserves the same A-H/finalization/history rules, and does not allocate T7 or authorize other lettered tasks.
 
 Start with a descriptive title and `Report state: DRAFT`. Include a `Task ID` table row in section A. Use these headings exactly, once and in order:
 

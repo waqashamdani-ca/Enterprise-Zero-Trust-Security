@@ -240,6 +240,41 @@ class ReportingGovernanceTests(unittest.TestCase):
             self.assertTrue(any("duplicate report locations" in item for item in findings))
 
 
+    def test_t6a_companion_keeps_numbering_and_requires_finalized_parent(self):
+        texts = {f"docs/reports/T{i}-Report.md": self.report(i, state="FINALIZED") for i in range(1, 7)}
+        companion = self.report(6).replace("| Task ID | T6 |", "| Task ID | T6A |")
+        texts["docs/reports/T6A-Report.md"] = companion
+        self.assertEqual(validator.report_issues(texts), [])
+        self.assertTrue(any("finalized" in x for x in validator.report_issues(texts, True)))
+        texts["docs/reports/T6-Report.md"] = self.report(6)
+        self.assertTrue(any("finalized parent" in x for x in validator.report_issues(texts)))
+        texts["docs/reports/T6-Report.md"] = self.report(6, state="FINALIZED")
+        texts["docs/reports/T6A-Report.md"] = companion.replace("| T6A |", "| T7 |")
+        self.assertTrue(any("Task ID" in x for x in validator.report_issues(texts)))
+
+    def test_other_lettered_reports_are_not_implicitly_authorized(self):
+        texts = {"docs/reports/T1-Report.md": self.report(),
+                 "docs/reports/T6B-Report.md": self.report(6)}
+        self.assertTrue(any("filename" in x for x in validator.report_issues(texts)))
+
+    def test_finalized_t6a_is_protected_by_history_checks(self):
+        with temporary_directory() as directory:
+            root = Path(directory)
+            (root / "docs/reports").mkdir(parents=True)
+            name = "docs/reports/T6A-Report.md"
+            content = self.report(6, state="FINALIZED").replace("| Task ID | T6 |", "| Task ID | T6A |")
+            (root / name).write_text(content, encoding="utf-8", newline="\n")
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "add", name], check=True)
+            subprocess.run(["git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+                            "user.email=fixture@example.test", "-c", "commit.gpgsign=false",
+                            "commit", "--quiet", "-m", "Freeze synthetic companion"], check=True)
+            self.assertEqual(validator.finalized_history_issues(root, {name: content}), [])
+            (root / name).write_text(content + "Changed\n", encoding="utf-8", newline="\n")
+            self.assertTrue(any("modified" in x for x in validator.finalized_history_issues(root, {name: content + "Changed\n"})))
+            self.assertTrue(any("deleted or renamed" in x for x in validator.finalized_history_issues(root, {})))
+
+
 class AssignmentContractTests(unittest.TestCase):
     def setUp(self):
         project = SCRIPT.parents[1]
@@ -263,7 +298,7 @@ class AssignmentContractTests(unittest.TestCase):
     def test_duplicate_filename_wrong_format_and_missing_coverage_are_rejected(self):
         for before, after, expected in (
             ("02-Identity-and-Zero-Trust-Implementation.docx", "01-Lab-Environment-and-Architecture.xlsx", "filenames"),
-            ("Word (.docx)", "Excel (.xlsx)", "format mismatch"),
+            ("02-Identity-and-Zero-Trust-Implementation.docx", "02-Identity-and-Zero-Trust-Implementation.xlsx", "filenames"),
             ("(FWR-01, FWR-02).", "(FWR-01).", "cover all"),
         ):
             with self.subTest(expected=expected):
@@ -298,7 +333,16 @@ class AssignmentContractTests(unittest.TestCase):
 
     def test_ordered_status_and_future_template_status_are_required(self):
         self.assert_rejected(self.guide, "Xeon W-2145", "Unspecified CPU", "ordered hardware")
-        self.assert_rejected(self.assignment, "approved T7 target, not yet created", "already created", "future T7 status")
+        self.assert_rejected(self.assignment, "planned and not yet available", "already available", "template availability")
+
+    def test_identity_limits_and_legacy_navigation_are_required(self):
+        self.assert_rejected(self.assignment, "separate test accounts", "shared Windows accounts", "application identity")
+        self.assert_rejected(self.assignment, '<a id="expected-deliverables"></a>', "", "compatibility anchors")
+        self.assert_rejected(self.assignment, "## Learning Objectives", "## Learning Objectives\n\nStart T7 now.", "internal task")
+
+    def test_short_readiness_controls_remain_required(self):
+        self.assert_rejected(self.assignment, "backup and recovery", "storage", "hardware readiness")
+        self.assert_rejected(self.assignment, "owner approval", "student discretion", "hardware readiness")
 
 
 if __name__ == "__main__":
