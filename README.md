@@ -45,12 +45,30 @@ Repository setup, planning documents, task reporting, and documentation validati
 
 [T1](docs/reports/T1-Report.md) preserves the bootstrap results. [Its reporting addendum](docs/reports/T1-Addendum-001-Reporting-Governance.md) records the reporting migration. [T2](docs/reports/T2-Report.md) records the documentation review. No implementation stage starts without separate owner approval.
 
+The eight blank Word/Excel deliverable templates are available below. [T5](docs/reports/T5-Report.md) records their creation and validation; the templates contain approved definitions and answer fields, with no actual lab results.
+
+## Editable Lab Deliverable Templates
+
+Use private working copies to record approved implementation. Publish only reviewed public-safe summaries. Each file uses Segoe UI and remains editable in Microsoft Office; no PDF edition is provided.
+
+| Template | Record here |
+| --- | --- |
+| [01 Lab environment](docs/deliverables/01-Lab-Environment.xlsx) | Inventory, software versions, setup and planned/actual capacity |
+| [02 Architecture and network design](docs/deliverables/02-Architecture-and-Network-Design.docx) | Objectives, zones, topology, flows and design decisions |
+| [03 Identity and access management](docs/deliverables/03-Identity-and-Access-Management.xlsx) | Synthetic identities, roles, endpoint baselines and access policies |
+| [04 Zero Trust implementation](docs/deliverables/04-Zero-Trust-Implementation.docx) | Stage configuration, certificate lifecycle, remote pilots, automation and recovery procedures |
+| [05 Security monitoring](docs/deliverables/05-Security-Monitoring.xlsx) | Six source classes, twenty event measurements, clocks, retention and investigations |
+| [06 Testing and validation](docs/deliverables/06-Testing-and-Validation.xlsx) | R01-R16, T00-T20, actual case results, evidence and separate owner UAT |
+| [07 Troubleshooting and lessons](docs/deliverables/07-Troubleshooting-and-Lessons.xlsx) | Issues, diagnosis, resolution, retests and lessons |
+| [08 Final lab submission](docs/deliverables/08-Final-Lab-Submission.docx) | Referenced assessment, limitations, rubric and publication record |
+
 ## Testing and Validation
 
 Use Python 3.11 or later with the pinned [documentation dependencies](docs/governance/DOCUMENTATION-BUILD.md). With that documentation environment active:
 
 ```powershell
 python scripts/validate_docs.py
+python scripts/validate_office_templates.py
 python -m unittest discover -s tests -v
 git diff --check
 ```
@@ -80,4 +98,4 @@ Use a task branch, focused commits, CI, and a reviewed pull request before mergi
 
 Maintained under [waqashamdani-ca](https://github.com/waqashamdani-ca) in the public [enterprise-zero-trust-security repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), with `main` as the default branch.
 
-No software license has been selected. The recommended next task is T5: create the eight Word/Excel shells named in the assignment, after separate owner approval. Stage A hardware/isolation readiness remains the first infrastructure stage and needs its own approval.
+No software license has been selected. The recommended next task is T6: a read-only Stage A hardware and isolation readiness assessment, after explicit asset/scope/validation/recovery approval. No installation or later stage is authorized by the templates.

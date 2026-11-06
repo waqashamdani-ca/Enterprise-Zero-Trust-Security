@@ -18,6 +18,11 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+try:
+    from validate_office_templates import package_issues, template_set_issues
+except ModuleNotFoundError:  # Importlib-based focused tests run from repo root.
+    from scripts.validate_office_templates import package_issues, template_set_issues
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_FILES = (
@@ -251,6 +256,8 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
         issues.append(f"{relative}: sensitive filename in publication set")
     if path.suffix.lower() == ".pdf":
         return issues + generated_pdf_issues(root, relative), None
+    if path.suffix.lower() in {".docx", ".xlsx"}:
+        return issues + package_issues(root, relative, public_content_issues), None
     if (path.suffix.lower() not in ALLOWED_EXTENSIONS and path.name not in ALLOWED_SPECIAL_NAMES
             and relative not in {PDF_MANIFEST, "requirements-docs.txt", "docs/docs/documentation-manifest.json"}):
         issues.append(f"{relative}: unreviewed file type; extend policy only after artifact review")
@@ -514,6 +521,8 @@ def main() -> int:
     issues.extend(pdf_inventory_issues(paths, texts))
     issues.extend(report_issues(texts, args.require_finalized))
     issues.extend(report_migration_issues(ROOT))
+    if (ROOT / "docs/reports/T5-Report.md").exists() or (ROOT / "docs/deliverables").exists():
+        issues.extend(template_set_issues(ROOT))
     try:
         issues.extend(finalized_history_issues(ROOT, texts))
     except (OSError, subprocess.CalledProcessError, UnicodeError):

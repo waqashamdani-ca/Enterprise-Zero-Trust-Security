@@ -25,18 +25,18 @@
       "uri_links": 8
     },
     {
-      "bookmarks": 12,
-      "internal_links": 0,
-      "pages": 3,
+      "bookmarks": 13,
+      "internal_links": 24,
+      "pages": 4,
       "pdf": "README.pdf",
-      "pdf_sha256": "a291717f536523093e8ff8f1e03e6a67908ec5391a3e423401c77a1ab6b7feab",
+      "pdf_sha256": "944dcd6751551455f5d79ebccf51fb64c9ce6843b05017e1b57067d9913430da",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "README.md",
-      "source_sha256": "06a35f11218396d3f4c0aa285575240f0177a84dd571828b8175cfeb1c4f9bb6",
-      "source_tokens": 374,
+      "source_sha256": "423afaeff89751251c70c71ca1c42be288abc4e586626950de02acb183df00cc",
+      "source_tokens": 426,
       "text_token_coverage": 1.0,
-      "uri_links": 21
+      "uri_links": 30
     },
     {
       "bookmarks": 1,
@@ -53,18 +53,18 @@
       "uri_links": 1
     },
     {
-      "bookmarks": 3,
+      "bookmarks": 4,
       "internal_links": 0,
-      "pages": 1,
+      "pages": 3,
       "pdf": "docs/README.pdf",
-      "pdf_sha256": "dcb2286a894bfe67ea852a670199a5a772e1f12e0bedfe045c8e0d0076434d86",
+      "pdf_sha256": "e265e2f1f09cf66799c29934148ed694ed4cff894f5957c288fddfd4e740242b",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "docs/README.md",
-      "source_sha256": "848424ec234ae9ff64737c2991776467b2dda24ffb933fa696492889b1917da6",
-      "source_tokens": 138,
+      "source_sha256": "5f737fbbca370311ee932b9dd81d89f64e416af657a042cce4ede162335f2488",
+      "source_tokens": 331,
       "text_token_coverage": 1.0,
-      "uri_links": 20
+      "uri_links": 30
     },
     {
       "bookmarks": 10,
@@ -113,12 +113,12 @@
       "internal_links": 0,
       "pages": 4,
       "pdf": "docs/governance/DECISIONS.pdf",
-      "pdf_sha256": "f8367bc54e5c0a098f26f70971f80108a351c23619f48ae5e7115ceaf21f6436",
+      "pdf_sha256": "af89f198d510182c711345ee347e266dc084707f860d81655e31217048326c37",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "docs/governance/DECISIONS.md",
-      "source_sha256": "471a4b7989f3b4fafe94f6c2f5cbbb97d1f345c26e8bf65ae13d86264c6b3dd6",
-      "source_tokens": 543,
+      "source_sha256": "5ed8155eee8fdc1edc3b51571ff12f43666ba3fbad892e7383cd0da77d75c24c",
+      "source_tokens": 568,
       "text_token_coverage": 1.0,
       "uri_links": 4
     },
@@ -127,14 +127,14 @@
       "internal_links": 0,
       "pages": 3,
       "pdf": "docs/governance/DOCUMENTATION-BUILD.pdf",
-      "pdf_sha256": "20c0715c7d141319a0c2564db8caf5462a02a43758dda4d3587f8c0eeb9fc7e2",
+      "pdf_sha256": "0c31422d2d0e8721e69c51438fe9f858d215a97745f3c2ed4a429d40ae86dcd4",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "docs/governance/DOCUMENTATION-BUILD.md",
-      "source_sha256": "b4aab63421e29689cc5f13da94c69d435af38485e5dade392fa2af96825169f8",
-      "source_tokens": 481,
+      "source_sha256": "5cc2eb1c1bbb3937bf321e515e678594f4ea1419db1f17e5a1e7fa2dd0180e2b",
+      "source_tokens": 515,
       "text_token_coverage": 1.0,
-      "uri_links": 1
+      "uri_links": 2
     },
     {
       "bookmarks": 13,
@@ -155,12 +155,12 @@
       "internal_links": 0,
       "pages": 3,
       "pdf": "docs/governance/RISKS.pdf",
-      "pdf_sha256": "d10f4067b92f34ba225c598f2a532936f01127760a4ede8f3b67f5a9e0f1a948",
+      "pdf_sha256": "36af33f53618883709d364446f10e487ee870ade980f48141b4ef1ff7c098b1f",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "docs/governance/RISKS.md",
-      "source_sha256": "ee2e3fe5a8c14517e67a34149066a1ecb08b6075e579138eb6775eb4bc71f70a",
-      "source_tokens": 530,
+      "source_sha256": "fd81d78fb668537c96d65dcff0a8525f089ac69158dd6cb951e48e9b38afa26b",
+      "source_tokens": 553,
       "text_token_coverage": 1.0,
       "uri_links": 2
     },
@@ -183,14 +183,14 @@
       "internal_links": 28,
       "pages": 27,
       "pdf": "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.pdf",
-      "pdf_sha256": "62e58e787876565e30eee5c9a4fe55ae7816c6bad21a843af62d2a6c385e2cfa",
+      "pdf_sha256": "029659f3ee90afbc3908f2750faa5972e7699c97510be9ca6cd8888901034115",
       "renderer_sha256": "c81d71ffb35f40c325cea992703b5c590771f03a585ed007fbc730b318e94434",
       "searchable": true,
       "source": "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
-      "source_sha256": "79dad776d63d21f3f038e4019fd864ffcb2bf839cc9c4c452b854628643696f3",
-      "source_tokens": 1457,
+      "source_sha256": "1ae176384d192704cb5abfcdd26e828a1aaf60876512940cf357377ac7fca053",
+      "source_tokens": 1458,
       "text_token_coverage": 1.0,
-      "uri_links": 18
+      "uri_links": 19
     },
     {
       "bookmarks": 6,

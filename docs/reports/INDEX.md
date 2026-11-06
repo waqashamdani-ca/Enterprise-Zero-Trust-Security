@@ -12,6 +12,7 @@ Use this index for the current location and reporting rules. Every task in HL-CY
 | T3 | [T3 report](T3-Report.md) | Documentation organization and PDF editions |
 | T3 addendum 001 | [Markdown-only reporting](T3-Addendum-001-Markdown-Only-Reporting.md) | PDF exclusion and reporting governance |
 | T4 | [T4 report](T4-Report.md) | Assignment redesign, submission filenames and report-folder migration |
+| T5 | [T5 report](T5-Report.md) | Eight editable Word/Excel lab deliverable shells and their validation |
 
 ## Numbering and required content
 
