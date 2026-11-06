@@ -62,6 +62,8 @@ Review title/contents pages, long tables, the architecture figure, command block
 
 ## Troubleshooting and recovery
 
+The eight native Word/Excel files in [the deliverable index](../README.md#editable-lab-deliverable-templates) are editable blank sources and receive no PDFs. `python scripts/validate_office_templates.py` performs an offline, standard-library check of their exact names, XML-only package contents, safe relationships/formulas, table controls, blank result fields and approved requirement/test definitions. The main validator includes this check. Unrelated binaries remain rejected. Native opening/editing/recalculation and visual layout review are separate observations; CI does not run Microsoft Office or validate lab controls. Review filled working records privately before any later publication task.
+
 - Missing library: use the documentation environment and pinned requirements; do not modify global software or install lab products.
 - Stale/missing PDF or manifest entry: rebuild from source, then rerun both checks. Do not edit a PDF or hash entry to hide a mismatch.
 - Layout failure: fix the renderer or editable source, rebuild, and inspect affected pages again. Keep finalized historical report Markdown unchanged.

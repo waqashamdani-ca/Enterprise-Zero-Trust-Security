@@ -4,14 +4,14 @@
 <<
 /Outlines 2 0 R
 /PageMode /UseNone
-/Pages 39 0 R
+/Pages 33 0 R
 /Type /Catalog
-/Names 59 0 R
+/Names 74 0 R
 >>
 endobj
 2 0 obj
 <<
-/Count 4
+/Count 5
 /First 3 0 R
 /Last 3 0 R
 /Type /Outlines
@@ -19,22 +19,22 @@ endobj
 endobj
 3 0 obj
 <<
-/Count 2
+/Count 3
 /Dest [ 4 0 R /Fit ]
-/First 55 0 R
-/Last 56 0 R
+/First 69 0 R
+/Last 71 0 R
 /Parent 2 0 R
 /Title (Documentation library)
 >>
 endobj
 4 0 obj
 <<
-/Annots [ 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 23 0 R 24 0 R 25 0 R 26 0 R 27 0 R 28 0 R 29 0 R 30 0 R 31 0 R 32 0 R 33 0 R 34 0 R 35 0 R 36 0 R 37 0 R ]
-/Contents 38 0 R
+/Annots [ 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R 13 0 R 14 0 R 15 0 R 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 23 0 R 24 0 R 25 0 R 26 0 R 27 0 R 28 0 R 29 0 R 30 0 R 31 0 R ]
+/Contents 32 0 R
 /MediaBox [ 0 0 612 792 ]
-/Parent 39 0 R
+/Parent 33 0 R
 /Resources <<
-/Font 40 0 R
+/Font 52 0 R
 /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
 /Rotate 0
@@ -51,7 +51,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057DOCUMENTATION\055BUILD\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 266.0745 673.24 317.9057 684.4 ]
+/Rect [ 150.819 660.04 202.6501 671.2 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -64,7 +64,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057assignments\057PROJECT\055ASSIGNMENT\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 564.8887 306.6035 575.6888 ]
+/Rect [ 264 551.6888 306.6035 562.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -77,7 +77,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057assignments\057PROJECT\055ASSIGNMENT\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 564.8887 423.073 575.6888 ]
+/Rect [ 407 551.6888 423.073 562.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -90,7 +90,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057lab\055guides\057LAB\055IMPLEMENTATION\055GUIDE\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 544.0887 306.6035 554.8887 ]
+/Rect [ 264 530.8888 306.6035 541.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -103,7 +103,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057lab\055guides\057LAB\055IMPLEMENTATION\055GUIDE\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 544.0887 423.073 554.8887 ]
+/Rect [ 407 530.8888 423.073 541.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -116,7 +116,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057architecture\057ARCHITECTURE\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 523.2887 306.6035 534.0888 ]
+/Rect [ 264 510.0888 306.6035 520.8888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -129,7 +129,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057architecture\057ARCHITECTURE\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 523.2887 423.073 534.0888 ]
+/Rect [ 407 510.0888 423.073 520.8888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -142,7 +142,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057security\057SECURITY\055REQUIREMENTS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 502.4888 306.6035 513.2888 ]
+/Rect [ 264 489.2888 306.6035 500.0888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -155,7 +155,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057security\057SECURITY\055REQUIREMENTS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 502.4888 423.073 513.2888 ]
+/Rect [ 407 489.2888 423.073 500.0888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -168,7 +168,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057testing\057TEST\055PLAN\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 481.6887 306.6035 492.4887 ]
+/Rect [ 264 468.4888 306.6035 479.2888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -181,7 +181,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057testing\057TEST\055PLAN\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 481.6887 423.073 492.4887 ]
+/Rect [ 407 468.4888 423.073 479.2888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -194,7 +194,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057testing\057ACCEPTANCE\055CRITERIA\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 460.8888 306.6035 471.6888 ]
+/Rect [ 264 447.6888 306.6035 458.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -207,7 +207,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057testing\057ACCEPTANCE\055CRITERIA\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 460.8888 423.073 471.6888 ]
+/Rect [ 407 447.6888 423.073 458.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -220,7 +220,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057final\055report\057FINAL\055REPORT\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 440.0888 306.6035 450.8888 ]
+/Rect [ 264 426.8888 306.6035 437.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -233,7 +233,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057final\055report\057FINAL\055REPORT\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 440.0888 423.073 450.8888 ]
+/Rect [ 407 426.8888 423.073 437.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -246,7 +246,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057DECISIONS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 419.2887 306.6035 430.0888 ]
+/Rect [ 264 406.0888 306.6035 416.8888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -259,7 +259,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057DECISIONS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 419.2887 423.073 430.0888 ]
+/Rect [ 407 406.0888 423.073 416.8888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -272,7 +272,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057RISKS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 398.4888 306.6035 409.2888 ]
+/Rect [ 264 385.2888 306.6035 396.0888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -285,7 +285,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057RISKS\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 398.4888 423.073 409.2888 ]
+/Rect [ 407 385.2888 423.073 396.0888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -298,7 +298,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057REFERENCES\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 377.6888 306.6035 388.4888 ]
+/Rect [ 264 364.4888 306.6035 375.2888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -311,7 +311,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057REFERENCES\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 377.6888 423.073 388.4888 ]
+/Rect [ 407 364.4888 423.073 375.2888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -324,7 +324,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057guides\057GLOSSARY\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 356.8888 306.6035 367.6888 ]
+/Rect [ 264 343.6888 306.6035 354.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -337,7 +337,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057guides\057GLOSSARY\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 356.8888 423.073 367.6888 ]
+/Rect [ 407 343.6888 423.073 354.4888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -350,7 +350,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057DOCUMENTATION\055BUILD\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 264 336.0888 306.6035 346.8888 ]
+/Rect [ 264 322.8888 306.6035 333.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -363,7 +363,7 @@ endobj
 /URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057governance\057DOCUMENTATION\055BUILD\056pdf)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 407 336.0888 423.073 346.8888 ]
+/Rect [ 407 322.8888 423.073 333.6888 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -373,10 +373,10 @@ endobj
 /A <<
 /S /URI
 /Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057reports\057INDEX\056md)
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057assignments\057PROJECT\055ASSIGNMENT\056pdf\043nameddest\075expected\055deliverables)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 54 230.78 154.3564 241.94 ]
+/Rect [ 74.25293 217.58 128.3455 228.74 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -386,51 +386,44 @@ endobj
 /A <<
 /S /URI
 /Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057README\056pdf)
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05701\055Lab\055Environment\056xlsx)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 233.3292 170.98 310.9216 182.14 ]
+/Rect [ 59 115.8588 162.1774 126.6588 ]
 /Subtype /Link
 /Type /Annot
 >>
 endobj
 32 0 obj
 <<
-/A <<
-/S /URI
-/Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057AGENTS\056pdf)
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 2374
 >>
-/Border [ 0 0 0 ]
-/Rect [ 334.3305 170.98 419.1158 182.14 ]
-/Subtype /Link
-/Type /Annot
->>
+stream
+GauHMgN)%,&:O:Sm%^'(0R0KB:JRuJD&pZReRmMoLkI%l'WHVYABjc,])]$t-.7f1)N?9b+SPkK(Q688!>IbQrYs&^hMpIYK)p]5UBqbqZ!h_^_pR.u1Lb[ED&GSiQXU>YD-Dr[!'*3[Q]+h&@tWrJ0UeaRo2c8?nWfmN^83*GJ%WIBs3J;M8e(P+L2k5p6Ah#F^K`*>P'NM4!tTE$Z8Gn1?m[WMA@^d9_!!k=hPdDiTfL,A[$r>^k<.$l-B]2i0pYM9>G?rBd")_G0:1f3Htj,KlYgF@Q>PA1#KQ@W.tWO.Ct%,LrK-(qi3;8t<S5U8Zb4D)*&,RjZPL_,Q>*t%;X`;'K@(>$"Z=b@KA+7474N`5@PPg>V-+l)c.7g/e/&9YkucnILhCB\djk"HbMSY'I+PfH`Ys=/`3tJs:^i8L8i"p=3A$SSldPQ.Nh1`0nhEg=0o-OL)$_4?N/]%lBu0'[Og'qhGI.ebb;lF9YaUDV"uE^K0]b$U/E7o/hg>FG=X`:o("ui]@A@#C\Isio9*pOg-=UHjGpH4#)D1"@7>+!*@'VYHDi"n+L/.i2?m6d7?&<A%EMB-VM/OPIkp%B*&t*G72/'\7,`^FZZ5t7?G>6CLN=B\+2*i^G_>-&,;$bWUKS>e^^N8=/3(FPs7"#_'8kou,GU#cAEu'NIY[ik%[2L[u4%^^#E5qRX!h?Yh1EHd:O?'J%FDBP#$;GI5;kJ<klV,YL"06!c(,<0RG_B8S*"2oCgY2(aRkp`1*%IgD&PZ/@1)g8mdeX@]2UXX8/Ylsf`2],/\e-\oMDXkT;%5C>=CHOj\!KI!\25XTLo*%TK<j")HGgl_2Vrn9$s[?d.*lsO&)EM*1$b0"+!9m99:nGq,Lu9Hgm"@-%G0F@TK]opZX\i]E_Uo$K)4QV*c?CAa*N&b\n7SSCuZlW7X$DeD6Nd]VV3rQqAcYt%SWdDpA:rHELM=;'@Y@7'Nj,%n$QpE_%-\ucG@1*Q=CpDd;i^B[jE/.<co\\8N1ic0AQV$;_a7H?]Zmb+=8;Zrj80.#(3UuJ(8A8Z_O#:A#&`OCfgr3qiL?ej`l31-dP,O^]G$PhF&C/TspBL$NH>)*uD8Q?t3T=ch_pEgOZ^qrBm`(\WbMYjp>`b3bf21Sq2q#!8FWY.['hQL#h&uJu5qA4=.,M7dZo"TeCQP4/Iut?3;p^mBP"Bjci^c)mtGnF)]LjFWCU4Og,`V9`\EIQ\'@Dg>JNbe759IO@faJ#RDb$Al3iiX07E:jArdgV"V<ch8K0h60H`,L/f^-dd9@?O;$&eCs[&@?14Frl)R>s]/a[-:<;D!6+].ah1O"GlTCX_kV4dt?#n`^'.u:kd;E,,bS/ENCs\b]h`9m_)K@bRE=sSHFchGGK(EkX)oP[ppI>GT-Ik,pBl<!FMmT+4dnJmif'>u"P7r:B`8.NoJ`#p/`:H[C*WY^>a7Wa9[6<g=j?Bgg=LE0hF.J"6g+(8fC]'onDY2;8Vi("MD\i_mE^[D&&Y5aK7s)?aTliS:HAh]*d9j9H&Y4(q7s)?adCHZ*7(;IoSPgt.FLrTf[4L$&d`Jeh>;rU3SId=JFgLAbBs===2k.34Ml&A38KH'JqJGh:ftQlU^J4`pk?1m8[<iP"(+$(te97BKV;@+aY,Wh5i>c1cFAAAm&90%l22Dh<R$\.#f!-9IlR9W`2Nb)nDX)O";RjKT^:P?@B`BEJqqub*:aHG'PDC##E@-mJW%?_P*l2Ob0H/dZ\1>]-/.C"09ZRA?>\8-8klMJ(\D+Lr<X8Fp1-]5WhOVJA/VeTDJUEt]]h)U6PtC[M;n=;eGRbVDLKBRD;H.?cHJ::lUfH#F;Q_N40q53^&?<'Zc\FMb/4;Tp$+s&uU,%a0,aPr,==*MMLJZ/%JT%PL:TYKm_-<9fpSJp,JkVI],&kkiTf%n*A-GD9$,=VFZte"0(:gGa9dO#1,6<^S>k(r2FRG;#*\o'Ba_T0>c6'0g#-FumZaQ48Y"*4.W\/G?@oXC^0.p6oX!l>k,nYr,=mJJs\[FR$Ir`9=M.O63rhOh(Bl[rBad7U_E$"cnWh9ZrYLjQC?58pi5pF4UOJhKm8j/L&o/W#/Vtaf4IVC+_"--ZVcb@l8Vt+o5$)<]e[oIVuaPBjRfISQ&Ka6F[Fc!n_nO6o"B"]PN7G$8r_="-be\<f)V?>_nn:$EG8SQYH]R>NA1tih6qj30&e<-MCC0]W$n`;H2$CPR?7%U.FWB2:fltZ-WRP+upp;j\!d3\]8PMliZ[0ud,'0<3OR:O:Og>b'Rdu4NmO[q:qGuUpW\\BVa9$<?]p&9c&;_ARgp"UmYESI0\&_=A$g/6\4-T=CZ]*X,V-4FXE2(\jrW2Au8Jf6WG+5L@)'*~>
+endstream
 endobj
 33 0 obj
 <<
-/A <<
-/S /URI
-/Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057infrastructure\057README\056pdf)
->>
-/Border [ 0 0 0 ]
-/Rect [ 425.0282 170.98 534.3804 182.14 ]
-/Subtype /Link
-/Type /Annot
+/Count 3
+/Kids [ 4 0 R 34 0 R 67 0 R ]
+/Type /Pages
 >>
 endobj
 34 0 obj
 <<
-/A <<
-/S /URI
-/Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057configurations\057README\056pdf)
+/Annots [ 35 0 R 36 0 R 37 0 R 38 0 R 39 0 R 40 0 R 41 0 R 42 0 R 43 0 R 44 0 R 45 0 R 46 0 R 47 0 R 48 0 R 49 0 R 50 0 R ]
+/Contents 51 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 33 0 R
+/Resources <<
+/Font 52 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
 >>
-/Border [ 0 0 0 ]
-/Rect [ 54 157.78 161.3587 168.94 ]
-/Subtype /Link
-/Type /Annot
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
 >>
 endobj
 35 0 obj
@@ -438,10 +431,10 @@ endobj
 /A <<
 /S /URI
 /Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057evidence\057README\056pdf)
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05702\055Architecture\055and\055Network\055Design\056docx)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 167.2711 157.78 252.7466 168.94 ]
+/Rect [ 59 692.9187 233.0516 703.7188 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -451,10 +444,10 @@ endobj
 /A <<
 /S /URI
 /Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057evidence\057BOOTSTRAP\055VALIDATION\056pdf)
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05703\055Identity\055and\055Access\055Management\056xlsx)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 279.1118 157.78 369.0784 168.94 ]
+/Rect [ 59 650.5187 230.256 661.3188 ]
 /Subtype /Link
 /Type /Annot
 >>
@@ -464,40 +457,202 @@ endobj
 /A <<
 /S /URI
 /Type /Action
-/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057README\056pdf)
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05704\055Zero\055Trust\055Implementation\056docx)
 >>
 /Border [ 0 0 0 ]
-/Rect [ 374.9908 157.78 455.4349 168.94 ]
+/Rect [ 59 597.3187 206.6218 608.1187 ]
 /Subtype /Link
 /Type /Annot
 >>
 endobj
 38 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ]
-/Length 2491
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05705\055Security\055Monitoring\056xlsx)
 >>
-stream
-GauHMhfGPP&q8/6d>u#T6id;mC7hf$b[#)1AS3o+?/<1C+PW@$a=G%^^:HQ.=osBE_2oPH>cC:O'(i+$qM.JJ$P*0Gk'+B@pa(LgG:pB>Op/?ZnKE/g:W^kR2hZpJn$t]r\Uu+L54nsqK3I-i95Z7-n0+<KOK;:frMp#DM6s&qhpR["It)tBlb@q[EuZ"q#>[e-eOGCY_gf1ZOJoali.\):'%II5<4W\W:TI[h^Hh>rP+VAINmIk%1tn]ulSU=F<XDno/m]8k]00":$Cj'W'"+`.ETD@!r:.7c_T;G!=@3WfAsC3V&N1(o6bg]GV&ZpKPo;aT,G4fpV4Q".ki0.kU],X?l3FcYi9gpHLmH_,_sthg%B8aV1s-AeWd,cAbr<cdg<5%4gK<K]M!#[9l8<aWjR;+`rZ&I(kQ_Zj6]=[J*hcc?@t)q5<AN.+$bJIs#?.6Nq5"'g6FGgg1JtF/S3q!M-1K6DX1JO.7BqN*P+U)i+D\Gi_MW1j0Ndmt.ou0K5!6O]`E@qVhkRXq'b38NAm./DpG5dMr/?\RUd>qmENn2Z7D:".i(hL#`/3V5%$9,oGEFT-nHuVS>3$PPCQUIaCDEB@s16=?-lS*E,molA,$a_/.bAH:A@H_`>F(2kY^Qtict\$52+_@VMR)51\cYsq]HlMAEOA)mB;nP`nGE.%,I+`@-m!Afd6ci;`bI,W&')*qh3m<V4`ie,,#ZiYJrbFZlQiV698l)_0;M*J&p.ltYtebF7Z)Zt4j]ZH1j8(j$j;S$GLXGO7"8>:KX15GpP9o$X;sMlijj4CPS_XD&9E_[U%TcNiM5FRSSoU;OQo:Y`m1M^G<R*FBM,EL%&eD!Qhgdk:!%N)\;e-%I3sWml'0/7pBM,h%&gZ(YNE?:N,MU@=B_U))VC!rb0,F1O/n)`^rXr3q^M<9?W.(l(Sj'm:-s2VG;]T$Y1')$-]U]k[n3KMdb?Uob#0bubnlT`Sr/4m9bna^Y6R:[gV7M_h8qBHkbV-((j<SKpjK.:k3dA9LZcqeEqTiL]ubPL2<^+6P9bAIf;/2IR,\=]0u][UitUt>G0QGIEUCrEV!_YtOk,Gc:(SAUR+TaSh<oVVnNUf_q"Q__d+T^NPL`C%:='n=Db]GJdM%YuC3ZYInB`6<RT*T3Fb35u=.XJZ4esOa<33n(`=tJ#/&B4smI@>NlD7?*89No">R2+>@!VWP#8P9X$U4s<amF&N8aU(Da,,eMZd,O?]N49[`cqjX6*<c=V*W.IS;1_t97Mcgo/MLg^_JlB2!?oSrqriRkb5.[&i1k@6FRr0I)-Q</36OAO*O/t0+Bs^fal@hNtSVHU6)ojm[EDS&mUK]g*9qqIXbeQEDhF1P3,%R[41s/U9%=b<g1'N\2pl273#q42uNF7L4g]Zr"quc#4lMgJ,R_#9Eh#4!IWS$`N;iLVA\\tHsuN6=m'243I%Q,+*tOJi3b(ICfa;qY$Ebl]AhIgVk7hkDp<Yc[O\6AeukCF>qrapG/]F-MCGO4.qWU!*%T4s-(/4F1Mqm&]IAXoo4HY"Rke)%DhbrC^!_p0V+tFndsq,foDH\RlbEDra)A#]1^k`=]j6+q\/h4Mn'*_mX7`sR3W,*t'm0^pcC)h!+>Sm1Yn0%(G<H!<H&f/<:ojs^rHTteq!e:Aq>':&j>YJ9&'j6*G7?5Q&MKD<V.AGi".k!<+F/9)SfS2#9@HjJ=]QSD6>dt.Wj6cF>EB1Gg:.2r0DQA6c'_[pfC,[\Ok:_rQ`8J5!m*a7""B>^$MX=mPS@dQO,<05FF&=q"T+a]e%Lpn[apG*]@OopaS=BI<_>!%cV5LX`%QFREO8`4fC!aik!1f2&hc#kFE$m$WbphP^C,.ldMnQb1+htL\*hM@epVe,)+mFMWHPb\^GN-:@nHPoZWgbmCB*:#oa3b>6HQY*QF7rjg_+k0rE9%7QYi(go4G76f;@A8rF5Km<Kt(/eN#fcCOB%M$K",uXFq<PK6O"'\R<"5[,nFdpfntb[.G@nFNV$/K)<IckWhu\Y,,RV03o[+rf@A4B<P)Ee$e1R]6PiJSB1AX'g#o6-#r6LD7;,Na=UIt_7psON2C#U#$^AenPY8nCln?GDC5T-V&3JM*Knm63[+mZc9a'teX'<dBL@0Jdp^C-L&0t<cZ<I1>BkE^"/&\2".d(L0k=0MK!*caO,"quf@cIHgiW59QhRWkZV&A;:Q-\.hi`jD*:[+tFHq(c\LnV7clG`WEN]`*&@Z:^*Y0E#U76.a\ZX=<+2dg[^ZO7gUffRXbOal.UmVuZ`,h@3!49o%@.,jOPGKrlYgRDs3*DYVmF%(_]lh)8[BnrXlPh9,+=[[Y/[];iBg\5S5HG'3OeR=WENt`(ZdrH\i08$E$Zf@WMQL#)(:nHu1c0B2Em=*,rpAhAB.2D5//u(=f;6W-:$T%7YZY"FEdb=gOrClZC9n1+k!Mh[(shshZb[?\jTg5+%25a'rQRp;j+#%je[HQA\G8A"@rk'~>
-endstream
+/Border [ 0 0 0 ]
+/Rect [ 59 544.1187 172.4254 554.9187 ]
+/Subtype /Link
+/Type /Annot
+>>
 endobj
 39 0 obj
 <<
-/Count 1
-/Kids [ 4 0 R ]
-/Type /Pages
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05706\055Testing\055and\055Validation\056xlsx)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 59 490.9187 184.7118 501.7188 ]
+/Subtype /Link
+/Type /Annot
 >>
 endobj
 40 0 obj
 <<
-/F1 41 0 R
-/F2+0 42 0 R
-/F3+0 46 0 R
-/F4+0 50 0 R
-/F5 54 0 R
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05707\055Troubleshooting\055and\055Lessons\056xlsx)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 59 426.9187 212.6965 437.7188 ]
+/Subtype /Link
+/Type /Annot
 >>
 endobj
 41 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057deliverables\05708\055Final\055Lab\055Submission\056docx)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 59 384.5188 182.4519 395.3188 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+42 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057reports\057T5\055Report\056md)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 146.4551 223.04 197.596 234.2 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+43 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057reports\057INDEX\056md)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 54 160.61 154.3564 171.77 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+44 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057README\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 233.3292 100.81 310.9216 111.97 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+45 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057AGENTS\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 334.3305 100.81 419.1158 111.97 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+46 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057infrastructure\057README\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 425.0282 100.81 534.3804 111.97 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+47 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057configurations\057README\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 54 87.61 161.3587 98.77 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+48 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057evidence\057README\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 167.2711 87.61 252.7466 98.77 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+49 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057evidence\057BOOTSTRAP\055VALIDATION\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 279.1118 87.61 369.0784 98.77 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+50 0 obj
+<<
+/A <<
+/S /URI
+/Type /Action
+/URI (https\072\057\057github\056com\057waqashamdani\055ca\057enterprise\055zero\055trust\055security\057blob\057main\057docs\057README\056pdf)
+>>
+/Border [ 0 0 0 ]
+/Rect [ 374.9908 87.61 455.4349 98.77 ]
+/Subtype /Link
+/Type /Annot
+>>
+endobj
+51 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 2981
+>>
+stream
+Gatm=?$"c1'n,h[^gjqjBmtrfoZ>cG]BM;CCok(o^?e*1,[jC[>_&'@9RhH9"\";L,V"d:*_S<j>[63WF70;!1Cl^arCdU=hCdIRH_:*7>HF26\Ii'$Z.m7JT3#olbbEHsDE.=Y`7uaHj'^1)q?hlQ]q%,laY[Od!bR&!H7X&KA8.'$AEh@BGL"P7Id;6Mci2+*b?F+%9-`)=KN;o_)cO(iOZ$Co4*ICJNN>QP2d6-5/cK.9T?*:mfjb!ZD!t?W'V_[S/QKo5\^XmQ#,^0Ym*01eSaDb%S'S`dcG'3s<Ee-S`!R:#1]*ECqkL]SjS[O%WmReR>G2MN*NtV[=Y5sh&!Jeb$%4`@U?SW,c[7<H0JMu8O;W9W7^5#YOG)571%%/k8&3TEa7MWAQ09:7!e;5:&T\!aZY70U5J\'4FBtb-N7ffqF`+h$oBC&u+5M2tN=p&rSL3P*q/\K.#K7jX:=p#Qdr.9PYT!9;HlTQZa7IU2l$)tbO&)kGR8H'!n[+nDn!<]K/=mSLcqC2?"C!kQn/.2VHdr:;*4KmBJ:$D_Z*d#V&DjmaXSFUfX;46io3+8/IL(D\HS:uXZ^(atJn=r781d@mk3Rb0*56[7&*6FJU/bjB-%ma@Og0nmk8,%@P0`hIpB]ZD\O:9V8rg!GcasdZEl/9T@B=HnR5pm-rM]@@o1g.50&93t:ZHeOE9bkPSFkcuk>0_H0;OX7++?>do0ELCN_L>#rn)U:)hYg^L1un\1LXWj8RInHCX!5Cl"5FOb1.^TlAZRlVB-qH'[dE-2YFb(=i`MFSnAIno0V[-23A9;%iK&<FCA%Y8Q2_4q8c239&d&OPa`&r*IR]Li*sQ>8ftB:bQ:2*Oa4eL+aR[nqd!?C6nM=agEfJoCop]9%H+7>/u5`P9c.e&!aS`_bb1/c>FCDWQnVBLQ%JSZOrKMs-(a(q`E'CA=Ug21oa&,pluehG-$1Ael2o#W"jR?@5ga69bDI:Lo7OjP@e:<0R$0''q?Y,]p65#Ccm.q&Y4'U:9(%aQ@BV-Ch`,g2<TQiU)r8B)`<p%Z"Q+Q24YlUU'tT\]_H`bp=c%6ejoF*XW"TtlI\;89'hK=+Ni8]+8:4*]<2#-$YtD&rA-e6+!r(m"WtHOu\n]UfW(L2C%16FmFRR51!UkB1q"iHQ4R69Nnsrr?A*ZLoq*8N3`"l_YY![!Ae@__r^nn\S"l6Z2Ef5+OD?64\M\.="Vn#DAqL31e18;45JhT(@&*b#-F^3%;'Y\UBSN7.!\6RcBrD0$.XHi<e/.]J-+L1d=ANq*Reape#7>al%h0QCQnE2%-]ub?6%,^m?:JokG("V7$Yjabf&U;VjRu*C5^KWO+R3=b,%F817W(_a^KulTi&7LdSk#uRM'r6AnPA/pN&DT,>)@fXD.2CCBi\mOjRc9!H/;7^9\64cP,+62$-P?Q*eY'K2)l7jug`_6dcca6dq"'+fs,JibT"V5JqHuuaprT63KS8\W[g+pk9']O<f-n]1,u5U0FED?:3*u>BM*Q?u6Xt7>o#bOpb]tj7Si_.Dl.e5@I>.23<H7T8g<-nYV#ni4NW\s;G^O!D1.+r*RV\urC!4L28u.%!qK0pSg<(Dce>Xo-SP2u/!=Ej`Q<L.!<e9*UfJ^@L'W$&/i\.V:[96\llKlICrf5l#Y1t9/iWuIWR31H?Msi(a@XCQ&L,"#pSE1-*:i2ihY2XDR0D[lgH`qj1>MF@Fm(W5!*W"OVh@IVNrEJ`[)3=Y!?JN$CkCNRcRe:Okq=trqNPaPHII:;&,,'E\:]4LE=0R0mT=^E_MP+g#T=Ykc'@8Yia6pW(osaDWj'aNG[uS9Ca`jpm6i[.p@sO6La`s\>Vs`IYB^UV@YN,`SFg2NJ0WkR`k.H'AB0/O;ZOqJ#>kU`D;qlo>FOt4a,0tpZ\BZ.0W%:Zn`gk.7r:?/9":)u8dY"lXq?-]K&d2O_RRr,MK;1WP>kTgI(CA&C@Pmore\9PcT-@F'o2KO*SdB88^LD\biNi=fkK+/#MF#c[9a34f"bZSbN1-u9<aS;;2X##XcEsT,38Dfd<)&d;N##VVL:,V>UgBDdbRnp$E+H_R<sE]AWp6Omm7JQ@f]:hl#9bSJPb#`1,[N?1QJH8Ah*+gq/WNgh2+,)nC#CDJZUPOdS<$XQOc$J2(*CJMV+p1+9MC90GQKi]s5.4djuM]n>%_%hj>`:V9e04\-Ubs@0j#nF_`0,SpO!#B_n>sWo"9V^>oO)3/p6eJ_mD'kam:k9mph6EeG,opeJk5dW[.Y[hR:Cnp`7>N9Z?JV<L%R)h1"]>e$S4[=WN/4:?PCWe/lE\CV/U4_BR=/CCMKXV9FMR+_ts`$:m?(6\7#1`TpaX3B:$'.'\O@9/g@=,G(f`f0\<E_O-MEc1qhT1Ma"eBO;E)i^4Ts1dZ-TV^#>J[r(0YoL`XP&"&-8M='$coGajVJu;eg_dY&M>('Jp6$f1-(km(TkQYe$e-!VfE]X5cX^WHj_,2?")d!rRK:gAL8\1'mIk_p2TcYW*%8YRYTfWbqGB^jI\+h8P(Kpf+QRr\_CuqV"1Sb1QlR';a)[*ABRG4:^7Tk%dS'M:07f2Y]^6',Kdh)pH)jc)FTKF3Rfgi1e.(VC<b]hC!`W9#+E@`"QW4*Q"8co6Z\_`CY[]Qq1dnXM<C-G)J6Am!8bJ;`\>?`s'.blVe'F"s=q;$D+7N?<L!*j,o1AM[0S_nCS/lH,R.%3'Dp.W#FP4f0i?PZd[.??18?G%K]D9rNcC^:5>km#;a07P("&F`j.8?ob<.aG,a8bIB@>jXG.nhLO,n.YmicOKo80Lbk*>&Op2\P\U7OH+RrZN+d20.mU?96>99g.Lm[bSSue9/[?jb*oHS6qN7-aN!;8!ElQ^Dq0L4_q#8`lNoZ/SrQp!ITpp>cp``d\?s*KoBt=?B]4=3"[T60Wd*(7\Sks:,ngY?ZhkQqBgJMbDn4*Z5>4=RYi8J_.!83OG4e'=^lP>~>
+endstream
+endobj
+52 0 obj
+<<
+/F1 53 0 R
+/F2+0 54 0 R
+/F3+0 58 0 R
+/F4+0 62 0 R
+/F5 66 0 R
+>>
+endobj
+53 0 obj
 <<
 /BaseFont /Helvetica
 /Encoding /WinAnsiEncoding
@@ -506,27 +661,27 @@ endobj
 /Type /Font
 >>
 endobj
-42 0 obj
+54 0 obj
 <<
 /BaseFont /AAAAAA+BitstreamVeraSans-Roman
 /FirstChar 0
-/FontDescriptor 43 0 R
+/FontDescriptor 55 0 R
 /LastChar 127
 /Name /F2+0
 /Subtype /TrueType
-/ToUnicode 45 0 R
+/ToUnicode 57 0 R
 /Type /Font
 /Widths [ 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 317.8711 400.8789 459.9609 837.8906 636.2305 950.1953 779.7852 274.9023 390.1367 390.1367 500 837.8906 317.8711 360.8398 317.8711 336.9141 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 336.9141 336.9141 837.8906 837.8906 837.8906 530.7617 1000 684.082 686.0352 698.2422 770.0195 631.8359 575.1953 774.9023 751.9531 294.9219 294.9219 655.7617 557.1289 862.793 748.0469 787.1094 603.0273 787.1094 694.8242 634.7656 610.8398 731.9336 684.082 988.7695 685.0586 610.8398 685.0586 390.1367 336.9141 390.1367 837.8906 500 500 612.793 634.7656 549.8047 634.7656 615.2344 352.0508 634.7656 633.7891 277.832 277.832 579.1016 277.832 974.1211 633.7891 611.8164 634.7656 634.7656 411.1328 520.9961 392.0898 633.7891 591.7969 817.8711 591.7969 591.7969 524.9023 636.2305 336.9141 636.2305 837.8906 600.0977 ]
 >>
 endobj
-43 0 obj
+55 0 obj
 <<
 /Ascent 759.7656
 /CapHeight 759.7656
 /Descent -240.2344
 /Flags 4
 /FontBBox [ -183.1055 -235.8398 1287.109 928.2227 ]
-/FontFile2 44 0 R
+/FontFile2 56 0 R
 /FontName /AAAAAA+BitstreamVeraSans-Roman
 /ItalicAngle 0
 /MissingWidth 600.0977
@@ -534,7 +689,7 @@ endobj
 /Type /FontDescriptor
 >>
 endobj
-44 0 obj
+56 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length1 28108
@@ -602,7 +757,7 @@ y˛$◊AÓûË#‹≠ëô™ë)ì≠¬çL∂ílçLÇ'ì421À*LÙ!Y!&!ÀJ&ò»xçd∂íåV2N#cπ¬ÿõ$˝í6â∏52F#£Ô≤
 &ç°∑—ó4¢Zâ¢∫…ëD,&<<‰AúZâF8∏Ál%H#∏Øy˜ˇˇ√˙ˇÅ˚ÚøÍD‹”
 endstream
 endobj
-45 0 obj
+57 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length 682
@@ -612,27 +767,27 @@ xúç’MkQ∆ÒΩübñ-•Ëıº• B^»¢/$•˚âﬁ§Be4ã|˚û«'$ó.JÙ¸áôã?Wgzysu3lé›Ù˚∏[›’c˜∞÷c=Ïû
 ü?.≈Æ
 endstream
 endobj
-46 0 obj
+58 0 obj
 <<
 /BaseFont /AAAAAA+BitstreamVeraSans-Bold
 /FirstChar 0
-/FontDescriptor 47 0 R
+/FontDescriptor 59 0 R
 /LastChar 127
 /Name /F3+0
 /Subtype /TrueType
-/ToUnicode 49 0 R
+/ToUnicode 61 0 R
 /Type /Font
 /Widths [ 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 348.1445 456.0547 520.9961 837.8906 695.8008 1001.953 872.0703 306.1523 457.0312 457.0312 522.9492 837.8906 379.8828 415.0391 379.8828 365.2344 695.8008 695.8008 695.8008 695.8008 695.8008 695.8008 695.8008 695.8008 695.8008 695.8008 399.9023 399.9023 837.8906 837.8906 837.8906 580.0781 1000 773.9258 762.207 733.8867 830.0781 683.1055 683.1055 820.8008 836.9141 372.0703 372.0703 774.9023 637.207 995.1172 836.9141 850.0977 732.9102 850.0977 770.0195 720.2148 682.1289 812.0117 773.9258 1103.027 770.9961 724.1211 725.0977 457.0312 365.2344 457.0312 837.8906 500 500 674.8047 715.8203 592.7734 715.8203 678.2227 435.0586 715.8203 711.9141 342.7734 342.7734 665.0391 342.7734 1041.992 711.9141 687.0117 715.8203 715.8203 493.1641 595.2148 478.0273 711.9141 651.8555 923.8281 645.0195 651.8555 582.0312 711.9141 365.2344 711.9141 837.8906 600.0977 ]
 >>
 endobj
-47 0 obj
+59 0 obj
 <<
 /Ascent 759.7656
 /CapHeight 759.7656
 /Descent -240.2344
 /Flags 262148
 /FontBBox [ -199.2188 -235.8398 1416.992 928.2227 ]
-/FontFile2 48 0 R
+/FontFile2 60 0 R
 /FontName /AAAAAA+BitstreamVeraSans-Bold
 /ItalicAngle 0
 /MissingWidth 600.0977
@@ -640,7 +795,7 @@ endobj
 /Type /FontDescriptor
 >>
 endobj
-48 0 obj
+60 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length1 27344
@@ -709,7 +864,7 @@ $∆∫˙J≤†æ≤Bäß®	ZÎ+Ôß‰z ∫ûÜÂz˙ÎÀÍ cUﬁVVµ∞/Ù≠gyçSRYS^[_ÌgùãØ§qp ñ6zÊr‡•¿xm˝‹æ
 &”¬§Å^í6¿!•Öë¥#‚ Õ,pêÀƒ˛©&©øÉÙ˜â©&“/eõ‘èíÄü≤ç$õHﬂ`“'i∞‘ßç$9ΩR“`“ªîÙ*%âîÙtíÑªîE‚=ƒEzƒÅ z˜à"qvãÃRlâ±íüËqêhçDEë»∑È%÷`)¬M"ˆCÃx\7ì0˜8)l	qR˜8JIàù∏ õ´ç8°ÕÈ%éRl'Aîÿ·ﬁNâ≠îX-6…L¨GDãçXñâfxbn#¶Tb÷å.b\&jf¢˘DïÖ%≤§I2%íF$ü(∂RJ%Pà^f	€	2ºóﬁª˜˛ˇ«˙ˇöÄˇÉ?ëËˇ°€X
 endstream
 endobj
-49 0 obj
+61 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length 681
@@ -718,27 +873,27 @@ stream
 xúÖ’MkQ∆ÒΩübñ-•Ëıº• B^»¢/4•{£◊Tà£åfëoﬂÛ¯HrÈ¢–ÛÊ˛\ùÒı›Õ]ø9v„Ô√ny_è›z”ØÜzÿ=À⁄=‘«M?*”nµYœwßÔÂv±çÛÂ˚ó√±nÔ˙ın4õu„˘p^∫wóßÎ√’Êò˜u±˝Uá≈˝¢?|º⁄=≠ﬁè∆ﬂÜU6˝„ˇOﬁ?Ô˜Ou[˚c7ÕÁ›™ÆÛßø,ˆ_€⁄çˇ˘˙€·ü/˚⁄MO˜Öˇdπ[’√~±ÃÛ˝cÕ&ìy7ã€˘®ˆ´øûïÈﬂyX//ÜÛŸI^ÛÏ“Ù¥iiZõ∂¶ΩÈh˙¢ÈOM_6}’Ùu”7Mn˙ˆ≠K„/çø4˛“¯K„/çø4˛“¯K„/çø4˛“¯K„/çø4˛“¯ßÙOOMél˙sd”ü#õ˛ŸÙÁ»¶?G6˝9≤ÈœëMél˙sd”ü#õ˛ŸÙÁ»¶?G6˝9F3°_‡˙~°_‡˙~°_‡˙~°_‡˙~°_‡˙~°_‡˙~°_‡˙~°_‡˙~•_·W˙~•_·W˙~•_·W˙~•_·W˙~•_·W˙~•_·W˙~•_·W˙~•_·W˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~£ﬂ‡7˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙~ßﬂ·w˙˛†?‡˙˛†?‡˙˛†?‡˙˛†?‡˙˛†?‡˙˛†?‡˙˛†?‡˙˛†?‡˙œ‚º	∞+∞_˜—ÚyrUùÊiÒ`Âl˙˙∫S˜ª=ﬁ¬Áë¨ó
 endstream
 endobj
-50 0 obj
+62 0 obj
 <<
 /BaseFont /AAAAAA+BitstreamVeraSans-Oblique
 /FirstChar 0
-/FontDescriptor 51 0 R
+/FontDescriptor 63 0 R
 /LastChar 127
 /Name /F4+0
 /Subtype /TrueType
-/ToUnicode 53 0 R
+/ToUnicode 65 0 R
 /Type /Font
 /Widths [ 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 600.0977 317.8711 400.8789 459.9609 837.8906 636.2305 950.1953 779.7852 274.9023 390.1367 390.1367 500 837.8906 317.8711 360.8398 317.8711 336.9141 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 636.2305 336.9141 336.9141 837.8906 837.8906 837.8906 530.7617 1000 684.082 686.0352 698.2422 770.0195 631.8359 575.1953 774.9023 751.9531 294.9219 294.9219 655.7617 557.1289 862.793 748.0469 787.1094 603.0273 787.1094 694.8242 634.7656 610.8398 731.9336 684.082 988.7695 685.0586 610.8398 685.0586 390.1367 336.9141 390.1367 837.8906 500 500 612.793 634.7656 549.8047 634.7656 615.2344 352.0508 634.7656 633.7891 277.832 277.832 579.1016 277.832 974.1211 633.7891 611.8164 634.7656 634.7656 411.1328 520.9961 392.0898 633.7891 591.7969 817.8711 591.7969 591.7969 524.9023 636.2305 336.9141 636.2305 837.8906 600.0977 ]
 >>
 endobj
-51 0 obj
+63 0 obj
 <<
 /Ascent 759.7656
 /CapHeight 759.7656
 /Descent -240.2344
 /Flags 68
 /FontBBox [ -262.207 -235.8398 1258.789 928.2227 ]
-/FontFile2 52 0 R
+/FontFile2 64 0 R
 /FontName /AAAAAA+BitstreamVeraSans-Oblique
 /ItalicAngle -11
 /MissingWidth 600.0977
@@ -746,7 +901,7 @@ endobj
 /Type /FontDescriptor
 >>
 endobj
-52 0 obj
+64 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length1 30892
@@ -836,7 +991,7 @@ y˛N)V.Ç3ﬂÈN#÷3Îs@TÃØÿ›Öpûı 9=gpúuhK8˘\«%èC†sBáhˇ√aãyˆ'≈*8l§
 'ç⁄òA,§ﬁG|–Ã∑è‘idy≠â.◊H≠â‘‹Ak|‰ñe6zKYf#KU≤‰f3]¢ëõÕ§ZTÔ#ã´,tÒxRe!ã.ì Ö/–Jç,¨XJæ@n+ =¥b)©äÂR¶ëÛ”ËçÃO#• Di0)1íy ’º§N≈)öDã<dn)‘H¡ú Z†ë9A$_#yô≠ëY3◊”YôπûÃ–à˜2πÈ2ô~ôLõ2ìN”»ø"πP -'9ö∑ùL]O≤·räòJßÃ$Yô¨ëÃ\íqôL4ëtç§j$E#…8yô`#IƒFì‹d|IL∞–DI∞V©'Éƒõ¬i¸z‚¶π‘≠ë8∏ä{Å∏†æ+í8cç‘i%ŒW_ˆcç$∆@bºb¥çDAı®}$r·°„|$"‹N#<$‹N¬B=4l	ıêçkƒqôÿÉ"®]#A–kP±iƒ™Ù`ŸGÃ0†y=1M‘Nå&¢jDÅG >"AuI#∞†πDÑ+1ï·øN∞J∞WDQü¿æ≠ﬂ√…ˇªˇ–ˇrˇˇ›—ˇÂ´±@
 endstream
 endobj
-53 0 obj
+65 0 obj
 <<
 /Filter [ /FlateDecode ]
 /Length 685
@@ -854,7 +1009,7 @@ xúç’MkQ∆ÒΩübñ-•òÎyKAÑº4êEõRK˜FoR!év‘Eæ}œ„íK7ÌÄûˇ0sÂÁÍåØnØo˚ı°∂Ày=tÎ~5‘˝ˆ8
 ø“Ø˝ø—o˝ø—o˝ø—o˝ø—o˝ø—o˝ø—o˝ø—o˝ø—o;˝ø”Ô;˝ø”Ô;˝ø”Ô;˝ø”Ô;˝ø”Ô;˝ø”Ô;˝ø”Ô;˝ø”Ô˝–˝–˝–˝–˝–˝–˝–˝–ˇ≤!^6vñ‚ÎJZá!∑’isûVŒ∫ØØÀu∑›·> êÈ∞á
 endstream
 endobj
-54 0 obj
+66 0 obj
 <<
 /BaseFont /Courier
 /Encoding /WinAnsiEncoding
@@ -863,23 +1018,56 @@ endobj
 /Type /Font
 >>
 endobj
-55 0 obj
+67 0 obj
 <<
-/Next 56 0 R
+/Contents 68 0 R
+/MediaBox [ 0 0 612 792 ]
+/Parent 33 0 R
+/Resources <<
+/Font 52 0 R
+/ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+>>
+endobj
+68 0 obj
+<<
+/Filter [ /ASCII85Decode /FlateDecode ]
+/Length 691
+>>
+stream
+Gas1\bAQ&g&A7ljk3+uQlY4K)WHkm"Ji9TNBl>i9[b43I8l>ipo]*P_*7kYZJ.P"cG@u)BW!"iYADC`$SCa-6-V..bCF"1iUV=QE4o%6td^%$%"Aq(<q1L.lZQ`\jDC/VQlu@n&jZGod0hhEr7N#2,Bu*dMC&7Yfm,H(]=WAgaK.H?2p/X2j:U124*Lt05jC"7&^dfoab*2IMV)P?&TmdqaH,`l1VqE\^*'2MSG\&^8[BdY5*'m"n&MGV%eQuFeW8_WEn"1qQ`6NFG.#Mb%[9,WQ:<V,99/B[AfTC<-]3(D&\R)D6aN>0"Z6[T@I/YV\Xk42j,Chk!k,>&#=[X\XagXde1%HkF!c!m<R"=7:g!-+CnOL@gdHQALHCie^[D@Wi8KA#kOG2RALIPEi`E3UQEb'@sdl(l1WZZK)No'B7ot?")%G).B[1(-5O4R!Z)^C'7k"3fsFktupWX[XpZ/.pJ\Q#q.\3g@.p?]@U'od-Rg)0'dj0fK3,\ZQ)j\jg3L:!aXbBp"kLH"E"+8DT8DKOOIfRncAbH9,1%R-S8#jNL6OJJOU)r+b+mtGmNX#9F**u0A4/)WJ9[eR0+p(^cteE6;_Ek/I"HS4LB"'[SRXU6:8+?e_%8<XLHrQ!87k8cKMm$['aCN]p`1N&"#<d(!qi\YBE^LXlZiO7gAs'FI9"I$T>g+[d~>
+endstream
+endobj
+69 0 obj
+<<
+/Next 70 0 R
 /Dest [ 4 0 R /Fit ]
 /Parent 3 0 R
 /Title (1\056 Project documents)
 >>
 endobj
-56 0 obj
+70 0 obj
 <<
-/Prev 55 0 R
+/Next 71 0 R
+/Prev 69 0 R
 /Dest [ 4 0 R /Fit ]
 /Parent 3 0 R
-/Title (2\056 Task reports and other instructions)
+/Title (2\056 Editable lab deliverable templates)
 >>
 endobj
-57 0 obj
+71 0 obj
+<<
+/Dest [ 34 0 R /Fit ]
+/Parent 3 0 R
+/Prev 70 0 R
+/Title (3\056 Task reports and other instructions)
+>>
+endobj
+72 0 obj
 <<
 /Author (HL\055CYB\055001 project)
 /CreationDate (D\07220000101000000\05300\04700\047)
@@ -887,111 +1075,133 @@ endobj
 /Keywords ()
 /ModDate (D\07220000101000000\05300\04700\047)
 /Producer (ReportLab PDF Library \055 \050opensource\051)
-/Subject (Source\072 docs\057README\056md\073 SHA\055256\072 848424ec234ae9ff64737c2991776467b2dda24ffb933fa696492889b1917da6)
+/Subject (Source\072 docs\057README\056md\073 SHA\055256\072 5f737fbbca370311ee932b9dd81d89f64e416af657a042cce4ede162335f2488)
 /Title (Documentation library)
 /Trapped /False
 >>
 endobj
-58 0 obj
+73 0 obj
 <<
 /D [ 4 0 R /FitH 826 ]
 /S /GoTo
 >>
 endobj
-59 0 obj
+74 0 obj
 <<
-/Dests 60 0 R
+/Dests 75 0 R
 >>
 endobj
-60 0 obj
+75 0 obj
 <<
-/Names [ (documentation\055library) 58 0 R (project\055documents) 61 0 R (task\055reports\055and\055other\055instructions) 62 0 R ]
+/Names [ (documentation\055library) 73 0 R (editable\055lab\055deliverable\055templates) 77 0 R (project\055documents) 76 0 R (task\055reports\055and\055other\055instructions) 78 0 R ]
 >>
 endobj
-61 0 obj
+76 0 obj
 <<
 /D [ 4 0 R /FitH 826 ]
 /S /GoTo
 >>
 endobj
-62 0 obj
+77 0 obj
 <<
 /D [ 4 0 R /FitH 826 ]
+/S /GoTo
+>>
+endobj
+78 0 obj
+<<
+/D [ 34 0 R /FitH 826 ]
 /S /GoTo
 >>
 endobj
 xref
-0 63
+0 79
 0000000000 65535 f 
 0000000015 00000 n 
 0000000114 00000 n 
 0000000185 00000 n 
 0000000308 00000 n 
-0000000738 00000 n 
-0000001051 00000 n 
-0000001364 00000 n 
-0000001676 00000 n 
-0000002000 00000 n 
-0000002323 00000 n 
-0000002629 00000 n 
-0000002934 00000 n 
-0000003248 00000 n 
-0000003561 00000 n 
-0000003862 00000 n 
-0000004162 00000 n 
-0000004473 00000 n 
-0000004783 00000 n 
-0000005095 00000 n 
-0000005406 00000 n 
-0000005707 00000 n 
-0000006007 00000 n 
-0000006304 00000 n 
-0000006600 00000 n 
-0000006902 00000 n 
-0000007203 00000 n 
-0000007499 00000 n 
-0000007794 00000 n 
-0000008108 00000 n 
-0000008421 00000 n 
-0000008709 00000 n 
-0000008986 00000 n 
-0000009263 00000 n 
-0000009558 00000 n 
-0000009847 00000 n 
-0000010136 00000 n 
-0000010442 00000 n 
-0000010727 00000 n 
-0000013311 00000 n 
-0000013371 00000 n 
-0000013454 00000 n 
-0000013562 00000 n 
-0000014875 00000 n 
-0000015144 00000 n 
-0000032990 00000 n 
-0000033749 00000 n 
-0000035071 00000 n 
-0000035345 00000 n 
-0000052601 00000 n 
-0000053359 00000 n 
-0000054674 00000 n 
-0000054947 00000 n 
-0000073883 00000 n 
-0000074645 00000 n 
-0000074751 00000 n 
-0000074854 00000 n 
-0000074975 00000 n 
-0000075426 00000 n 
-0000075480 00000 n 
-0000075516 00000 n 
-0000075670 00000 n 
-0000075724 00000 n 
+0000000696 00000 n 
+0000001008 00000 n 
+0000001321 00000 n 
+0000001633 00000 n 
+0000001957 00000 n 
+0000002280 00000 n 
+0000002586 00000 n 
+0000002891 00000 n 
+0000003205 00000 n 
+0000003518 00000 n 
+0000003819 00000 n 
+0000004119 00000 n 
+0000004430 00000 n 
+0000004740 00000 n 
+0000005052 00000 n 
+0000005363 00000 n 
+0000005664 00000 n 
+0000005964 00000 n 
+0000006261 00000 n 
+0000006557 00000 n 
+0000006859 00000 n 
+0000007160 00000 n 
+0000007456 00000 n 
+0000007751 00000 n 
+0000008065 00000 n 
+0000008378 00000 n 
+0000008734 00000 n 
+0000009052 00000 n 
+0000011519 00000 n 
+0000011593 00000 n 
+0000011910 00000 n 
+0000012250 00000 n 
+0000012588 00000 n 
+0000012919 00000 n 
+0000013241 00000 n 
+0000013569 00000 n 
+0000013902 00000 n 
+0000014228 00000 n 
+0000014527 00000 n 
+0000014815 00000 n 
+0000015092 00000 n 
+0000015369 00000 n 
+0000015664 00000 n 
+0000015951 00000 n 
+0000016238 00000 n 
+0000016542 00000 n 
+0000016825 00000 n 
+0000019899 00000 n 
+0000019982 00000 n 
+0000020090 00000 n 
+0000021403 00000 n 
+0000021672 00000 n 
+0000039518 00000 n 
+0000040277 00000 n 
+0000041599 00000 n 
+0000041873 00000 n 
+0000059129 00000 n 
+0000059887 00000 n 
+0000061202 00000 n 
+0000061475 00000 n 
+0000080411 00000 n 
+0000081173 00000 n 
+0000081279 00000 n 
+0000081472 00000 n 
+0000082255 00000 n 
+0000082358 00000 n 
+0000082491 00000 n 
+0000082613 00000 n 
+0000083064 00000 n 
+0000083118 00000 n 
+0000083154 00000 n 
+0000083361 00000 n 
+0000083415 00000 n 
+0000083469 00000 n 
 trailer
 <<
-/Size 63
+/Size 79
 /Root 1 0 R
-/Info 57 0 R
-/ID [ (\360\031\335\004\327\253\251\375\266\050\216\322\274\227f\271) (\360\031\335\004\327\253\251\375\266\050\216\322\274\227f\271) ]
+/Info 72 0 R
+/ID [ (\262\032\036\235\020\011\361\024E\321\301\2336O\041\212) (\262\032\036\235\020\011\361\024E\321\301\2336O\041\212) ]
 >>
 startxref
-75778
+83524
 %%EOF

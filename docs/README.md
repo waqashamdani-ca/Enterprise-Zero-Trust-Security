@@ -1,6 +1,6 @@
 # Documentation library
 
-Markdown is the editable source. User-facing project documents have a generated PDF reading/printing edition; task reports are Markdown only. The [build guide](governance/DOCUMENTATION-BUILD.md) explains the Windows rebuild command, validation, and source/PDF consistency rules.
+Markdown is the editable source for project documents, which have generated PDF reading/printing editions. The lab deliverable templates are editable Word/Excel files with no PDF editions; task reports are Markdown only. The [build guide](governance/DOCUMENTATION-BUILD.md) explains the Windows rebuild command, validation, and source/PDF consistency rules.
 
 ## Project documents
 
@@ -20,6 +20,25 @@ Markdown is the editable source. User-facing project documents have a generated 
 | Documentation build instructions | [Markdown](governance/DOCUMENTATION-BUILD.md) | [PDF](governance/DOCUMENTATION-BUILD.pdf) |
 
 The final project report remains a clearly identified template. All infrastructure is PLANNED and its operational controls are NOT TESTED. No PDF adds implementation, certification, or owner acceptance claims.
+
+## Editable lab deliverable templates
+
+The [assignment](assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) owns these filenames and requirement mappings. Complete private working copies only after stage approval. Pale yellow Excel cells accept inputs, gray cells calculate, and Not Started means NOT TESTED. Owner UAT starts Pending and requires its own explicit confirmation. Keep actual results and reviewed evidence in their owning record; use references in summaries.
+
+| Editable template | Primary requirements | Information maintained here |
+| --- | --- | --- |
+| [01-Lab-Environment.xlsx](deliverables/01-Lab-Environment.xlsx) | R02 | Hardware, VMs, software, stage checklist and planned/actual resource ledger |
+| [02-Architecture-and-Network-Design.docx](deliverables/02-Architecture-and-Network-Design.docx) | R01, R03, R04, R15 | Business roles, zones, diagrams, flows, threats, decisions and limitations |
+| [03-Identity-and-Access-Management.xlsx](deliverables/03-Identity-and-Access-Management.xlsx) | R05, R06, R08 | Synthetic identities, groups, permissions, authentication, privilege, endpoint baselines and revocation timing |
+| [04-Zero-Trust-Implementation.docx](deliverables/04-Zero-Trust-Implementation.docx) | R03, R04, R07, R09, R12, R13 | Stage A-L configuration references, certificate lifecycle, sequential pilots, two automations and recovery procedures |
+| [05-Security-Monitoring.xlsx](deliverables/05-Security-Monitoring.xlsx) | R10 | Log sources, twenty event timestamps, detections, investigations, coverage, clock offsets and retention sizing |
+| [06-Testing-and-Validation.xlsx](deliverables/06-Testing-and-Validation.xlsx) | R01, R13, R14 | All R01-R16 mappings and T00-T20 definitions, individual cases, actual results/evidence, recovery measurements, exceptions and separate owner UAT |
+| [07-Troubleshooting-and-Lessons.xlsx](deliverables/07-Troubleshooting-and-Lessons.xlsx) | R14, R15 | Issues, impact, investigation, correction/rollback, verification and lessons |
+| [08-Final-Lab-Submission.docx](deliverables/08-Final-Lab-Submission.docx) | R11, R15, R16 | Assessment, supporting-file references, measured-outcome summary, rubric, public hygiene and GitHub record |
+
+These are blank submission shells. No stage, security test, hardware inspection, owner acceptance or project benefit is claimed. Word answer prompts and diagram placeholders are editable. Spreadsheet tables have filters, frozen headers, dropdowns and bounded status formatting. Capacity, elapsed-time and retention formulas keep unmeasured outputs blank. Expand the case register into all approved individual subcases before execution; catalog headings alone are not the R14 denominator.
+
+Run `python scripts/validate_office_templates.py` for the bounded offline package/blank-field/traceability check. Native Word/Excel opening, edits, recalculation and rendered layout checks are separate T5 observations in the [task report](reports/T5-Report.md). No macro, embedded evidence or external workbook data connection is included.
 
 ## Task reports and other instructions
 
