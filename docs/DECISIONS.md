@@ -32,5 +32,6 @@ For each later decision/change, record ID, date, problem/trigger, options, selec
 | --- | --- | --- | --- |
 | CH-001 | 2026-11-05 | Owner Task 001 | Establish assignment, proposed architecture/guide, security and acceptance framework, public-safe scaffold and documentation checks; no implementation |
 | CH-002 | 2026-11-05 | Owner GitHub integration/synchronization addendum | Confirm exact account/repository/public visibility, secure existing authentication, controlled commits/PRs/pulls, `main`, CI and local/remote verification; prohibit background sync |
+| CH-003 | 2026-11-05 | Task 001 completion verification within the existing authorization | Public bootstrap pushed with existing Git Credential Manager login; initial documentation CI and local/remote synchronization verified; add sanitized completion evidence without starting a lab stage |
 
 Actual commit IDs and CI/publication evidence are reported after verification in [FINAL-REPORT.md](FINAL-REPORT.md) and the Task 001 completion report. No stage approval or owner UAT decision has been recorded.

@@ -5,7 +5,7 @@
 | Area | State |
 | --- | --- |
 | Project | HL-CYB-001 — Enterprise Zero Trust Security Architecture |
-| Task 001 | Local documentation/scaffold verification passed; GitHub publication verification pending |
+| Task 001 | Bootstrap published; documentation checks and initial CI passed; synchronized publication snapshot recorded below |
 | Operational implementation | **NOT STARTED** |
 | Stages A–L | **NOT STARTED; separate owner approval required** |
 | Owner review / UAT | **PENDING** |
@@ -30,13 +30,28 @@ Hardware descriptions remain supplied information, not inspected inventory. No h
 
 ## Technical validation and publication
 
-Local validation passed for twenty public text candidates, including fifteen Markdown files: required structure, local links/anchors, twelve stages with all seven required fields, sixteen requirement mappings, twenty-one test definitions, 100-point rubric, workflow constraints, and focused publication checks. All twelve unit tests passed using normal filesystem permissions; the restricted Windows context could not access temporary fixture directories, so those checks were rerun in the supported context. Independent counts confirmed the proposed 36 GiB guest RAM and 248 GiB guest-disk totals.
+Initial local validation passed for twenty public text candidates, including fifteen Markdown files: required structure, local links/anchors, twelve stages with all seven required fields, sixteen requirement mappings, twenty-one test definitions, 100-point rubric, workflow constraints, and focused publication checks. All twelve unit tests passed using normal filesystem permissions; the restricted Windows context could not access temporary fixture directories, so those checks were rerun in the supported context. Independent counts confirmed the proposed 36 GiB guest RAM and 248 GiB guest-disk totals. The completion evidence record adds one reviewed Markdown file; repository checks are rerun before publishing that record.
 
 The reference catalog contains fifty external URLs. The local HTTPS reachability check confirmed HTTP success for thirty-seven; thirteen could not be verified by that client because of certificate/transport validation issues. Relevant primary-source pages were also researched through the browsing tool. No TLS verification was disabled. An obsolete Google Help link was removed rather than published as verified. These external-reference limits do not affect local Markdown links, and references must be rechecked at stage entry.
 
-Commit, publication, synchronization, and Actions results are **PENDING** at the initial bootstrap snapshot. This section is updated only after observing them. A passing documentation check must never be reported as operational security verification.
+| Publication item | Observed result |
+| --- | --- |
+| Repository | [waqashamdani-ca/enterprise-zero-trust-security](https://github.com/waqashamdani-ca/enterprise-zero-trust-security) |
+| Authenticated owner and push actor | `waqashamdani-ca` |
+| Permissions | Administrator and push permissions confirmed by CLI/API and connected GitHub metadata |
+| Visibility / default branch | PUBLIC / `main` |
+| Origin | `https://github.com/waqashamdani-ca/enterprise-zero-trust-security.git` |
+| Initial bootstrap commit | [2640261ad2738f1e6d4497ee68636621ed403ea3](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/commit/2640261ad2738f1e6d4497ee68636621ed403ea3) |
+| Initial documentation CI | [Run 42139263675: SUCCESS](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/actions/runs/42139263675), including validation, unit tests, and whitespace steps |
+| Synchronization snapshot | Local `main`, `origin/main`, remote HEAD, and remote `refs/heads/main` matched the initial bootstrap SHA; clean worktree |
+| Credentials | Existing secure Git Credential Manager authentication used; no project token or global Git configuration change |
+| Owner UAT / stage execution | PENDING / NOT STARTED |
 
-Target repository: [waqashamdani-ca/enterprise-zero-trust-security](https://github.com/waqashamdani-ca/enterprise-zero-trust-security). Initial publication includes only reviewed public-safe text artifacts; actual addressing/inventories, secrets, raw logs/media, production exports, and proprietary code are excluded. No software license is added.
+The initial CLI-backed push was rejected because its OAuth token lacked the workflow scope. The existing Git Credential Manager login successfully published the same reviewed commit, without force-push, history alteration, token disclosure, or requesting a new credential. GitHub recorded the expected owner as the push actor.
+
+See [the bootstrap evidence record](../evidence/BOOTSTRAP-VALIDATION.md) for commands and limits. This report records the verified initial snapshot; its completion-record commit has its own SHA and CI run, which are verified separately and reported in the final Task 001 response. Avoid embedding a commit's own hash inside itself. A passing documentation check is not operational security verification.
+
+Publication includes only reviewed public-safe text artifacts; actual addressing/inventories, secrets, raw logs/media, production exports, and proprietary code are excluded. No software license was added. No Task 001 publication blocker remains; stage-specific design dependencies and owner UAT remain open.
 
 ## Open decisions and risks
 

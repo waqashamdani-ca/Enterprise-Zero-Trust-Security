@@ -6,6 +6,8 @@ Design an isolated, virtual enterprise to study identity, least privilege, segme
 
 **Implementation status: NOT STARTED.** The repository contains a proposed architecture, an engineering assignment, an approval-gated implementation blueprint, and documentation validation. A published repository or passing documentation CI is not evidence that the lab exists or its security controls work.
 
+Task 001 bootstrap publication and initial CI verification are recorded in [the completion evidence](evidence/BOOTSTRAP-VALIDATION.md). Owner review remains pending.
+
 ## Start here
 
 | Document | Purpose |
