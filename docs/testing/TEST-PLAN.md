@@ -2,7 +2,7 @@
 
 **Operational tests: NOT TESTED.** This plan defines future lab validation; it is not a record of executed security tests. Authorized documentation tasks may run repository checks (T00 and repository-only T17). Every lab, security, remote-access, and recovery test needs explicit approval for the relevant stage. Home and production systems are never targets.
 
-A functional test checks that required work succeeds. A negative test checks that a named unauthorized action is denied. A recovery test checks that an agreed service can be restored. Use the [glossary](../guides/GLOSSARY.md) and [individual task reports](../../reports/README.md) to distinguish these planned tests from actual evidence.
+A functional test checks that required work succeeds. A negative test checks that a named unauthorized action is denied. A recovery test checks that an agreed service can be restored. Use the [glossary](../guides/GLOSSARY.md) and [individual task reports](../reports/INDEX.md) to distinguish these planned tests from actual evidence.
 
 ## Test governance and evidence
 

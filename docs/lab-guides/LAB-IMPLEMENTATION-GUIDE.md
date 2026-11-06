@@ -2,11 +2,11 @@
 
 **Status: PLANNED. Operational controls are NOT TESTED.** This guide explains how to build and verify the isolated lab after approval. It does not authorize execution. Obtain the owner's approval for each stage; Stage A readiness is the recommended first engineering step.
 
-The [assignment](../assignments/PROJECT-ASSIGNMENT.md) defines the business requirements. The [architecture](../architecture/ARCHITECTURE.md) defines the zones and allowed flows. Use the [glossary](../guides/GLOSSARY.md) for terms such as bridge, certificate authority, Group Policy, and recovery objectives. Each stage below states its prerequisites, actions, expected result, checks, recovery steps, and completion criteria.
+The [assignment](../assignments/PROJECT-ASSIGNMENT.md) defines the business requirements; its [Expected Deliverables](../assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) defines the eight submission filenames for the future T5 shell plan. The [architecture](../architecture/ARCHITECTURE.md) defines the zones and allowed flows. Use the [glossary](../guides/GLOSSARY.md) for terms such as bridge, certificate authority, Group Policy, and recovery objectives. Each stage below states its prerequisites, actions, expected result, checks, recovery steps, and completion criteria.
 
 ## How to execute a future approved stage
 
-Before work, create the next sequential draft [task report](../../reports/README.md). Record the approved scope/date/reference, operator, versions, private target inventory, intended changes, expected results, tests, stop conditions, and rollback. Check current vendor instructions and compatibility.
+Before work, create the next sequential draft [task report](../reports/INDEX.md). Record the approved scope/date/reference, operator, versions, private target inventory, intended changes, expected results, tests, stop conditions, and rollback. Check current vendor instructions and compatibility.
 
 Work from a clean task branch and update the design before changing the lab. Execute only the approved stage, retain raw evidence privately, and publish reviewed synthetic summaries. Finalize the task report after verification and keep owner user acceptance testing (UAT) separate. A task needs its finalized report to be engineering-complete; finishing a stage never authorizes the next one.
 

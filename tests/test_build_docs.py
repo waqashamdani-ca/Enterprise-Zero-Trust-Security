@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 import unittest
@@ -103,12 +104,12 @@ class PdfArtifactTests(unittest.TestCase):
             root = Path(directory)
             subprocess.run(["git", "init", "--quiet", str(root)], check=True)
             (root / "docs").mkdir()
-            (root / "reports/nested").mkdir(parents=True)
-            content = b"# Guide\n\n[Task record](reports/T1-Report.md#c-testing-and-validation).\n"
+            (root / "docs/reports/nested").mkdir(parents=True)
+            content = b"# Guide\n\n[Task record](docs/reports/T1-Report.md#c-testing-and-validation).\n"
             (root / "guide.md").write_bytes(content)
             for name in ("README.md", "T1-Report.md", "T1-Addendum-001-Format.md", "nested/guide.md"):
-                (root / "reports" / name).write_text("Not a PDF source; no title required.\n", encoding="utf-8")
-            archive = root / "reports/T1-Report.pdf"
+                (root / "docs/reports" / name).write_text("Not a PDF source; no title required.\n", encoding="utf-8")
+            archive = root / "docs/reports/T1-Report.pdf"
             archive.write_bytes(b"untouched archive fixture")
             self.assertEqual(docs.discover_sources(root), ["guide.md"])
             first = quiet_build(root)
@@ -116,23 +117,23 @@ class PdfArtifactTests(unittest.TestCase):
             pdf = root / "guide.pdf"
             stamp, data = pdf.stat().st_mtime_ns, pdf.read_bytes()
             archive_stamp = archive.stat().st_mtime_ns
-            (root / "reports/T1-Report.md").write_text("Updated report only.\n", encoding="utf-8")
+            (root / "docs/reports/T1-Report.md").write_text("Updated report only.\n", encoding="utf-8")
             second = quiet_build(root, check=True, rebuild_check=True)
             self.assertEqual(first, second)
             self.assertEqual((pdf.stat().st_mtime_ns, pdf.read_bytes()), (stamp, data))
             self.assertEqual((archive.stat().st_mtime_ns, archive.read_bytes()),
                              (archive_stamp, b"untouched archive fixture"))
-            self.assertEqual(list((root / "reports").rglob("*.pdf")), [archive])
+            self.assertEqual(list((root / "docs/reports").rglob("*.pdf")), [archive])
 
     def test_direct_report_pdf_generation_is_refused(self):
-        for name in ("reports/T1-Report.md", "reports/README.md", "reports/nested/guide.md", "REPORTS/Guide.md"):
+        for name in ("docs/reports/T1-Report.md", "docs/reports/README.md", "docs/reports/INDEX.md", "docs/reports/nested/guide.md", "DOCS/REPORTS/Guide.md", "reports/T1-Report.md"):
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Markdown only"):
                 docs.render_pdf(name, self.content, {name})
 
     def test_pdf_report_links_open_markdown_with_normal_heading_anchors(self):
-        target = docs.REPOSITORY + "/blob/main/reports/T1-Report.md#c-testing-and-validation"
-        content = b"# Guide\n\n[Task record](../reports/T1-Report.md#c-testing-and-validation).\n"
-        self.assertEqual(docs.resolve_link("docs/guide.md", "../reports/T1-Report.md#c-testing-and-validation", {"docs/guide.md"}), target)
+        target = docs.REPOSITORY + "/blob/main/docs/reports/T1-Report.md#c-testing-and-validation"
+        content = b"# Guide\n\n[Task record](reports/T1-Report.md#c-testing-and-validation).\n"
+        self.assertEqual(docs.resolve_link("docs/guide.md", "reports/T1-Report.md#c-testing-and-validation", {"docs/guide.md"}), target)
         data = docs.render_pdf("docs/guide.md", content, {"docs/guide.md"})
         reader = docs.PdfReader(io.BytesIO(data))
         uris = [str(ref.get_object()["/A"]["/URI"]) for page in reader.pages
@@ -150,28 +151,28 @@ class PdfArtifactTests(unittest.TestCase):
                 report += "| Field | Record |\n| --- | --- |\n| Task ID | T1 |\n\n"
             report += "Fixture evidence.\n\n"
         manifest = {"schema": 1, "documents": [{"source": "guide.md", "pdf": "guide.pdf"}]}
-        texts = {"guide.md": "# Guide\n", "reports/T1-Report.md": report,
-                 "reports/README.md": "# Report index\n", validator.PDF_MANIFEST: json.dumps(manifest)}
+        texts = {"guide.md": "# Guide\n", "docs/reports/T1-Report.md": report,
+                 "docs/reports/README.md": "# Report index\n", validator.PDF_MANIFEST: json.dumps(manifest)}
         paths = list(texts) + ["guide.pdf"]  # No report PDFs, including optional archives.
         self.assertEqual(validator.report_issues(texts, require_finalized=True), [])
         self.assertEqual(validator.pdf_inventory_issues(paths, texts), [])
-        manifest["documents"].append({"source": "reports/T1-Report.md", "pdf": "reports/T1-Report.pdf"})
+        manifest["documents"].append({"source": "docs/reports/T1-Report.md", "pdf": "docs/reports/T1-Report.pdf"})
         texts[validator.PDF_MANIFEST] = json.dumps(manifest)
-        self.assertTrue(validator.pdf_inventory_issues(paths + ["reports/T1-Report.pdf"], texts))
-        manifest["documents"] = [{"source": "guide.md", "pdf": "reports/T1-Report.pdf"}]
+        self.assertTrue(validator.pdf_inventory_issues(paths + ["docs/reports/T1-Report.pdf"], texts))
+        manifest["documents"] = [{"source": "guide.md", "pdf": "docs/reports/T1-Report.pdf"}]
         texts[validator.PDF_MANIFEST] = json.dumps(manifest)
-        self.assertTrue(validator.pdf_inventory_issues(paths + ["reports/T1-Report.pdf"], texts))
+        self.assertTrue(validator.pdf_inventory_issues(paths + ["docs/reports/T1-Report.pdf"], texts))
 
     def test_historical_report_pdf_bytes_are_pinned_and_new_report_pdfs_are_rejected(self):
         base = ROOT / "local/pdf-tests"
         base.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(dir=base) as directory:
             root = Path(directory)
-            (root / "reports").mkdir()
+            (root / "docs/reports").mkdir(parents=True)
             for name, expected in validator.ARCHIVED_REPORT_PDFS.items():
                 with self.subTest(name=name):
                     data = subprocess.check_output(["git", "-C", str(ROOT), "show",
-                                                    validator.REPORT_ARCHIVE_BASELINE + ":" + name])
+                                                    validator.REPORT_ARCHIVE_BASELINE + ":" + name.removeprefix("docs/")])
                     self.assertEqual(hashlib.sha256(data).hexdigest(), expected)
                     path = root / name
                     path.write_bytes(data)
@@ -180,7 +181,7 @@ class PdfArtifactTests(unittest.TestCase):
                     self.assertEqual(validator.generated_pdf_issues(root, name), [])
                     path.write_bytes(data + b"\nchanged")
                     self.assertTrue(any("frozen" in issue for issue in validator.generated_pdf_issues(root, name)))
-            name = "reports/T3-Addendum-001-Markdown-Only-Reporting.pdf"
+            name = "docs/reports/T3-Addendum-001-Markdown-Only-Reporting.pdf"
             (root / name).write_bytes(docs.render_pdf("fixture.md", self.content, {"fixture.md"}))
             self.assertTrue(any("prohibited" in issue for issue in validator.generated_pdf_issues(root, name)))
 
@@ -200,8 +201,51 @@ class PdfArtifactTests(unittest.TestCase):
             docs.resolve_link("guide.md", "../private.pdf", {"guide.md"})
         with self.assertRaises(ValueError):
             docs.resolve_link("guide.md", "javascript:unsafe", {"guide.md"})
-        target = docs.resolve_link("reports/T1-Report.md", "../docs/DECISIONS.md", {"docs/governance/DECISIONS.md"})
+        target = docs.resolve_link("docs/reports/T1-Report.md", "../docs/DECISIONS.md", {"docs/governance/DECISIONS.md"})
         self.assertTrue(target.endswith("docs/governance/DECISIONS.pdf"))
+
+    def test_frozen_report_aliases_exist_resolve_and_are_excluded_from_pdf_sources(self):
+        self.assertEqual(set(docs.ALIASES), validator.PDF_ALIASES)
+        sources = set(docs.discover_sources(ROOT))
+        for alias, destination in docs.ALIASES.items():
+            with self.subTest(alias=alias):
+                self.assertTrue((ROOT / alias).is_file())
+                self.assertTrue((ROOT / destination).is_file())
+                self.assertNotIn(alias, sources)
+                self.assertEqual(validator.link_issues(ROOT, alias, (ROOT / alias).read_text(encoding="utf-8")), [])
+        record = json.loads((ROOT / "docs/docs/documentation-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual((ROOT / "docs/docs" / record["moved_to"]).resolve(), ROOT / docs.MANIFEST)
+        self.assertEqual(record["url"], docs.REPOSITORY + "/blob/main/" + docs.MANIFEST)
+
+    def test_assignment_has_compact_cover_all_requirements_submissions_and_original_rubric(self):
+        content = (ROOT / docs.ASSIGNMENT).read_bytes()
+        sources = set(docs.discover_sources(ROOT))
+        data = docs.render_pdf(docs.ASSIGNMENT, content, sources)
+        reader = docs.PdfReader(io.BytesIO(data))
+        self.assertLessEqual(len(reader.pages), 6)
+        cover = reader.pages[0].extract_text()
+        self.assertIn("Assignment contents", cover)
+        self.assertIn("PLANNED", cover)
+        self.assertIn("NOT TESTED", cover)
+        compact = "".join("".join(page.extract_text().split()) for page in reader.pages)
+        for name in validator.DELIVERABLE_FILENAMES:
+            self.assertIn(name, compact)
+        for number in range(1, 17):
+            self.assertIn(f"R{number:02d}", compact)
+        self.assertIn("100points", compact)
+        self.assertEqual(docs.inspect_pdf(data, docs.ASSIGNMENT, content, sources)["text_token_coverage"], 1.0)
+        baseline = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                           validator.REPORT_MIGRATION_BASELINE + ":" + docs.ASSIGNMENT]).decode()
+        old_rubric = baseline.partition("## 100-point evaluation rubric")[2].split("\n## ", 1)[0]
+        new_rubric = content.decode().partition("## Success Criteria")[2].split("\n## ", 1)[0]
+        scores = lambda text: re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", text, re.M)
+        self.assertEqual(scores(new_rubric), scores(old_rubric))
+
+    def test_lab_guide_stage_bodies_remain_identical_to_pre_t4_baseline(self):
+        name = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                       validator.REPORT_MIGRATION_BASELINE + ":" + name])
+        self.assertEqual((ROOT / name).read_bytes().partition(b"## Stage A")[2], old.partition(b"## Stage A")[2])
 
 
 if __name__ == "__main__":

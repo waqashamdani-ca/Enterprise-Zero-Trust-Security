@@ -2,7 +2,7 @@
 
 **Project: HL-CYB-001 — Enterprise Zero Trust Security Architecture.** Infrastructure implementation has not started. This file is the template for the eventual project-wide assessment; it is not an individual task report.
 
-Individual task outcomes belong in [reports/](../../reports/README.md). The original Task 001 report and its evidence are preserved in [T1-Report.md](../../reports/T1-Report.md), including an exact source appendix. Later task reports and addenda must not overwrite that historical record.
+Individual task outcomes belong in [docs/reports/](../reports/INDEX.md). The original Task 001 report and its evidence are preserved in [T1-Report.md](../reports/T1-Report.md), including an exact source appendix. Later task reports and addenda must not overwrite that historical record.
 
 ## Completion rules
 
