@@ -1,6 +1,6 @@
 # Risk register
 
-**Baseline: 2026-11-05.** These are design risks, not findings from executed security tests. Likelihood/impact are qualitative planning judgments. Owner acceptance is pending unless explicitly recorded later.
+**Baseline: 2026-11-05.** These risks come from design review and repository checks, not executed lab security tests. Likelihood and impact are planning judgments; RK-17 records an observed metadata finding. Each row identifies a mitigation and the person responsible for the remaining decision. Owner risk acceptance remains pending unless explicitly recorded. See the [glossary](GLOSSARY.md) for specialist terms.
 
 | ID | Risk / likelihood / impact | Mitigation and next evidence | Residual condition / owner |
 | --- | --- | --- | --- |
@@ -20,6 +20,7 @@
 | RK-14 | Hypervisor/admin compromise defeats virtual segmentation / low–medium / critical | Dedicated admin path, supported MFA, scoped roles, no production credentials, independent physical separation and recovery | Single-host trust is a lab limitation; owner |
 | RK-15 | Documented PR convention is bypassed without repository enforcement / medium / medium | Focused branches/PR reviews and CI; owner decides rulesets/required checks/reviewer model | No protection/ruleset configuration silently applied; owner |
 | RK-16 | Directory/CA snapshot rollback corrupts identity or revocation state / medium / high | Supported system-state/CA backups, isolated restores, dependency order, no duplicate live DC | Recovery procedures must match selected software versions; engineer |
+| RK-17 | Existing public commits contain non-noreply author/committer email metadata / observed / privacy policy finding | T2 identified owner README edits and the GitHub-generated PR 1 merge; addresses withheld from reports. Verify noreply identity for both fields on every new commit/merge; preserve existing history | Removing historical metadata requires a separate owner-approved history change; account email/privacy preference is an owner decision |
 
 ## Handling and escalation
 

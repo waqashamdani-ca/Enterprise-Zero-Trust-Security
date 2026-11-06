@@ -1,10 +1,12 @@
 # Proposed architecture and trust boundaries
 
-**Status: DESIGN ONLY. No hardware inspection, installation, network configuration, or security validation has been performed.** Address labels below are symbolic; actual addresses and protected-network inventories are private records outside Git.
+**Status: PLANNED. Operational controls are NOT TESTED.** Hardware has not been inspected and the lab has not been installed or configured. Address labels are symbolic; actual addresses and protected-network inventories stay in private records outside Git.
+
+The design separates user work, administration, identity services, applications, and audit collection so one allowed connection does not grant access to everything. It also defines how the lab can recover without depending on production. A trust boundary is a point where access must be checked; the [glossary](GLOSSARY.md) explains the specialist terms used below.
 
 ## Design principles
 
-Build an offline, single-host baseline first. Use explicit identity and resource authorization, layered network/host enforcement, a separate administrative path, scoped service dependencies, centralized evidence, and tested recovery. Home networking and Purple Eye production are protected external environments, never trusted lab dependencies. Network location alone grants no resource entitlement.
+Start with one offline virtualization host. Check identity and resource permission, enforce access at both network and host/application layers, separate administration, and permit only required service dependencies. Collect evidence centrally and verify recovery. Home networking and Purple Eye production remain outside the lab; being on a lab network does not grant resource permission.
 
 ## Logical layout
 
@@ -33,7 +35,7 @@ flowchart TB
     WAN -. Filtered outbound sessions .-> EXT
 ```
 
-Arrows represent potential policy-controlled paths, not blanket permits. HOME and ROOT have no network edges by design. Offline CA certificate/request transfer uses separately reviewed media; no network connection is implied.
+Arrows show paths that a policy may permit for a specific service. They do not allow every connection. HOME and ROOT have no network edges. Certificate requests and signed material move to/from the offline root certificate authority (CA) through separately reviewed media.
 
 ## Physical and virtual topology
 
@@ -50,11 +52,13 @@ Proposed compute: Dell Precision 5820. Verify firmware virtualization support, s
 | Optional WAN | `vmbr99` | Firewall WAN only | A separately approved, dedicated uplink; no hypervisor IP |
 | Offline PKI | No bridge | Standalone root CA | No virtual NIC or physical network |
 
-The firewall has an interface per connected zone. General guests have exactly one zone interface. No guest is directly attached to a home-facing physical bridge; do not give endpoints a second NIC, NAT adapter, Wi-Fi link, or host-sharing path. The firewall is the only routed inter-zone path. Same-zone traffic bypasses it and therefore requires host/application controls.
+The firewall has one interface for each connected zone. Ordinary guest virtual machines (VMs) have exactly one zone interface and no direct home-facing bridge connection. Do not add a second network interface (NIC), NAT adapter, Wi-Fi link, or host-sharing path. Traffic between zones must pass through the firewall. Traffic inside a zone may not, so host/application controls remain necessary.
 
 The initial management cable/segment is disconnected from Google Wifi and all production. The dedicated administrator station has Wi-Fi, other NICs, bridges, VPNs, Internet sharing, and forwarding disabled during lab administration; do not use a production-joined workstation as the administrator station. Use physical console while this topology is being built. Retain console access if the firewall is down. Do not claim that assigning different virtual bridges isolates a physical uplink that is still shared.
 
-Safe Internet egress is a blocking design decision. A verified independent uplink/firewall arrangement must prevent layer-2 adjacency with home devices and enforce protected-destination blocking independently of guest routing. A second NIC connected directly to the home LAN alone is insufficient: the virtual firewall WAN still shares that LAN. Until the owner approves a concrete independent isolation boundary, leave `vmbr99` disconnected and remote access/online activation pending. Prefer offline transfer of verified media. Do not turn the hypervisor into a home-to-lab router or weaken isolation to complete a pilot.
+Internet egress—traffic leaving the lab—requires a separate approved design. The uplink/firewall arrangement must prevent direct layer-2 access to home devices and block protected destinations independently of guest routes. A second NIC plugged into the home LAN is insufficient because the virtual firewall's WAN interface would still share that LAN.
+
+Keep `vmbr99` disconnected until the owner approves the actual isolation boundary. Remote access and online activation remain pending in the meantime. Prefer offline transfer of verified media. Do not turn the hypervisor into a home-to-lab router or weaken isolation to finish a pilot.
 
 Future physical firewall/managed-switch integration requires a new topology review, dedicated management design, verified VLAN/trunk/native-VLAN behavior, route/IPv6 review, and owner-approved cutover/rollback. It is not part of the bootstrap or assumed Google Wifi capability.
 
@@ -70,7 +74,7 @@ IPv6 is **disabled for lab routing/RA/DHCPv6 in the baseline**, with explicit hy
 
 ## Initial capacity budget
 
-These are planning ceilings, not measured allocations or vendor minimum guarantees. GiB units are intentional; the advertised 512 GB disk is smaller when measured in GiB. Verify actual usable capacity before creating a VM. Keep at least 80 GiB free and never count thin provisioning as extra physical capacity.
+The following values are planning ceilings. They are not inspected allocations or a guarantee that a workload will fit. The ledger uses GiB, which differs from advertised GB capacity. Verify actual usable space before creating a VM, keep at least 80 GiB free, and do not treat thin provisioning as additional physical storage.
 
 | VM role | vCPU planning allocation | RAM GiB | Virtual disk ceiling GiB | Operation |
 | --- | --- | --- | --- | --- |
@@ -92,7 +96,7 @@ Thirty-day event retention must fit measured event volume. Start with bounded sy
 
 ## Inter-zone policy matrix
 
-All objects below are symbolic private inventory aliases. Apply source-interface stateful rules. Establish narrowly scoped infrastructure exceptions, then deny protected destinations before any Internet permits. End with logged default deny. Inspect floating/group/automatic rules, existing states, local firewall services, and anti-lockout defaults, not just the visible interface rule list.
+The objects below stand for private inventory entries. Apply stateful rules at the interface where traffic starts. Add narrow infrastructure exceptions, block protected destinations before Internet permits, and finish with a logged default deny. Review floating/group/automatic rules, existing connection states, local firewall services, and anti-lockout defaults as well as the visible interface rules.
 
 | Flow ID | Source → destination | Allowed service / reason | Enforcement and evidence |
 | --- | --- | --- | --- |

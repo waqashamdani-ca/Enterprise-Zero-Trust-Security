@@ -1,6 +1,8 @@
 # Acceptance criteria and approval gates
 
-**Task 001 acceptance is limited to repository/documentation quality. Implementation and operational acceptance remain NOT STARTED.** Engineering verification and owner UAT are separate decisions.
+Acceptance answers two different questions: did the engineer verify the approved work, and did the owner accept it for its intended use? Keep those decisions separate. Repository/documentation checks have evidence in the [task reports](../reports/README.md); lab implementation is PLANNED and its operational controls are NOT TESTED.
+
+The criteria below define what evidence a reviewer needs. A passing continuous integration (CI) run checks the repository; owner user acceptance testing (UAT) needs explicit confirmation. See the [glossary](GLOSSARY.md) for these terms.
 
 ## Task 001 bootstrap criteria
 
@@ -24,7 +26,7 @@ If GitHub authentication/permissions block publication, B09/B10 remain blocked a
 
 ## Future stage acceptance
 
-Every stage requires a scope-specific approval **before execution**. Each exit requires recorded engineering verification, sanitized evidence, open issue review, and separate owner acceptance; it never authorizes the next stage automatically.
+Obtain scope-specific owner approval **before each stage**. To finish a stage, record engineering checks, reviewed evidence, unresolved issues, and the owner's separate acceptance decision. Finishing one stage does not authorize the next.
 
 | Stage | Minimum exit evidence | Blocking condition |
 | --- | --- | --- |
@@ -45,11 +47,11 @@ An owner-approved scope exception must record affected requirements/tests, justi
 
 ## Engineering verification record
 
-For a future stage, record: stage/task branch, approval reference/date, actual versions/asset roles, changed artifacts, requirement/test IDs, expected/observed results, evidence IDs, independent observation method, verifier, defects/severity, rollback readiness, and verdict. Use NOT RUN for missing tests. A second tool or observation is independent evidence; it is not an independent human reviewer unless one actually participated.
+In the individual task report, identify the stage/branch, approval/date, actual versions and asset roles, changed files/configuration, requirement/test IDs, expected and actual results, evidence IDs, verifier and second observation, defects/severity, rollback readiness, and verdict. Mark missing tests NOT TESTED. A second tool or observation supports verification; it is not a second human reviewer unless someone else participated.
 
 ## Owner UAT record
 
-Record separately: owner/reviewer, date, approved business workflows, observed usability, accepted limitations, rejection/follow-up items, and explicit acceptance decision. Leave all fields pending until the owner supplies a decision. Engineering status, GitHub publication, and CI cannot fill this record automatically.
+Record the owner/reviewer, date, business workflows checked, observed usability, accepted limits, follow-up items, and explicit acceptance decision separately. Leave owner UAT pending until the owner supplies that decision. Engineering completion, GitHub publication, and CI do not supply owner acceptance.
 
 ## Current gate
 
