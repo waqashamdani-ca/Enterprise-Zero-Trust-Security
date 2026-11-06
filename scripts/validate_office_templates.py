@@ -6,6 +6,8 @@ complete secret detector. It never opens external links or executes formulas.
 """
 from __future__ import annotations
 
+import hashlib
+import subprocess
 import posixpath
 import re
 import sys
@@ -15,6 +17,9 @@ from xml.etree import ElementTree as ET
 from zipfile import BadZipFile, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
+# T6 preserves legacy shells; T7 alone may migrate their historical contract.
+LEGACY_TEST_PLAN_REF = "b838c00bc7d4478251662fc2086059d38a2c7ffd"
+LEGACY_TEST_PLAN_SHA256 = "c01a987e29cfcfe637d5f25bbdbd8fecef526ae8175c0a6f9f3b604063e27811"
 FILES = (
     "01-Lab-Environment.xlsx", "02-Architecture-and-Network-Design.docx",
     "03-Identity-and-Access-Management.xlsx", "04-Zero-Trust-Implementation.docx",
@@ -199,8 +204,17 @@ def template_set_issues(root: Path) -> list[str]:
                         issues.append(f"{filename}:{sheet_name}: status dropdown/conditional formatting missing")
             if filename == FILES[5]:
                 catalog = data["Test Catalog"]["cells"]
-                plan = (root / "docs/testing/TEST-PLAN.md").read_text(encoding="utf-8")
+                raw_plan = subprocess.check_output(
+                    ["git", "-C", str(ROOT), "show",
+                     LEGACY_TEST_PLAN_REF + ":docs/testing/TEST-PLAN.md"],
+                    stderr=subprocess.PIPE,
+                )
+                if hashlib.sha256(raw_plan).hexdigest() != LEGACY_TEST_PLAN_SHA256:
+                    raise ValueError("Legacy test-plan integrity mismatch")
+                plan = raw_plan.decode("utf-8")
                 definitions = re.findall(r"### (T\d{2}) — (.*?)\n(.*?)(?=\n### |\n## Coverage index)", plan, re.S)
+                if [tid for tid, _, _ in definitions] != [f"T{i:02}" for i in range(21)]:
+                    raise ValueError("Legacy test-plan definitions unavailable")
                 ids = [catalog.get(f"A{r}", {}).get("value") for r in range(8, 29)]
                 if ids != [f"T{i:02}" for i in range(21)]:
                     issues.append(f"{filename}: T00-T20 definitions missing or reordered")
@@ -236,7 +250,7 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: stages A-L incomplete")
             if any(section not in text for section in WORD_SECTIONS[filename]):
                 issues.append(f"{filename}: required submission sections missing")
-    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
+    except (OSError, subprocess.CalledProcessError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
         issues.append("Office template structure/traceability could not be verified")
     return sorted(set(issues))
 
@@ -251,7 +265,7 @@ def main() -> int:
         for issue in sorted(set(issues)):
             print("- " + issue)
         return 1
-    print("PASS: eight editable-package shells; 30 worksheets; R01-R16/T00-T20; blank actual/evidence fields; bounded OOXML publication review.")
+    print("PASS: eight legacy T5 editable-package shells; 30 worksheets; pinned R01-R16/T00-T20; blank actual/evidence fields; bounded OOXML publication review.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
 

@@ -10,7 +10,7 @@ This guide explains terms used in the assignment and lab procedures. The [archit
 | Least privilege | Give a user, service, or device only the access required for its approved work. |
 | Default deny | Block access unless a specific rule permits it. |
 | Trust boundary / security zone | A boundary is where access must be checked; a zone groups components with a defined role and access policy. Being in the same zone does not grant application permission. |
-| Management, Identity, Endpoints, Services, Monitoring, Remote access | The six lab zone roles. Management contains administration; Identity contains directory/certificate services; Endpoints contains user devices; Services contains the test application; Monitoring contains collectors; Remote access contains the selected pilot component. |
+| Management, Corporate, Restricted | The three current zones: host/firewall administration, AD/Windows endpoint, and Linux HTTPS application. Logs are reviewed from existing sources; Tailscale enrolls APP1 without an extra zone. |
 | Hypervisor / virtual machine (VM) | The hypervisor runs separate guest operating systems on one physical host; each guest is a VM. Proxmox VE is the proposed hypervisor. |
 | Bridge / NIC | A bridge connects selected network interfaces; a network interface controller (NIC) connects a host or guest to a network. Workload bridges have no physical uplink in the baseline. |
 | Egress / WAN | Egress is traffic leaving a zone or the lab. The firewall's wide area network (WAN) interface is the proposed external path, disconnected until isolation is approved. |
@@ -20,20 +20,20 @@ This guide explains terms used in the assignment and lab procedures. The [archit
 | DNS / Group Policy (GPO) | The Domain Name System resolves names to service/address information. Group Policy Objects apply selected Windows configuration and access settings. |
 | Kerberos, LDAP, SMB, RPC | Protocols used for authentication, directory access, file/policy access, and remote procedure calls. Their required flows must be scoped to approved lab components. |
 | MFA / SSO | Multi-factor authentication checks more than one factor. Single sign-on reuses an identity provider for sign-in. Remote MFA does not automatically protect every internal logon, and corporate SSO is excluded. |
-| Overlay / subnet router / exit node | An overlay adds a logical network over existing connections. A subnet router exposes routes to another network; an exit node can carry Internet traffic. The baseline remote pilots exclude the latter two capabilities. |
+| Overlay / subnet router / exit node | An overlay adds a logical network over existing connections. A subnet router exposes routes to another network; an exit node can carry Internet traffic. The one-resource Tailscale baseline excludes the latter two capabilities. |
 | Device posture | Information about a device's security state used in an access decision. Available checks depend on the selected technology and plan; they are not assumed implemented. |
 
 ## Certificates, logging, and recovery
 
 | Term | Meaning in this project |
 | --- | --- |
-| PKI / CA / AD CS | Public key infrastructure manages certificate trust. A certificate authority issues certificates. Active Directory Certificate Services is the proposed Windows CA software. The root stays offline; a separate issuer handles approved lab certificates. |
+| PKI / CA / AD CS | Public key infrastructure manages certificate trust. A certificate authority issues certificates. This baseline uses one offline OpenSSL lab CA signing one HTTPS leaf. AD CS and a separate issuer are not required. |
 | TLS / certificate chain | Transport Layer Security protects a connection. A chain links a service certificate to a trusted issuer/root. A trusted chain alone does not grant resource permission. |
-| CRL / AIA / CDP | A certificate revocation list identifies revoked certificates. Authority Information Access and CRL Distribution Points tell clients where to find issuer/revocation information. The chosen application must be tested for its actual revocation behavior. |
+| CRL / AIA / CDP | A certificate revocation list identifies revoked certificates. Authority Information Access and CRL Distribution Points tell clients where to find issuer/revocation information. These are background terms; certificate-revocation infrastructure is outside the focused baseline. App/device revocation does not prove certificate revocation. |
 | EKU / SAN / HSM | Extended Key Usage limits certificate purpose; Subject Alternative Name identifies covered names; a hardware security module protects keys. An HSM is not part of the current lab design. |
 | WEF / WEC / syslog / SIEM | Windows Event Forwarding sends selected events to a Windows Event Collector. Syslog carries log messages from supported systems. A security information and event management platform analyzes events; no heavyweight SIEM is assumed. |
 | Snapshot / backup | A snapshot is a short-lived rollback aid. The recovery design requires supported encrypted backups on separate storage; a snapshot on the same disk is not that backup. |
-| RPO / RTO | Recovery point objective limits acceptable data age after restoration. Recovery time objective limits the time to restore the agreed service scope. Both need measured recovery evidence. |
+| RPO / RTO | Recovery point objective limits acceptable data age after restoration. Recovery time objective limits the time to restore the agreed service scope. The focused baseline records actual backup age/recovery time and limits without enterprise RPO/RTO targets. |
 | GiB / GB | GiB and GB use different units. The proposed VM ledger uses GiB; advertised storage capacity in GB is not the same amount of usable space. |
 
 ## Evidence, standards, and repository work
@@ -59,3 +59,13 @@ This guide explains terms used in the assignment and lab procedures. The [archit
 | PENDING owner UAT | The owner has not explicitly accepted the work. Never turn this into PASS from a CI result or engineering self-review. |
 
 Report state is separate: DRAFT means the report is being prepared; FINALIZED means its evidence record is frozen. A finalized report can still correctly contain NOT TESTED results, unresolved risks, or pending owner UAT.
+
+## Hardware status vocabulary
+
+| Status | Meaning |
+| --- | --- |
+| Existing | Owner reports equipment already held; suitability still needs inspection. |
+| Ordered | Purchase/order confirmed by owner; delivery not established. |
+| Delivered | Actual receipt recorded; installation/compatibility not implied. |
+| Installed | Named component/software physically installed/configured with evidence; not automatically tested. |
+| Validated | Named checks passed for the installed scope/date; owner acceptance remains separate. |

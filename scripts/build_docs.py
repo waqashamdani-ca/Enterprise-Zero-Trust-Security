@@ -204,7 +204,7 @@ def parse_diagram(raw: str) -> tuple[dict[str, str], list[tuple[str, str, str, b
             edges.append((dotted[1], dotted[3], dotted[2], True))
         else:
             raise ValueError("Unsupported Mermaid syntax; review before publication")
-    if set(nodes) != {"Admin", "Mgmt", "FW", "ID", "USR", "APP", "LOG", "RA", "ROOT", "WAN", "EXT", "HOME"}:
+    if set(nodes) != {"Admin", "Mgmt", "FW", "Corp", "App", "Remote", "Logs", "Backup", "CA", "WAN", "HOME"}:
         raise ValueError("Architecture nodes changed; review the vector layout")
     if any(a not in nodes or b not in nodes for a, b, _, _ in edges):
         raise ValueError("Mermaid edge references an undefined node")
@@ -215,24 +215,41 @@ class ArchitectureFigure(Flowable):
     def __init__(self, raw: str):
         super().__init__()
         self.nodes, self.edges = parse_diagram(raw)
-        self.width, self.height = CONTENT_WIDTH, 490
+        self.width, self.height = CONTENT_WIDTH, 550
 
     def draw(self):
         canvas = self.canv
         layout = {
-            "Admin": (252, 455, 300, 38), "Mgmt": (252, 393, 300, 38), "FW": (252, 331, 300, 38),
-            "ID": (50, 232, 94, 72), "USR": (151, 232, 94, 72), "APP": (252, 232, 94, 72),
-            "LOG": (353, 232, 94, 72), "RA": (454, 232, 94, 72),
-            "ROOT": (112, 129, 186, 44), "HOME": (112, 60, 186, 44),
-            "WAN": (390, 129, 190, 44), "EXT": (390, 51, 190, 38),
+            "Admin": (252, 523, 300, 36), "Mgmt": (252, 465, 300, 42),
+            "FW": (252, 397, 240, 40), "Corp": (118, 310, 210, 52),
+            "App": (386, 310, 210, 52), "Remote": (386, 222, 210, 40),
+            "Logs": (118, 211, 210, 50), "Backup": (386, 130, 210, 42),
+            "WAN": (118, 120, 210, 42), "CA": (118, 42, 210, 42),
+            "HOME": (386, 42, 210, 42),
+        }
+        routes = {
+            ("Remote", "App"): [(386, 242), (386, 284)],
+            ("FW", "Corp"): [(252, 377), (252, 355), (118, 355), (118, 336)],
+            ("FW", "App"): [(252, 377), (252, 355), (386, 355), (386, 336)],
+            ("FW", "Logs"): [(132, 397), (2, 397), (2, 211), (13, 211)],
+            ("Corp", "Logs"): [(118, 284), (118, 236)],
+            ("App", "Logs"): [(281, 310), (252, 310), (252, 211), (223, 211)],
+            ("App", "Backup"): [(491, 310), (502, 310), (502, 130), (491, 130)],
+            ("FW", "WAN"): [(132, 397), (7, 397), (7, 120), (13, 120)],
+        }
+        labels = {
+            ("Remote", "App"): (397, 256, 92),
+            ("FW", "Logs"): (12, 357, 100),
+            ("Corp", "Logs"): (20, 258, 92),
+            ("App", "Logs"): (148, 258, 96),
+            ("App", "Backup"): (289, 164, 180),
+            ("FW", "WAN"): (18, 158, 115),
         }
         canvas.saveState()
         for start, end, label, dotted in self.edges:
-            x1, y1, w1, h1 = layout[start]
+            x1, y1, _, h1 = layout[start]
             x2, y2, _, h2 = layout[end]
-            points = [(x1, y1 - h1 / 2), (x2, y2 + h2 / 2)]
-            if start == "FW" and end == "WAN":
-                points = [(x1 + w1 / 2, y1), (502, y1), (502, y2 + h2 / 2 + 12), (x2, y2 + h2 / 2 + 12), (x2, y2 + h2 / 2)]
+            points = routes.get((start, end), [(x1, y1 - h1 / 2), (x2, y2 + h2 / 2)])
             canvas.setStrokeColor(colors.HexColor("#56758c"))
             canvas.setLineWidth(0.9)
             canvas.setDash(3, 3) if dotted else canvas.setDash()
@@ -248,20 +265,21 @@ class ArchitectureFigure(Flowable):
             canvas.setFillColor(colors.HexColor("#56758c"))
             canvas.drawPath(arrow, fill=1, stroke=0)
             if label:
-                canvas.setDash()
-                style = ParagraphStyle("edge", fontName="Vera", fontSize=7.1, leading=9, textColor=colors.HexColor("#40576a"))
+                if (start, end) not in labels:
+                    raise ValueError("Diagram label route needs review")
+                px, py, width = labels[start, end]
+                style = ParagraphStyle("edge", fontName="Vera", fontSize=7.6, leading=9.4,
+                                       textColor=colors.HexColor("#40576a"))
                 paragraph = Paragraph(html.escape(normalize(label)), style)
-                width = 92 if start == "FW" else 135
-                px, py = (408, 279) if start == "FW" else (245, 78)
-                _, height = paragraph.wrap(width, 60)
+                _, height = paragraph.wrap(width, 40)
                 paragraph.drawOn(canvas, px, py)
         canvas.setDash()
         for node, label in self.nodes.items():
             x, y, width, height = layout[node]
             canvas.setStrokeColor(colors.HexColor("#718391"))
-            canvas.setFillColor(colors.HexColor("#eef3f7" if node not in {"ROOT", "HOME"} else "#f1f1f1"))
+            canvas.setFillColor(colors.HexColor("#eef3f7" if node not in {"CA", "HOME"} else "#f1f1f1"))
             canvas.roundRect(x - width / 2, y - height / 2, width, height, 4, stroke=1, fill=1)
-            style = ParagraphStyle("node", fontName="Vera", fontSize=8.1 if width < 100 else 8.8, leading=10.5, alignment=TA_CENTER)
+            style = ParagraphStyle("node", fontName="Vera", fontSize=8.8, leading=10.5, alignment=TA_CENTER)
             paragraph = Paragraph(html.escape(normalize(label)), style)
             _, ph = paragraph.wrap(width - 12, height - 8)
             if ph > height - 8:
@@ -391,13 +409,13 @@ class Builder:
         headers = [plain(cell["children"]) for cell in head]
         count = len(headers)
         if self.source == ASSIGNMENT and headers == ["ID", "Required outcome and measurement", "Tests"]:
-            widths = [32, 408, 64]
+            widths = [54, 390, 60]
         elif self.source == ASSIGNMENT and headers[0] == "Deliverable filename":
             widths = [209, 66, 229]
         elif count == 2:
             widths = [62, 442] if max(len(plain(row[0]["children"])) for row in rows) < 12 else [133, 371]
         elif count == 3:
-            widths = [144, 42, 318] if headers[1] == "Points" else ([45, 250, 209] if headers[0] in {"Stage", "Security ID"} else [205, 143, 156])
+            widths = [144, 42, 318] if headers[1] == "Points" else ([58, 276, 170] if headers[0] in {"Stage", "Security ID"} else [205, 143, 156])
         elif count == 4:
             if headers[-1] == "Status":
                 widths = [145, 140, 163, 56]
@@ -408,13 +426,13 @@ class Builder:
             else:
                 widths = [117, 153, 139, 95]
         elif count == 5:
-            widths = [137, 66, 94, 141, 66]
+            widths = [70, 40, 62, 65, 267] if headers == ["VM", "vCPU", "RAM GiB", "Disk GiB", "Responsibility"] else [137, 66, 94, 141, 66]
         else:
             widths = [CONTENT_WIDTH / count] * count
         cells = []
         for row_number, row in enumerate(rows):
             cells.append([Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), self.cell_style) for cell in row])
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=1, hAlign="LEFT", spaceAfter=12)
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source == "docs/governance/RISKS.md" else 1, hAlign="LEFT", spaceAfter=12)
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
@@ -449,7 +467,7 @@ class Builder:
                 story.append(Paragraph(inline(token["children"], self.source, self.sources), style))
             elif kind == "heading":
                 title = plain(token["children"])
-                if token["attrs"]["level"] == 2 and (title.startswith("Stage ") or title == "Source preservation appendix"):
+                if token["attrs"]["level"] == 2 and (title.startswith(("Stage ", "Phase ")) or title == "Source preservation appendix"):
                     story.append(PageBreak())
                 story.append(self.heading(token))
             elif kind == "list":
@@ -517,12 +535,12 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     story = []
     if source == ASSIGNMENT:
         first_section = next(i for i, token in enumerate(tokens) if token["type"] == "heading" and token["attrs"]["level"] == 2)
-        story.extend([Spacer(1, 45), Paragraph("CYBERSECURITY ENGINEERING", ParagraphStyle("assignment-label", parent=builder.style, fontSize=9, textColor=colors.HexColor("#475c6c"), spaceAfter=18)), builder.heading(tokens[0], cover=True), Spacer(1, 20)])
+        story.extend([Spacer(1, 8), Paragraph("CYBERSECURITY ENGINEERING", ParagraphStyle("assignment-label", parent=builder.style, fontSize=9, textColor=colors.HexColor("#475c6c"), spaceAfter=8)), builder.heading(tokens[0], cover=True), Spacer(1, 10)])
         story.extend(builder.blocks(tokens[1:first_section]))
-        story.extend([Spacer(1, 23), Paragraph("Assignment contents", ParagraphStyle("assignment-contents", parent=builder.style, fontName="Vera-Bold", fontSize=11, spaceAfter=8))])
+        story.extend([Spacer(1, 10), Paragraph("Assignment contents", ParagraphStyle("assignment-contents", parent=builder.style, fontName="Vera-Bold", fontSize=11, spaceAfter=8))])
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("assignment-toc", fontName="Vera", fontSize=9.3, leading=13, spaceBefore=3)]
-        story.extend([contents, PageBreak()])
+        story.extend([contents, Spacer(1, 10)])
         tokens = [tokens[0], *tokens[first_section:]]
     elif formal:
         cover_status = ""

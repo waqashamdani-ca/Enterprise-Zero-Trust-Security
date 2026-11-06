@@ -1,175 +1,215 @@
-# Test plan and requirement traceability
+# Focused test plan and requirement traceability
 
-**Operational tests: NOT TESTED.** This plan defines future lab validation; it is not a record of executed security tests. Authorized documentation tasks may run repository checks (T00 and repository-only T17). Every lab, security, remote-access, and recovery test needs explicit approval for the relevant stage. Home and production systems are never targets.
+**T6 baseline, 2026-11-06. All operational tests below are NOT TESTED. Actual results and evidence fields are intentionally empty.**
 
-A functional test checks that required work succeeds. A negative test checks that a named unauthorized action is denied. A recovery test checks that an agreed service can be restored. Use the [glossary](../guides/GLOSSARY.md) and [individual task reports](../reports/INDEX.md) to distinguish these planned tests from actual evidence.
+Ten focused tests check the [assignment](../assignments/PROJECT-ASSIGNMENT.md). Each includes named subchecks, not just a dashboard status. Obtain the relevant stage-specific approval before any lab action; T6 runs repository/document checks only. Home/production are never targets. The [guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#historical-requirement-and-test-transition) maps all historical R01-R16/T00-T20 IDs; no old result transfers to FWR/FWT.
 
 ## Test governance and evidence
 
-For each future test, freeze the lab-only source/target, identity/device context, version, expected outcome, bounded action/rate, independent observation, stop condition, recovery method, and evidence ID. Use [evidence conventions](../../evidence/README.md). Evidence stays private until sanitized and manually reviewed. A negative result must show denial from the intended control, not merely a disconnected service or a DNS typo; first establish an approved working control case.
+Before execution freeze versions, lab-owned sources/targets, synthetic user context, action/rate, expected result, evidence ID, second observation, stop and rollback. Use [evidence conventions](../../evidence/README.md). Keep raw records private. Start every negative test with a known working allowed service/control; DNS failure or a stopped service does not prove denial.
 
-Use PASS, FAIL, or NOT TESTED and explain any blocked or skipped case. Record an exception before assessment, with owner approval, risk, and revised scope. An unexecuted case never counts as passed. R14 requires every mandatory case executed, 100% of critical cases passed, at least 95% of applicable noncritical cases passed, and no unresolved high-severity issue. Count the declared individual cases, state the denominator, and do not round away a failure. T20 includes separate owner UAT; engineering cannot award it on the owner's behalf.
+Record PASS/FAIL/NOT TESTED for every mandatory subcheck and the test overall. PASS requires all its subchecks to pass with evidence. Missing evidence/blocked steps stay NOT TESTED and block engineering completion. Any critical safety failure blocks acceptance regardless of rubric score. No percentage rounding or 95% threshold applies to this small baseline. Engineering and separate owner UAT remain distinct.
 
-## Test catalog
+### FWT-01 - Isolation and readiness
 
-### T00 — Bootstrap documentation and Git validation
+**Scope:** FWR-01; FSC-01; FAC-01. Critical. Approval A and the relevant network/egress stage.
 
-- Scope: Task 001; critical; R11/R15/R16. Run the standard-library validator, its focused negative-case unit tests, whitespace checks, and independent file/link/content review. Inspect all proposed tracked paths and the staged diff/history before publication.
-- Expected: required files/sections, valid local destinations/anchors, complete requirement traceability, 100-point rubric, no selected publication findings, and no infrastructure execution. After publication, verify public visibility, `main`, clean tracking, exact local/remote SHA equality, and actual Actions result.
-- Independent observation: Git tree/history and remote metadata/Actions run, separate from the validator's output. Evidence: Task 001 completion report and repository-only check record. Owner UAT remains pending until stated by the owner.
+**Objective and method:** Confirm hardware status/ownership, delivery where needed, physical/compatibility/data-service inventory, backup/console readiness and exact destructive approvals. Inspect cables, bridge/NIC membership, routes/forwarding/IPv6, private protected aliases, other admin adapters and absence of trust/sync/credential/data reuse. Egress is disconnected or independently isolated and approved. Attempt only one scoped connection to a known listening lab-owned mock representing a protected boundary.
 
-### T01 — Protected-network isolation
+**Expected result and pass/fail criteria:** No unapproved protected path or integration; mock connection denied by intended control. No actual protected asset receives traffic. Delivery estimates never count as receipt or validation. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
 
-- Future scope: A–D/K; critical; R01/R04. Inspect cables, bridge ports, guest NICs, host/guest routes, forwarding, firewall aliases/rules, IPv6, and other admin-station adapters. Confirm no production trust/sync/identities.
-- Expected: no unauthorized physical/virtual/overlay path to home/production; only the approved administrative path and separately gated egress exist. With separately approved mock endpoints representing a protected zone, attempt one bounded connection and observe denial.
-- Independent observation: effective route/bridge/rule review plus a corresponding mock-boundary log/counter. Never send traffic to a real protected address/domain. Evidence must distinguish configuration proof from the mock behavioral test.
+**Second observation:** Configuration/cable inspection plus mock denial and matching policy log/counter; compare inventory with physical/firmware view. A disconnected mock alone is insufficient.
 
-### T02 — Egress, DNS, and exposure control
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
 
-- Future scope: D/K; critical; R01/R04. Inspect permitted external destinations, resolver restrictions, firewall-originated traffic, NAT/automatic rules, IPv6, UPnP/NAT-PMP, and inbound listeners. Egress-enabling approval is a prerequisite.
-- Expected: offline baseline remains disconnected or approved egress reaches only named dependencies; no inbound admin/port forward or protected destination permit exists. Test allowed vendor dependency and denied lab-mock alternate resolver/destination only within scope.
-- Independent observation: rule/state/counter inspection and resolver/vendor result; inspect actual protected-target aliases privately without probing them. Unavailable isolated egress means BLOCKED, not relaxed policy.
+### FWT-02 - Three-zone network and administration
 
-### T03 — Hardware, capacity, and media readiness
+**Scope:** FWR-02; FSC-02; FAC-02. Critical. Approvals B-D.
 
-- Future scope: A/B; critical; R02. Reconcile supplied specs with existing OS/firmware/physical observations, exact disk ownership, backup/console recovery, media integrity, and usable capacity. No disk write during the read-only readiness task.
-- Expected: an approved resource ledger fits measured RAM/storage, reserves at least 12 GiB host RAM and 80 GiB disk free, and identifies all blocking uncertainty. Verify the guest ceilings independently by summing the allocation table.
-- Independent observation: physical/firmware or storage UI versus inventory output; vendor integrity value versus downloaded media digest. Record measurements privately and publish synthetic summaries.
+**Objective and method:** Count one host/four baseline VMs and exactly Management/Corporate/Restricted. Sum measured capacity versus allocations/reserves. Inspect FF-01 through FF-08 and effective automatic/state/NAT rules. Demonstrate named admin access/MFA where supported, console recovery, WIN1-to-APP1 HTTPS permit, unlisted inter-zone listening-service denial and ordinary-user management denial. Inspect same-zone DC host policy separately.
 
-### T04 — Administrative access and recovery
+**Expected result and pass/fail criteria:** Only approved source/service paths work; default deny/host policy prevent extra access. Console recovery remains available; resource ledger fits actual capacity, including temporary restore space. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
 
-- Future scope: B/D/K; critical; R03. Verify named admin/MFA and effective roles, management bind addresses, lab-only admin source, local console recovery, and ordinary-user denial using approved mock contexts.
-- Expected: ordinary users cannot administer the hypervisor/firewall; authorized named administration works; recovery works without opening management to all networks. Identify MFA coverage gaps explicitly.
-- Independent observation: successful/denied session plus management audit log and role inspection. Never disable the firewall globally for this test.
+**Second observation:** Successful/denied sessions plus effective rules/logs and host UI/console observations; ordinary-user lack of credentials alone is not network denial.
 
-### T05 — Required inter-zone workflows
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
 
-- Future scope: D/F/H/K; noncritical; R04/R08. Run one approved business/service flow for each implemented permit F01–F10, with a known listening destination, correct identity, DNS, and service.
-- Expected: each permit works only for its intended source, destination, and service. Failed dependencies are defects; they do not justify a broad allow rule.
-- Independent observation: application-level result plus matching firewall/host policy log/counter. Record each flow case separately in the denominator.
+### FWT-03 - Directory, six application cases and app revocation
 
-### T06 — Default deny and lateral restrictions
+**Scope:** FWR-03; FSC-03; FAC-03. Critical. Approvals E/H and relevant endpoint scope.
 
-- Future scope: D/H/K; critical; R04/R08. With a known working control case, try a wrong source, wrong port/resource, ordinary-user management path, and same-zone unauthorized service using lab-only targets.
-- Expected: each case is denied by the intended network/host/application control; unlisted inter-zone traffic and same-zone resource authorization remain restricted. Inspect state/cached-session behavior after a policy change.
-- Independent observation: bounded connection result plus effective policy and denial audit. Record both overlay/direct-IP and hostname cases when implemented; no broad scans.
+**Objective and method:** Inspect ad.lab.test, DNS/Group Policy and project counts: ava/eli/uma, LabReaders/LabMaintainers/LabAdmins, separate privileged admin. Verify standard WIN1 logon/name resolution and no unintended privileged group. Execute C01-C06 below with known valid app credentials. Remove eli from app LabMaintainers and corresponding AD role, invalidate any relevant caches and retry an authenticated browser plus a fresh maintenance request; record elapsed time and exact changes.
 
-### T07 — Directory DNS and domain services
+**Expected result and pass/fail criteria:** Six case outcomes match the table; revoked maintenance permission denies both contexts. App role mapping matches approved AD roles. AD group changes alone are not treated as application revocation. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
 
-- Future scope: E/F/K; noncritical; R05. Check the separate forest, DNS forward/reverse/service records, lab-only resolver settings, time source, and version-specific AD service permits. Resolve a synthetic record and exercise an approved member logon.
-- Expected: `ad.lab.test` services work without corporate trust/sync/DNS; clients cannot silently substitute a home/corporate resolver. Real protected resolvers are inspected as excluded configuration, never probed.
-- Independent observation: directory/DNS configuration versus client resolution/logon and server event. Capture actual addresses only privately.
+**Second observation:** AD/group/resultant-policy inspection and Windows logon event; app result plus Apache authorization log/effective file. Compare committed change time to actual denial with a separate clock.
 
-### T08 — GPO and identity lifecycle
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
 
-- Future scope: E/F/K; noncritical; R05/R08. Count six synthetic standard users, three role groups, two separate privileged accounts; inspect delegated memberships and resultant GPO on the member endpoint. Test a dedicated synthetic joiner/mover/leaver scenario.
-- Expected: intended baseline/rights apply, ordinary users lack privileged groups, and lifecycle changes generate audit events. No corporate object or cloud synchronization is present.
-- Independent observation: resultant policy/user session versus GPO/group configuration and directory audit. Do not perform lockout testing against recovery accounts.
+### FWT-04 - Endpoint baseline and least privilege
 
-### T09 — Endpoint baseline and least privilege
+**Scope:** FWR-04; FSC-04; FAC-04. Critical for privilege/bypass. Approval F.
 
-- Future scope: F/K; noncritical; R06. Verify supported Windows/Linux versions, patch status, single-NIC attachment, host firewall, unnecessary services, and standard-user/admin separation.
-- Expected: standard users cannot perform an approved harmless privileged action; authorized administration works; local/forwarding bypasses are absent. Linux domain join is assessed only if approved and implemented.
-- Independent observation: user-level behavior versus OS policy/service/firewall inspection. Do not claim vulnerability assessment from a version list.
+**Objective and method:** Inspect supported OS/build/update status, Windows antivirus/resultant policy, both host firewalls, standard/admin membership, single zone NIC and APP1 overlay exception. Attempt one harmless administrator-only action as standard user and one approved admin control; inspect unnecessary listeners/forwarding.
 
-### T10 — PKI issuance and trust
+**Expected result and pass/fail criteria:** Standard users cannot administer hosts; authorized admin works; baseline firewalls/antivirus and recorded updates are in place, without home/corporate profiles or bypass adapters. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
 
-- Future scope: G/K; critical; R07. Inspect root NIC absence/power state, separate issuing CA, template/enrollment permissions, CA backup custody, chain/AIA/CDP, and lab-only trust. Issue a synthetic application TLS certificate.
-- Expected: approved application accepts correct hostname/usage/chain and rejects an untrusted or wrong-name/expired test certificate. Only approved lab systems trust the root.
-- Independent observation: certificate/template review versus actual TLS relying-application behavior. No production trust-store modification.
+**Second observation:** OS policy/service/firewall views plus harmless standard/admin behavioral check. A version list is not vulnerability testing.
 
-### T11 — Certificate revocation
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
 
-- Future scope: G/K; critical; R07. Revoke a dedicated test leaf, publish a fresh CRL, document validity/cache state, and test the selected revocation-enforcing lab application. AIA/CDP URLs must be reviewed lab destinations.
-- Expected: the valid control certificate succeeds and the revoked leaf fails in the relying application within its declared refresh behavior. Do not change DC time or infer rejection from a certificate dump alone.
-- Independent observation: CA/CRL evidence plus application rejection and chain validation; report soft-fail/unsupported clients as limitations.
+### FWT-05 - HTTPS certificate trust and validity
 
-### T12 — Business-role matrix and access revocation
+**Scope:** FWR-05; FSC-05; FAC-05. Critical for false trust. Approval G.
 
-- Future scope: H/K; critical; R08. Execute all twelve cases below using synthetic contexts and application-level actions. Measure revocation from committed policy change to actual denial for both existing and new sessions.
-- Expected: every allow/deny matches the approved matrix; target revocation is at most fifteen minutes, including declared cache/session treatment. No network permit substitutes for application authorization.
-- Independent observation: effective group/application policy plus application result/audit and independently recorded elapsed time. Matrix entries are future test expectations, not results.
+**Objective and method:** Inspect one encrypted offline CA key/public root and one APP1 leaf, serverAuth/CA constraints, SAN app.ad.lab.test and current validity dates. Approved lab client trusts the public root and opens the correct HTTPS name. An otherwise functional untrusted lab client rejects the chain. Check remaining validity explicitly; do not change domain time or bypass warnings.
 
-| Case | Synthetic context | Resource/action | Expected |
+**Expected result and pass/fail criteria:** Correct chain/name/dates produce a normal HTTPS session; untrusted client rejects it. No lab trust outside approved clients. Certificate revocation services are excluded; report that limit. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** Certificate inspection/chain check plus real browser handshake/failure. File inspection alone is insufficient.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+### FWT-06 - Tailscale one-resource access and revocation
+
+**Scope:** FWR-06; FSC-06; FAC-06. Critical. Approval I plus isolated egress.
+
+**Objective and method:** Inspect separate lab tailnet/identities/MFA/recovery, APP1/approved-client enrollment, exact TCP 443 grant, additive paths/tag owners and no routes/exit node/public share/SSH/Funnel/Serve. Inspect Linux overlay rules/forwarding and DNS. Prove approved remote HTTPS works with app roles, unauthorized user fails, wrong listening port/resource fails, then remove client grant/device authorization and test existing and new requests.
+
+**Expected result and pass/fail criteria:** Only app.ad.lab.test HTTPS is reachable by the approved context; wrong identity/port and revoked client cannot access it. No production tailnet, routes, identities or credentials. Record actual revocation times/cache/state treatment. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** Vendor/effective host policy and device state plus actual permitted/denied app sessions/logs. OPNsense alone cannot establish overlay restriction. Missing safe egress means NOT TESTED, never a relaxed permit.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+### FWT-07 - Five events and one denied-access investigation
+
+**Scope:** FWR-07; FSC-07; FAC-07. Approval J.
+
+**Objective and method:** Observe five benign events across the approved two or three sources: directory success, one failure, app allow, authenticated app denial and firewall denial. On DC1 verify account-logon auditing and appropriate Kerberos success/failure records (for example 4768/4771), rather than assuming a WIN1 interactive event is logged on DC1. Record source/observer UTC/time differences, synthetic context, event type and evidence. Investigate one denial against known working control and intended rule/group.
+
+**Expected result and pass/fail criteria:** All five are attributable/searchable in the selected source views, with restricted logs/rotation. Investigation explains who requested what, why it was denied and which evidence supports that conclusion. No enterprise ingestion/retention target. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** Source record versus actual approved action and separate policy/group observation; preserve private originals. Do not count five duplicate requests as five event categories.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+### FWT-08 - One automation and safe repetition
+
+**Scope:** FWR-08; FSC-08; FAC-08. Approval L automation portion.
+
+**Objective and method:** Review one PowerShell/Python WIN1 local-capacity summary operation: target/domain allowlist, private path, read-only query and safe invalid target/path rejection. Execute approved operation, inspect output versus OS storage view, repeat and inspect configuration/side effects.
+
+**Expected result and pass/fail criteria:** Intended summary is correct; repeat changes only intended output, never configuration/accounts/network. Invalid inputs fail safely. Time/free-space fields may legitimately vary; no credential or private inventory is published. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** OS/storage inspection separate from script output and before/after configuration review; a success flag or dry run alone is insufficient.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+### FWT-09 - One encrypted backup and isolated restore
+
+**Scope:** FWR-09; FSC-09; FAC-09. Critical. Approval L recovery portion.
+
+**Objective and method:** Verify one off-compute encrypted APP1 full backup covers declared pages/config/hashed app accounts/roles/server key/leaf/public root and recovery-key access. Restore on approved disconnected temporary ID with original off and copied Tailscale inactive. Measure restore-to-usable time, compare hashes/content and perform HTTPS allowed/denied role checks through an isolated existing client.
+
+**Expected result and pass/fail criteria:** Actual scoped restore succeeds without overwriting original/sole backup or connecting duplicate identities. Record backup age/time, data/function evidence and AD/CA/host exclusions. No enterprise RPO/RTO threshold. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** Backup/restore output plus independent clock, manifest/hash comparison and actual restored application behavior. Same-disk snapshots do not qualify.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+### FWT-10 - Evidence, publication and final handover
+
+**Scope:** FWR-10; FSC-10; FAC-10. Critical for disclosure/false claims. Approvals K/L closeout.
+
+**Objective and method:** Review all mandatory subchecks, requirements/controls/evidence/defects, five future T7 files once created, final claims and single rubric. Scan/review full proposed public set/metadata/staged diff/new history; run finalized-report, link, Office preservation, PDF/rebuild, focused tests and whitespace checks. Verify actual PR/final-head CI/merge and live main equality. Record owner UAT separately.
+
+**Expected result and pass/fail criteria:** No missing mandatory evidence/unresolved safety issue. Five final files are present only after T7, sanitized artifacts/history and intentional Git publication are verified. Engineering record names actual verifier/cutoff; owner UAT stays PENDING without explicit confirmation. All mandatory subchecks must pass; any observed mismatch is FAIL and any unexecuted/unverified subcheck is NOT TESTED.
+
+**Second observation:** Manual content/metadata/history and traceability review plus live GitHub read-back. Repository-only T6 checks are not PASS for this full operational handover test.
+
+| Record | Value |
+| --- | --- |
+| Actual result | |
+| Evidence reference | |
+| Operator / date / version | |
+| Verdict | NOT TESTED |
+
+## Six application access cases
+
+These six cases are subchecks of FWT-03, not extra test IDs. Three permit and three deny outcomes use authenticated synthetic users on the same named HTTPS application. The maintenance path is a synthetic instruction page, not shell access.
+
+| Case | User / role | Resource | Expected |
 | --- | --- | --- | --- |
-| C01 | Analyst | Read synthetic report through TLS | Allow |
-| C02 | Analyst | Modify application configuration | Deny |
-| C03 | Analyst | Administer hypervisor/firewall | Deny |
-| C04 | Engineer standard identity | Read approved project resource | Allow |
-| C05 | Engineer approved admin context | Maintain named test service | Allow |
-| C06 | Engineer standard identity | Administer directory or CA | Deny |
-| C07 | Named administrator on admin path | Manage approved infrastructure | Allow |
-| C08 | Administrator identity on ordinary endpoint | Use prohibited privileged logon path | Deny |
-| C09 | Unauthorized synthetic user | Read protected report | Deny |
-| C10 | Authorized user, wrong service/port | Access unlisted application path | Deny |
-| C11 | Same-zone unauthorized endpoint/user | Reach restricted peer resource | Deny |
-| C12 | Revoked synthetic user | Continue/reopen previously allowed resource | Deny within declared target |
+| C01 | ava / LabReaders | /reports/ | Allow |
+| C02 | ava / no maintenance role | /maintenance/ | Deny |
+| C03 | eli / LabReaders | /reports/ | Allow |
+| C04 | eli / LabMaintainers | /maintenance/ | Allow |
+| C05 | uma / no reader role | /reports/ | Deny |
+| C06 | uma / no maintenance role | /maintenance/ | Deny |
 
-### T13 — Tailscale pilot
-
-- Future scope: I/K; critical; R09/R08. Verify independent lab identity/tailnet before enrollment, explicit restrictive effective policy, tag owners, MFA, selected device, DNS/routes, no subnet/exit node, and host/overlay controls.
-- Expected: one named resource works for the authorized user/device; unauthorized user/resource and revoked-user cases fail. Record existing-session timing and plan-specific posture/log visibility.
-- Independent observation: policy/admin records versus actual application session and host/vendor audit. No real protected-target probe; run only one remote pilot at a time.
-
-### T14 — Twingate pilot
-
-- Future scope: I/K; critical; R09/R08. Verify a separate lab network, connector placement, private token handling, explicit resource/port restrictions, group/MFA settings, DNS, and connector firewall limits.
-- Expected: the same scoped authorized/unauthorized/revoked cases as T13; connector cannot reach management/directory except specifically required reviewed dependencies. No inbound public service is introduced.
-- Independent observation: effective vendor resource/group policy and independent connector-zone firewall/log evidence versus application behavior. Document unsupported features rather than silently accepting broader access.
-
-### T15 — Time correlation
-
-- Future scope: J/K; noncritical; R10. Compare all six source classes to the chosen lab time authority using supported read-only observations. Verify domain hierarchy and standalone host settings.
-- Expected: every measured offset is at most two seconds; UTC timestamps correlate. Offline or vendor time visibility limitations are explicit and block the applicable claim.
-- Independent observation: source settings versus measured offsets and collector correlation. Never shift domain time merely to test certificate expiry.
-
-### T16 — Collection, detection, and retention
-
-- Future scope: J/K; noncritical; R10. Generate twenty approved benign synthetic events across all six classes. Record source/collector/search timestamps. Test one lab source interruption, log access denial, and rotation/quota behavior.
-- Expected: at least nineteen events searchable within five minutes, every class represented, source interruption detected, and retention capacity supports thirty days with margin. Distinguish calculated capacity from elapsed retention evidence.
-- Independent observation: source records versus collector searches, timestamps, ACLs, storage ledger, and health alert. Raw data stays private; no real attack traffic is required.
-
-### T17 — Publication and supply-chain review
-
-- Scope: repository-only during Task 001; critical; R11/R16. Scan candidate/staged/history content for selected secret patterns, sensitive filenames, real addresses, email/tenant details, binary artifacts, production exports, and proprietary source. Review workflow permissions/action pin and absence of lab credentials.
-- Expected: only individually reviewed public-safe artifacts; no real internal addresses or tokens in files, Git URLs, commits, or evidence. No license selected without approval. Unknown binary types fail closed.
-- Independent observation: manual full-content review and Git tree/history inspection. The built-in pattern scanner cannot prove absence of every secret or classify proprietary code; operational media/integrity reviews occur only in approved later stages.
-
-### T18 — Bounded automation
-
-- Future scope: L; noncritical; R12. Review two operations/target allowlists/credential handling, run syntax and meaningful rejection tests, apply on one approved target, inspect actual state, and repeat.
-- Expected: intended first-run behavior, zero unintended second-run changes, safe failure on invalid target/input, private sensitive output, and successful scoped rollback demonstration.
-- Independent observation: desired state inspected through another supported tool, not just the automation's own success flag. Check/diff mode is not proof of safe normal execution.
-
-### T19 — Isolated recovery
-
-- Future scope: L; critical; R13. Verify backup age/encryption/key access/off-compute location; restore representative identity/application scope into disconnected networks using supported procedures. Do not run duplicate live DC identities.
-- Expected: data age at most 24 hours and full scoped service restoration within four hours; DNS/authentication, PKI/revocation dependencies, authorization, and synthetic data consistency pass. List assets not recovered by the drill.
-- Independent observation: separate timing and service/data checks versus backup/restore output. Do not overwrite the sole valid backup or rejoin protected networks to complete recovery.
-
-### T20 — Final traceability, report, and owner UAT
-
-- Future scope: K/L; critical; R14/R15. Review every requirement against tests, actual evidence, defects, accepted exceptions, architectural differences, and final claims. Apply the 100-point rubric only to demonstrated outcomes.
-- Expected: accurate engineering verdict with no high-severity unresolved issue, honest limitations, evidence-backed resume statements, and a **separate explicit owner UAT decision**. Pending UAT is not acceptance.
-- Independent observation: traceability/evidence review and owner business workflow confirmation; document who performed each review. Task 001 establishes this plan and earns no operational result.
+The additional required revocation demonstration removes eli's maintenance role and checks existing/fresh requests. FWT-02 separately checks management/segmentation; FWT-06 separately checks remote permit/deny/revocation. None is silently included in the six-case count.
 
 ## Coverage index
 
-| Requirement | Primary tests |
-| --- | --- |
-| R01 | T01, T02 |
-| R02 | T03 |
-| R03 | T04 |
-| R04 | T01, T02, T05, T06 |
-| R05 | T07, T08 |
-| R06 | T09 |
-| R07 | T10, T11 |
-| R08 | T06, T08, T12, T13, T14 |
-| R09 | T13, T14 |
-| R10 | T15, T16 |
-| R11 | T00, T17 |
-| R12 | T18 |
-| R13 | T19 |
-| R14 | T01–T20, assessed through T20 |
-| R15 | T00, T20 |
-| R16 | T00, T17 |
+Every current requirement has a component/flow, security control, focused test, acceptance criterion and future submission owner. T7 file numbers refer to the exact filenames in the assignment/guide; they are planned, not existing artifacts.
+
+| Requirement | Architecture component / flow | Security control | Test | Acceptance | T7 file |
+| --- | --- | --- | --- | --- | --- |
+| FWR-01 | Physical boundary; FF-07/08 | FSC-01 | FWT-01 | FAC-01 | 01 |
+| FWR-02 | Host/four VMs/three zones; FF-01/02/03/05/08 | FSC-02 | FWT-02 | FAC-02 | 01 |
+| FWR-03 | DC1/WIN1/APP1 roles; FF-02/03 | FSC-03 | FWT-03 | FAC-03 | 02 |
+| FWR-04 | WIN1/APP1 host policy | FSC-04 | FWT-04 | FAC-04 | 02 |
+| FWR-05 | Offline CA/APP1 HTTPS; FF-03 | FSC-05 | FWT-05 | FAC-05 | 02 |
+| FWR-06 | APP1/client overlay; FF-06/07 | FSC-06 | FWT-06 | FAC-06 | 02 |
+| FWR-07 | Firewall/DC1/Apache local logs | FSC-07 | FWT-07 | FAC-07 | 03 |
+| FWR-08 | WIN1 local capacity operation | FSC-08 | FWT-08 | FAC-08 | 03 |
+| FWR-09 | APP1/encrypted off-compute backup | FSC-09 | FWT-09 | FAC-09 | 03 |
+| FWR-10 | Private/public boundary and handover | FSC-10 | FWT-10 | FAC-10 | 03, 04, 05 |
+
+The [guide transition tables](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#historical-requirement-and-test-transition) preserve all sixteen old requirements and all twenty-one old test IDs without renumbering their historical evidence.

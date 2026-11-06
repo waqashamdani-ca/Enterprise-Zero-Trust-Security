@@ -46,9 +46,22 @@ REQUIRED_DIRS = (
     "docs/assignments", "docs/lab-guides", "docs/architecture", "docs/security",
     "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
-STAGE_FIELDS = (
-    "Objective", "Prerequisites", "Required tools", "Procedures", "Proposed commands", "Expected outcome",
-    "Verification", "Troubleshooting", "Rollback", "Completion criteria",
+PHASE_FIELDS = (
+    "Prerequisites", "Required tools", "Implementation instructions", "Expected results",
+    "Verification steps", "Troubleshooting", "Rollback procedures",
+)
+PHASE_TITLES = (
+    "Infrastructure and Network", "Identity and Endpoint Security", "Zero Trust Access Controls",
+    "Monitoring, Automation and Recovery", "Validation and Final Submission",
+)
+RUBRIC_WEIGHTS = (
+    ("Infrastructure and Network Security", 25), ("Identity and Access Controls", 25),
+    ("Security Monitoring and Operations", 20), ("Testing and Recovery", 20),
+    ("Documentation and Final Submission", 10),
+)
+ORDERED_HARDWARE = (
+    "Xeon W-2145", "Samsung 1 TB SSD", "Sabrent PCIe adapter",
+    "Intel I350-T4 NIC", "GL.iNet Beryl AX", "TP-Link managed switch",
 )
 PDF_MANIFEST = "docs/documentation-manifest.json"
 PDF_ALIASES = {
@@ -92,10 +105,11 @@ ASSIGNMENT_HEADINGS = (
     "Success Criteria", "References",
 )
 DELIVERABLE_FILENAMES = (
-    "01-Lab-Environment.xlsx", "02-Architecture-and-Network-Design.docx",
-    "03-Identity-and-Access-Management.xlsx", "04-Zero-Trust-Implementation.docx",
-    "05-Security-Monitoring.xlsx", "06-Testing-and-Validation.xlsx",
-    "07-Troubleshooting-and-Lessons.xlsx", "08-Final-Lab-Submission.docx",
+    "01-Lab-Environment-and-Architecture.xlsx",
+    "02-Identity-and-Zero-Trust-Implementation.docx",
+    "03-Security-Monitoring-and-Testing.xlsx",
+    "04-Troubleshooting-and-Lessons.xlsx",
+    "05-Final-Project-Submission.docx",
 )
 ALLOWED_EXTENSIONS = {".md", ".py", ".yml", ".yaml"}
 ALLOWED_SPECIAL_NAMES = {".gitignore", ".gitattributes"}
@@ -339,59 +353,112 @@ def structure_issues(root: Path, paths: list[str]) -> list[str]:
 
 
 def completeness_issues(texts: dict[str, str]) -> list[str]:
+    """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
     assignment = texts.get("docs/assignments/PROJECT-ASSIGNMENT.md", "")
+    guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
+    plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = {match[2] for match in HEADING.finditer(strip_fences(assignment)[0])}
     for title in ASSIGNMENT_HEADINGS:
         if title not in titles:
             issues.append(f"assignment missing required section: {title}")
-    required_ids = {f"R{number:02d}" for number in range(1, 17)}
-    assignment_ids = re.findall(r"^\|\s*(R\d{2})\s*\|", assignment, re.M)
-    if set(assignment_ids) != required_ids or len(assignment_ids) != 16:
-        issues.append("assignment must declare R01–R16 exactly once")
+    required_ids = [f"FWR-{number:02d}" for number in range(1, 11)]
+    assignment_ids = re.findall(r"^\|\s*(FWR-\d{2})\s*\|", assignment, re.M)
+    if assignment_ids != required_ids:
+        issues.append("assignment must declare FWR-01 through FWR-10 exactly once in order")
+    for number in range(1, 11):
+        row = re.search(rf"^\|\s*FWR-{number:02d}\s*\|[^\n]+$", assignment, re.M)
+        if not row or re.findall(r"FWT-\d{2}", row[0]) != [f"FWT-{number:02d}"]:
+            issues.append(f"FWR-{number:02d}: wrong primary test mapping")
     rubric = assignment.partition("## Success Criteria")[2].split("\n## ", 1)[0]
-    scores = re.findall(r"^\|[^|]+\|\s*(\d+)\s*\|", rubric, re.M)
-    if not scores or sum(map(int, scores)) != 100:
-        issues.append("assignment rubric must total exactly 100 points")
+    weights = [(title.strip(), int(score)) for title, score in
+               re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
+    if weights != list(RUBRIC_WEIGHTS) or sum(score for _, score in weights) != 100:
+        issues.append("assignment rubric must match approved five categories/weights and total 100 points")
     deliverables = assignment.partition("## Expected Deliverables")[2].split("\n## ", 1)[0]
     names = re.findall(r"^\|\s*`([^`]+)`\s*\|", deliverables, re.M)
-    if tuple(names) != DELIVERABLE_FILENAMES or len(set(names)) != 8:
-        issues.append("assignment must declare the eight approved unique deliverable filenames in order")
+    if tuple(names) != DELIVERABLE_FILENAMES:
+        issues.append("assignment must declare the five approved unique T7 deliverable filenames in order")
     mapped = set()
     for row in deliverables.splitlines():
         match = re.match(r"\|\s*`([^`]+)`\s*\|\s*([^|]+)\|(.+)\|$", row)
         if not match:
             continue
-        extension = Path(match[1]).suffix
-        if {".xlsx": "Excel (.xlsx)", ".docx": "Word (.docx)"}.get(extension) != match[2].strip():
+        if {".xlsx": "Excel (.xlsx)", ".docx": "Word (.docx)"}.get(Path(match[1]).suffix) != match[2].strip():
             issues.append(f"{match[1]}: deliverable extension/Office format mismatch")
-        mapped.update(re.findall(r"\bR\d{2}\b", match[3]))
-    if mapped != required_ids:
-        issues.append("assignment deliverables must cover all R01-R16 requirements")
+        mapped.update(re.findall(r"\bFWR-\d{2}\b", match[3]))
+    if mapped != set(required_ids):
+        issues.append("assignment deliverables must cover all FWR-01 through FWR-10 requirements")
     if "`docs/deliverables/`" not in deliverables:
         issues.append("assignment must state the docs/deliverables/ submission location")
-    guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
-    sections = re.split(r"^## Stage ([A-L])[^\n]*\n", guide, flags=re.M)
-    stage_parts = iter(sections[1:])
-    stages = list(zip(stage_parts, stage_parts))
-    if [letter for letter, _ in stages] != list("ABCDEFGHIJKL"):
-        issues.append("guide must contain stages A–L exactly once in order")
-    for letter, section in stages:
-        for field in STAGE_FIELDS:
+    for name, content in (("assignment", deliverables), ("guide", guide)):
+        if "approved T7 target, not yet created" not in content:
+            issues.append(f"{name}: future T7 status must be explicit")
+    guide_files = guide.partition("## Five future T7 deliverables")[2].split("\n## ", 1)[0]
+    if tuple(re.findall(r"^\|\s*`([^`]+)`\s*\|", guide_files, re.M)) != DELIVERABLE_FILENAMES:
+        issues.append("guide must match the five future T7 filenames")
+    phases = re.split(r"^## Phase (\d): ([^\n]+)\n", guide, flags=re.M)
+    phase_rows = [tuple(phases[i:i + 3]) for i in range(1, len(phases), 3)]
+    if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
+        issues.append("guide must contain the five approved phases exactly once in order")
+    for number, _, section in phase_rows:
+        for field in PHASE_FIELDS:
             if not re.search(rf"^### {re.escape(field)}\s*$", section, re.M):
-                issues.append(f"stage {letter} missing field: {field}")
-    plan = texts.get("docs/testing/TEST-PLAN.md", "")
-    test_ids = re.findall(r"^### (T\d{2})\b", plan, re.M)
-    if test_ids != [f"T{number:02d}" for number in range(21)]:
-        issues.append("test plan must declare T00–T20 exactly once in order")
+                issues.append(f"phase {number} missing field: {field}")
+    transition = guide.partition("## Historical requirement and test transition")[2].split("\n## ", 1)[0]
+    if set(re.findall(r"\bR\d{2}\b", transition)) != {f"R{i:02d}" for i in range(1, 17)}:
+        issues.append("guide historical requirement transition must preserve all R01-R16 IDs")
+    if set(re.findall(r"\bT\d{2}\b", transition)) != {f"T{i:02d}" for i in range(21)}:
+        issues.append("guide historical test transition must preserve all T00-T20 IDs")
+    for label, content in (("assignment", assignment), ("guide", guide)):
+        for status in ("Existing", "Ordered", "Delivered", "Installed", "Validated"):
+            if not re.search(rf"\b{status}\b", content, re.I):
+                issues.append(f"{label}: missing hardware status {status}")
+        for part in ORDERED_HARDWARE:
+            if part not in content:
+                issues.append(f"{label}: missing confirmed ordered hardware item")
+    test_ids = re.findall(r"^### (FWT-\d{2})\b", plan, re.M)
+    if test_ids != [f"FWT-{number:02d}" for number in range(1, 11)]:
+        issues.append("test plan must declare FWT-01 through FWT-10 exactly once in order")
+    chunks = re.split(r"^### (FWT-\d{2})[^\n]*\n", plan, flags=re.M)
+    pairs = iter(chunks[1:])
+    for tid, section in zip(pairs, pairs):
+        for field in ("Objective and method", "Expected result and pass/fail criteria", "Second observation"):
+            if f"**{field}:**" not in section:
+                issues.append(f"{tid}: missing test field {field}")
+        for field in ("Actual result", "Evidence reference"):
+            value = re.search(rf"^\|\s*{field}\s*\|([^|]*)\|", section, re.M)
+            if not value or value[1].strip():
+                issues.append(f"{tid}: planned {field.lower()} must be present and empty")
+        if not re.search(r"^\|\s*Verdict\s*\|\s*NOT TESTED\s*\|", section, re.M):
+            issues.append(f"{tid}: planned verdict must be NOT TESTED")
+    app_cases = plan.partition("## Six application access cases")[2].split("\n## ", 1)[0]
+    outcomes = re.findall(r"^\|\s*(C\d{2})\s*\|[^\n]+\|\s*(Allow|Deny)\s*\|", app_cases, re.M)
+    if outcomes != [(f"C{i:02d}", result) for i, result in enumerate(("Allow", "Deny", "Allow", "Allow", "Deny", "Deny"), 1)]:
+        issues.append("test plan must retain six approved meaningful application access cases")
+    controls = texts.get("docs/security/SECURITY-REQUIREMENTS.md", "")
+    acceptance = texts.get("docs/testing/ACCEPTANCE-CRITERIA.md", "")
+    if re.findall(r"^\|\s*(FSC-\d{2})\s*\|", controls, re.M) != [f"FSC-{i:02d}" for i in range(1, 11)]:
+        issues.append("security must declare ten focused controls")
+    if re.findall(r"^\|\s*(FAC-\d{2})\s*\|", acceptance, re.M) != [f"FAC-{i:02d}" for i in range(1, 11)]:
+        issues.append("acceptance must declare ten focused criteria")
+    for number in range(1, 11):
+        row = re.search(rf"^\|\s*FSC-{number:02d}\s*\|[^\n]+$", controls, re.M)
+        if (not row or re.findall(r"FWR-\d{2}", row[0]) != [f"FWR-{number:02d}"]
+                or re.findall(r"FWT-\d{2}", row[0]) != [f"FWT-{number:02d}"]):
+            issues.append(f"FSC-{number:02d}: invalid security requirement/test mapping")
     coverage = plan.partition("## Coverage index")[2]
-    covered = re.findall(r"^\|\s*(R\d{2})\s*\|\s*([^|]+)\|", coverage, re.M)
-    if {rid for rid, _ in covered} != required_ids or len(covered) != 16:
-        issues.append("test coverage index must map every requirement exactly once")
-    for rid, tests in covered:
-        referenced = re.findall(r"\bT\d{2}\b", tests)
-        if not referenced or not set(referenced).issubset(set(test_ids)):
-            issues.append(f"{rid}: invalid or missing primary test mapping")
+    rows = [line.strip().strip("|").split("|") for line in coverage.splitlines() if re.match(r"^\|\s*FWR-", line)]
+    if [row[0].strip() for row in rows] != required_ids:
+        issues.append("test coverage index must map every focused requirement exactly once")
+    for row in rows:
+        rid = row[0].strip()
+        number = rid[-2:]
+        expected = (f"FSC-{number}", f"FWT-{number}", f"FAC-{number}")
+        if len(row) != 6 or tuple(cell.strip() for cell in row[2:5]) != expected:
+            issues.append(f"{rid}: invalid architecture/control/test/acceptance mapping")
+        elif not row[1].strip() or not re.fullmatch(r"0[1-5](?:, 0[1-5])*", row[5].strip()):
+            issues.append(f"{rid}: missing architecture or future deliverable mapping")
     workflow = texts.get(".github/workflows/documentation.yml", "")
     if not re.search(r"permissions:\s*\n\s+contents: read\s*\n", workflow):
         issues.append("workflow must declare contents: read")
@@ -534,7 +601,7 @@ def main() -> int:
         return 1
     markdown_count = sum(path.endswith(".md") for path in paths)
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
-    print("PASS: structure, local links/anchors, stage fields, R01–R16/T00–T20 coverage, rubric, workflow, focused publication scan.")
+    print("PASS: structure, local links/anchors, five phase fields, FWR/FWT/FSC/FAC coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
     print("PASS: docs/reports/ migration, eleven historical file hashes, Markdown-only reporting, and source/hash-matched document PDFs.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")

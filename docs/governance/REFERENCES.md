@@ -1,91 +1,77 @@
 # Authoritative technical references
 
-Research baseline: **2026-11-05 (America/Toronto)**. These are primary-source references for the proposed design, not a claim that referenced software is installed. Recheck supported versions, advisories, license/plan terms, commands, and hardware compatibility before each approved stage. Source fetch availability and version-specific ambiguity must be reported rather than guessed.
+Research update: **2026-11-06, America/Toronto, T6**. Primary guidance supports the focused four-week specification; it does not establish installed versions or executed commands. Recheck compatibility, advisories, lawful terms and installed help at stage entry. No software/provider subscription is purchased by T6.
 
 ## Standards and namespaces
 
-- [NIST SP 800-207: Zero Trust Architecture](https://csrc.nist.gov/pubs/sp/800/207/final) — resource-focused principles and logical architecture.
-- [NIST SP 800-53 Revision 5](https://csrc.nist.gov/pubs/sp/800/53/r5/upd1/final) — security/privacy control catalog; use the current release material linked there.
-- [NIST SP 800-53 Release 5.2.0 notice](https://csrc.nist.gov/News/2025/nist-releases-revision-to-sp-800-53-controls) — release baseline context, not a new revision number.
-- [CIS Controls](https://www.cisecurity.org/controls) and [CIS Controls v8.1](https://www.cisecurity.org/controls/v8-1) — prioritized control areas; project mappings are tailored educational interpretations.
-- [RFC 2606: Reserved Top Level DNS Names](https://www.rfc-editor.org/rfc/rfc2606) — `.test` for testing; no corporate domain required.
-- [RFC 6761: Special-Use Domain Names](https://www.rfc-editor.org/rfc/rfc6761) — special-use name behavior and considerations.
+- [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final): resource-focused principles; no compliance certification.
+- [RFC 2606](https://www.rfc-editor.org/rfc/rfc2606): .test is reserved for testing.
+- Earlier detailed NIST/CIS mappings remain historical context in Git; they are not additional evidence requirements.
 
 ## Proxmox
 
-- [Official documentation downloads](https://www.proxmox.com/en/downloads/proxmox-virtual-environment/documentation) — choose the version-matched administration guide at implementation time.
-- [System requirements](https://www.proxmox.com/en/products/proxmox-virtual-environment/requirements) — virtualization and host requirements; supplied RAM does not establish compatibility.
-- [Network configuration](https://pve.proxmox.com/wiki/Network_Configuration) — bridge/interface concepts; actual interface names must be inspected.
-- [Installation and upgrade](https://pve.proxmox.com/wiki/Proxmox_VE_Installation_and_Upgrade) — supported installation paths and release-specific cautions.
-- [Administration guide PDF](https://pve.proxmox.com/pve-docs/pve-admin-guide.pdf) — management, firewall, backup, and recovery reference. Some Proxmox documentation endpoints restrict automated access; use the official download index if a direct fetch is refused.
+- [Official documentation](https://www.proxmox.com/en/downloads/proxmox-virtual-environment/documentation) and [administration guide](https://pve.proxmox.com/pve-docs/pve-admin-guide.pdf): select the installed release.
+- [Official network source](https://github.com/proxmox/pve-docs/blob/master/pve-network.adoc) and [installation source](https://github.com/proxmox/pve-docs/blob/master/pve-installation.adoc): bridges and installer/disk cautions.
+- Direct admin-guide HTML returned 403 during T6 research; official source/download references were used. No installed-backend or disk command was verified on a host.
 
 ## OPNsense
 
-- [Virtual and cloud installation](https://docs.opnsense.org/manual/virtuals.html) — VM deployment entry point.
-- [Firewall rules and processing](https://docs.opnsense.org/manual/firewall.html) — stateful policy, rule ordering, and default behavior.
-- [Interface configuration](https://docs.opnsense.org/manual/interfaces.html) — interface assignment and private/bogon filtering implications.
-- [Official documentation](https://docs.opnsense.org/) — current version-specific backup, logging, and hardening procedures.
+- [Virtual installation](https://docs.opnsense.org/manual/virtuals.html): VM deployment.
+- [Firewall processing](https://docs.opnsense.org/manual/firewall.html): incoming/stateful policy and automatic/floating/group/interface order; quick and non-quick behavior differ.
+- [Firewall logging](https://docs.opnsense.org/manual/logging_firewall.html): log/counter interpretation and existing-state limits.
+- [Interfaces](https://docs.opnsense.org/manual/interfaces.html): exact NIC assignment, private/bogon settings.
 
 ## Windows evaluation and hardware
 
-- [Windows Server 2025 Evaluation Center](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2025) — evaluation media, 180-day expiry, and stated initial activation requirement. Recheck terms and deadlines at use; no license entitlement or purchase is implied.
-- [Windows Server hardware requirements](https://learn.microsoft.com/en-us/windows-server/get-started/hardware-requirements) — CPU, memory, and storage prerequisites; do not treat minimums as measured workload sizing.
+- [Windows Server Evaluation](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2025) and [hardware requirements](https://learn.microsoft.com/en-us/windows-server/get-started/hardware-requirements): check lawful terms, activation/expiry and selected version requirements.
+- [Dell Precision 5820 manuals](https://www.dell.com/support/product-details/en-us/product/precision-5820-workstation/docs): match exact chassis, firmware, cooler, processor, storage/adapter and slot before approval. T6 does not certify the ordered parts' fit.
+- The latest owner procurement plan/receipt records remain private. Public documents record order status and expected dates only, not serials, order IDs or real inventory addresses.
 
 ## Readiness and network commands
 
-- [Get-CimInstance](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance) — local read-only CIM inventory syntax used in Stage A.
-- [Get-NetIPConfiguration](https://learn.microsoft.com/en-us/powershell/module/nettcpip/get-netipconfiguration) — local interface/DNS configuration inspection; output is private.
+- [Get-CimInstance](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance) and [Get-NetIPConfiguration](https://learn.microsoft.com/en-us/powershell/module/nettcpip/get-netipconfiguration): proposed read-only local readiness examples; outputs stay private.
 
 ## Active Directory, DNS, and policy
 
-- [Install Active Directory Domain Services](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/install-active-directory-domain-services--level-100-) — supported AD DS role installation and deployment workflow.
-- [Install-WindowsFeature](https://learn.microsoft.com/en-us/powershell/module/servermanager/install-windowsfeature) — verified role-installation syntax; changes the approved target.
-- [Install-ADDSForest](https://learn.microsoft.com/en-us/powershell/module/addsdeployment/install-addsforest) — verified new-forest/DNS syntax, secure DSRM prompt, reboot/functional-level considerations.
-- [AD domain firewall requirements](https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/config-firewall-for-ad-domains-and-trusts) — service dependencies and dynamic RPC scope; does not authorize production trust.
-- [Core network components](https://learn.microsoft.com/en-us/windows-server/networking/core-network-guide/core-network-guide) — lab DNS/directory network deployment context.
+- [AD DS deployment](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/install-active-directory-domain-services--level-100-), [Install-WindowsFeature](https://learn.microsoft.com/en-us/powershell/module/servermanager/install-windowsfeature) and [Install-ADDSForest](https://learn.microsoft.com/en-us/powershell/module/addsdeployment/install-addsforest): lab-only installation, secure prompt and reboot considerations.
+- [AD firewall requirements](https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/config-firewall-for-ad-domains-and-trusts): scope required services to approved lab systems. Same-zone host rules still matter.
 
 ## Endpoint and certificate verification
 
-- [Test-ComputerSecureChannel](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/test-computersecurechannel) — member-machine secure-channel check; not a DC health test.
-- [AD CS overview](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/active-directory-certificate-services-overview) — PKI service components.
-- [Certification Authority role](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/certification-authority-role) — standalone/offline root and subordinate CA concepts.
-- [Inspect certificates and stores](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/inspect-certificates-manage-certificate-stores) — verified certificate inspection and `certutil -verify -urlfetch` syntax; fetch URLs must be reviewed.
-- [Certificate path validation and revocation policy](https://learn.microsoft.com/en-us/windows-server/identity/ad-cs/configure-certificate-path-validation-revocation-policy) — relying-party trust/revocation configuration; validation tools do not establish application behavior by themselves.
+- [Test-ComputerSecureChannel](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/test-computersecurechannel?view=powershell-5.1): supported member-machine check, not DC health. Initial direct fetch failed; Microsoft indexed documentation confirmed syntax. Verify locally installed help before use.
+- [OpenSSL req](https://docs.openssl.org/3.5/man1/openssl-req/), [x509](https://docs.openssl.org/3.5/man1/openssl-x509/) and [verify](https://docs.openssl.org/3.5/man1/openssl-verify/): one CA, one leaf, extensions, chain/name/date checks. Commands target OpenSSL 3.x and must match installed help.
+- [Apache TLS module](https://httpd.apache.org/docs/2.4/mod/mod_ssl.html): certificate/key and protocol directives. No AD CS/separate issuer or certificate-revocation infrastructure is required.
+
+## Application authentication and authorization
+
+- [Apache authentication guide](https://httpd.apache.org/docs/2.4/howto/auth.html), [file groups](https://httpd.apache.org/docs/2.4/mod/mod_authz_groupfile.html), [authorization merge behavior](https://httpd.apache.org/docs/2.4/mod/mod_authz_core.html) and [htpasswd](https://httpd.apache.org/docs/2.4/programs/htpasswd.html): local hashed accounts, group-protected directories, AuthMerging and interactive passwords.
+- [Apache control wrapper](https://httpd.apache.org/docs/2.4/programs/apachectl.html): configtest; package activation/path wrappers differ.
+- File-based roles are manually mapped to AD groups; these references do not establish AD SSO or synchronization.
 
 ## Tailscale
 
-- [Access control](https://tailscale.com/docs/features/access-control) — policy model and enforcement.
-- [Default ACL and policy examples](https://tailscale.com/docs/reference/examples/acls) — initial allow-all warning; do not infer deny-all from missing policy.
-- [Grant examples](https://tailscale.com/docs/reference/examples/grants) — explicit resource-scoped grants and additive access.
-- [Device visibility](https://tailscale.com/docs/concepts/device-visibility) — identity/environment membership and default visibility concerns.
-- [Exit nodes](https://tailscale.com/docs/features/exit-nodes) — capability deliberately excluded from this baseline.
-- [Tailscale CLI](https://tailscale.com/docs/reference/tailscale-cli) — verify `tailscale status` against the installed version; output contains private identifiers.
+- [Access control](https://tailscale.com/docs/features/access-control), [grant syntax](https://tailscale.com/docs/reference/syntax/grants) and [grant examples](https://tailscale.com/docs/reference/examples/grants): explicit additive policy, exact destination and TCP 443.
+- [ACL examples](https://tailscale.com/docs/reference/examples/acls): review permissive initial/default policy; omitted content is not proof of deny-all.
+- [CLI reference](https://tailscale.com/docs/reference/tailscale-cli): proposed status inspection, private output.
+- [Device removal](https://tailscale.com/docs/features/access-control/device-management/how-to/remove): verify current revoke/remove behavior and actual existing/new session denial.
+- Recheck current plan/MFA/logging/identity terms at stage entry. No production tailnet, subnet routing, exit node, public sharing or remote management service is included.
 
 ## Twingate
 
-- [Understanding connectors](https://www.twingate.com/docs/understanding-connectors) — outbound connector/resource model.
-- [Resources](https://www.twingate.com/docs/resources) — exact resource addressing, DNS perspective, and explicit port restrictions; defaults require review.
-- [Connectors](https://www.twingate.com/docs/connectors) — supported deployment methods; no token-bearing deployment command is copied into Git.
-- [How firewalls work with Twingate](https://www.twingate.com/docs/firewalls-and-twingate) — resource scope, network controls, and audit considerations.
-- [Connector connectivity troubleshooting](https://www.twingate.com/docs/connector-failures) — current outbound Controller/Relay dependencies; verify current protocols/ports rather than assume HTTPS alone is sufficient.
+Historical navigation anchor only. Twingate is excluded from the T6 baseline; no second provider, connector or comparison is required. Earlier references remain in Git history.
 
 ## Logging and automation
 
-- [Windows Event Forwarding for detection](https://learn.microsoft.com/en-us/windows/security/operating-system-security/device-management/use-windows-event-forwarding-to-assist-in-intrusion-detection) — collection design and source coverage.
-- [Source-initiated event subscriptions](https://learn.microsoft.com/en-us/windows/win32/wec/setting-up-a-source-initiated-subscription) — source permissions and subscription setup.
-- [systemd journalctl](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html) — verified `--since` and `--no-pager` inspection options; use the installed distribution's version.
-- [Ansible check and diff modes](https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html) — simulation/module limitations and sensitive diff output.
-- [Ansible playbook CLI](https://docs.ansible.com/projects/ansible/latest/cli/ansible-playbook.html) — syntax-check/check/diff/limit options; target inventory remains private.
+- [Kerberos authentication auditing](https://learn.microsoft.com/windows/security/threat-protection/auditing/audit-kerberos-authentication-service): confirm which host emits the actual directory authentication events.
+- [systemd journalctl](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html): read-only --since/--no-pager examples. Apache request logs are separate.
+- Existing PowerShell/Python supports one local capacity-summary operation. T6 adds no executable lab automation, Ansible requirement, collector VM or SIEM.
 
 ## GitHub and repository workflow
 
-- [GitHub Actions security hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) — least privilege and full-commit pinning.
-- [Official checkout action](https://github.com/actions/checkout) — bootstrap pins a full commit resolved from the official `v6` ref on the research date; stored checkout credentials are disabled.
-- [GitHub CLI repository creation](https://cli.github.com/manual/gh_repo_create) — supported secure repository creation/public visibility workflow.
-- [GitHub CLI authentication status](https://cli.github.com/manual/gh_auth_status) — inspect existing supported authentication without exposing a token.
-
-The offline architecture makes no claim about Google Wifi VLAN capabilities and requires no home-network change. Hardware/network capability verification belongs to the separately approved readiness stage.
+- [Actions security hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions) and [official checkout](https://github.com/actions/checkout): least privilege, full commit pin, no retained checkout credentials.
+- [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_status): existing secure authentication; never expose tokens.
+- Current [build instructions](DOCUMENTATION-BUILD.md) define offline document/PDF checks.
 
 ## Command verification limits
 
-Proposed Stage A/E/F/G/I/J/L examples use syntax confirmed in the corresponding primary documentation. They were not run on lab assets. Installation details, firewall backend/rules, Linux distribution commands, recovery commands, software versions, provider plan features, and actual target values intentionally require a version-specific reviewed change record before execution. Python/Git repository checks are verified locally during Task 001.
+T6 reviewed primary vendor descriptions/syntax for proposed inventory, AD deployment, member checks, OpenSSL, Apache, Tailscale and journal examples. It executed none on lab assets. Installed versions/backends, actual paths, compatibility, activation, provider behavior, recovery targets and Linux package commands require a future approved change record. Documentation CI fetches no external references and reaches no lab systems.

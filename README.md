@@ -1,101 +1,56 @@
 # Enterprise Zero Trust Security Architecture
 
-HL-CYB-001 · Advanced cybersecurity engineering lab
+HL-CYB-001 | Four-week focused cybersecurity lab
 
-## Project Overview
+A synthetic analyst needs report access, an engineer needs maintenance instructions and an unassigned user must be denied. This project designs a small isolated lab to demonstrate those decisions, remote revocation and recovery with evidence a reviewer can follow.
 
-This project designs an isolated enterprise lab where people receive access to the systems needed for their role. It brings identity, network restrictions, certificates, logging, and recovery into one testable engineering assignment.
+**Current state:** Aligned planning documents and repository checks exist. Lab implementation is **PLANNED**; operational controls are **NOT TESTED**; owner user acceptance testing (UAT) is **PENDING**. No production-impact or compliance claim is made.
 
-The scenario uses synthetic Purple Eye users and data, with no production or home-network connection.
+## Focused architecture
 
-## Business Problem
+One Proxmox host runs four VMs: virtual OPNsense, one Windows Server with Active Directory/DNS/Group Policy, one Windows endpoint and one Linux HTTPS application server. Management, Corporate and Restricted are the three zones. Three synthetic standard users, three role groups and a separate privileged administrator support six application access cases and an access-revocation demonstration.
 
-An employee may need to read a report without changing the application or administering its server. Remote access must let that employee reach the approved resource without opening the whole network.
+One simple lab certificate authority signs the application certificate. Tailscale alone exposes one named HTTPS resource in a separate lab tailnet. Two or three log sources, five representative events, one investigation, one repeatable PowerShell/Python operation and one measured application restore complete the lab.
 
-The lab will demonstrate allowed and denied actions, access revocation, and the evidence behind each result. It makes no production-impact or compliance-certification claim.
+The [architecture](docs/architecture/ARCHITECTURE.md) explains flows, capacity and limits, including manual AD-to-application role mapping. [The assignment](docs/assignments/PROJECT-ASSIGNMENT.md) owns ten FWR requirements, the four-week schedule and the single 100-point rubric. [The guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md) groups practical steps into five phases while retaining separate stage A-L approvals.
 
-## Project Objectives
+## Hardware and safety
 
-- Design separate security zones and a protected administrative path using the available hardware.
-- Give synthetic users and devices only the resource access required for their role.
-- Test certificate trust, remote access, logging, automation, and recovery in individually approved stages.
-- Publish reviewed engineering evidence and accurate task reports.
+The owner reports existing hardware and six ordered components. Ordered does not mean delivered, installed or validated. [Hardware status and preparation](docs/architecture/ARCHITECTURE.md#hardware-status-and-preparation) records the distinction. Receipt, inspection, compatibility, current data/service inventory, backups/recovery and exact destructive-change approval precede installation. Additional hardware does not expand scope.
 
-## Architecture Overview
-
-Proxmox VE will run the virtual machines; OPNsense will control traffic between Management, Identity, Endpoints, Services, Monitoring, and Remote access zones. Active Directory manages lab identities; host/application permissions control resource access. An offline certificate authority protects the root of certificate trust.
-
-Internet access needs a separately approved isolation design. See the [architecture](docs/architecture/ARCHITECTURE.md) for the diagram, capacity, and allowed flows, and the [glossary](docs/guides/GLOSSARY.md) for terms.
-
-## Technologies Used
-
-The repository currently uses **Git, GitHub, Python, and GitHub Actions** for version control and documentation checks.
-
-Planned lab technologies are Proxmox VE, OPNsense, Windows Server Evaluation, Active Directory, DNS, Group Policy, Linux, public key infrastructure (PKI), Tailscale, Twingate, Ansible, and PowerShell. Their presence in the design does not mean they are installed or configured.
-
-## Key Security Capabilities
-
-Planned controls include access denied unless permitted, separate ordinary/admin identities, resource-scoped remote access, certificate issuance/revocation, central audit records, and encrypted backups with a timed restore. Each has a requirement and future test.
-
-Production Microsoft 365 identities, PE-DAP, customer data, the corporate website, and production hosting, including AWS Lightsail, are excluded. Actual addresses, credentials, tenant details, raw logs, and backups stay outside public Git.
-
-## Implementation Status
-
-Repository setup, planning documents, task reporting, and documentation validation have been implemented and checked. **Lab implementation is PLANNED; operational controls are NOT TESTED.** Owner user acceptance testing (UAT) remains pending.
-
-[T1](docs/reports/T1-Report.md) preserves the bootstrap results. [Its reporting addendum](docs/reports/T1-Addendum-001-Reporting-Governance.md) records the reporting migration. [T2](docs/reports/T2-Report.md) records the documentation review. No implementation stage starts without separate owner approval.
-
-The eight blank Word/Excel deliverable templates are available below. [T5](docs/reports/T5-Report.md) records their creation and validation; the templates contain approved definitions and answer fields, with no actual lab results.
+Start offline. No protected home/production trust, identities, credentials, routes, Microsoft 365, PE-DAP, customer data, corporate website testing or hosting integration is permitted. Independently isolated egress needs separate approval. Protected-network checks use configuration/passive review and lab-owned mocks, never probes of real protected systems.
 
 ## Editable Lab Deliverable Templates
 
-Use private working copies to record approved implementation. Publish only reviewed public-safe summaries. Each file uses Segoe UI and remains editable in Microsoft Office; no PDF edition is provided.
+The [five planned submission filenames](docs/assignments/PROJECT-ASSIGNMENT.md#expected-deliverables) are the approved **T7 target, not yet created**. T7 requires separate approval.
 
-| Template | Record here |
-| --- | --- |
-| [01 Lab environment](docs/deliverables/01-Lab-Environment.xlsx) | Inventory, software versions, setup and planned/actual capacity |
-| [02 Architecture and network design](docs/deliverables/02-Architecture-and-Network-Design.docx) | Objectives, zones, topology, flows and design decisions |
-| [03 Identity and access management](docs/deliverables/03-Identity-and-Access-Management.xlsx) | Synthetic identities, roles, endpoint baselines and access policies |
-| [04 Zero Trust implementation](docs/deliverables/04-Zero-Trust-Implementation.docx) | Stage configuration, certificate lifecycle, remote pilots, automation and recovery procedures |
-| [05 Security monitoring](docs/deliverables/05-Security-Monitoring.xlsx) | Six source classes, twenty event measurements, clocks, retention and investigations |
-| [06 Testing and validation](docs/deliverables/06-Testing-and-Validation.xlsx) | R01-R16, T00-T20, actual case results, evidence and separate owner UAT |
-| [07 Troubleshooting and lessons](docs/deliverables/07-Troubleshooting-and-Lessons.xlsx) | Issues, diagnosis, resolution, retests and lessons |
-| [08 Final lab submission](docs/deliverables/08-Final-Lab-Submission.docx) | Referenced assessment, limitations, rubric and publication record |
+The [eight existing T5 Word/Excel shells](docs/README.md#editable-lab-deliverable-templates) remain unchanged as legacy artifacts of the earlier baseline. Their old counts, IDs and rubric are historical and must not drive current implementation. Keep working records private; publish only reviewed sanitized summaries.
 
-## Testing and Validation
+## Testing and evidence
 
-Use Python 3.11 or later with the pinned [documentation dependencies](docs/governance/DOCUMENTATION-BUILD.md). With that documentation environment active:
+[Ten focused tests](docs/testing/TEST-PLAN.md) connect requirements, architecture, security controls, acceptance and future deliverables. All operational actual/evidence fields are empty. [Acceptance](docs/testing/ACCEPTANCE-CRITERIA.md) requires completed mandatory subchecks and separate owner UAT; critical failures block acceptance regardless of score.
+
+With Python 3.11+ and the existing pinned [documentation environment](docs/governance/DOCUMENTATION-BUILD.md):
 
 ```powershell
-python scripts/validate_docs.py
+python scripts/validate_docs.py --require-finalized
 python scripts/validate_office_templates.py
+python scripts/build_docs.py --check --rebuild-check
 python -m unittest discover -s tests -v
 git diff --check
 ```
 
-The checks cover documentation, local links, traceability, report history, and selected publication risks; they do not test the lab. Before completion, also run `python scripts/validate_docs.py --require-finalized`. Review public content manually: the scanner is not exhaustive, and CI does not fetch external references.
+These checks validate documentation, preservation and bounded publication risks; they do not test lab security. CI remains read-only, commit-pinned, without retained checkout credentials or lab access. Manual content/metadata/history review and rendered PDF inspection remain necessary.
 
-CI uses read-only permissions, a commit-pinned checkout, no retained credentials, and no lab access. The [test plan](docs/testing/TEST-PLAN.md) defines future functional, denied-access, security, and recovery checks.
+## Project documentation
 
-## Project Documentation
+The [documentation library](docs/README.md) links Markdown sources and generated PDFs. Markdown is authoritative; task reports/addenda are Markdown only and frozen when finalized. Existing report PDFs remain byte-frozen archives.
 
-Use the [documentation library](docs/README.md) for source/PDF pairs, including the [assignment PDF](docs/assignments/PROJECT-ASSIGNMENT.pdf), [lab guide PDF](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.pdf), and [architecture PDF](docs/architecture/ARCHITECTURE.pdf). Markdown remains editable; PDFs are generated with the [documented Windows build](docs/governance/DOCUMENTATION-BUILD.md).
+- [Security controls](docs/security/SECURITY-REQUIREMENTS.md), [decisions](docs/governance/DECISIONS.md) and [risks](docs/governance/RISKS.md) explain safeguards and unresolved gates.
+- [T6 report](docs/reports/T6-Report.md) records specification alignment; [T5](docs/reports/T5-Report.md) preserves original template validation.
+- [All task reports](docs/reports/INDEX.md) preserve engineering history; [project final report](docs/final-report/FINAL-REPORT.md) remains a template.
+- [Glossary](docs/guides/GLOSSARY.md) and [official references](docs/governance/REFERENCES.md) explain terms and proposed commands.
 
-- [Assignment](docs/assignments/PROJECT-ASSIGNMENT.md): business case, requirements, deliverables, and assessment rubric.
-- [Implementation guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md): stages A–L, checks, rollback, and approval gates.
-- [Architecture](docs/architecture/ARCHITECTURE.md) and [security requirements](docs/security/SECURITY-REQUIREMENTS.md): boundaries, access rules, threats, and standards mappings.
-- [Acceptance criteria](docs/testing/ACCEPTANCE-CRITERIA.md), [decisions](docs/governance/DECISIONS.md), and [risks](docs/governance/RISKS.md): evaluation and unresolved choices.
-- [Task reports](docs/reports/INDEX.md) and [bootstrap evidence](evidence/BOOTSTRAP-VALIDATION.md): work performed and evidence available.
-- [Project final report template](docs/final-report/FINAL-REPORT.md), [glossary](docs/guides/GLOSSARY.md), and [references](docs/governance/REFERENCES.md): project assessment, terminology, and authoritative sources.
+Use focused task branches, reviewed public-safe commits/PRs, exact-head CI and intentional main synchronization under [AGENTS.md](AGENTS.md). No background upload. Licensing and repository-protection settings remain owner decisions.
 
-## Reporting and GitHub Workflow
-
-Every task needs a sequential, finalized Markdown-only report (`docs/reports/Ti-Report.md`) before engineering completion. Reports and addenda do not receive PDFs; the entire reporting directory is excluded from PDF generation. Existing report PDFs are archived artifacts. Finalized Markdown reports remain immutable; corrections use an addendum or later task report. Owner UAT remains separate.
-
-Use a task branch, focused commits, CI, and a reviewed pull request before merging; then fast-forward local `main`. Synchronization is intentional Git activity. [AGENTS.md](AGENTS.md) defines the workflow, approvals, writing standards, and prohibition on background upload. Protection/reviewer settings remain owner decisions.
-
-## Author and Repository Information
-
-Maintained under [waqashamdani-ca](https://github.com/waqashamdani-ca) in the public [enterprise-zero-trust-security repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), with `main` as the default branch.
-
-No software license has been selected. The recommended next task is T6: a read-only Stage A hardware and isolation readiness assessment, after explicit asset/scope/validation/recovery approval. No installation or later stage is authorized by the templates.
+**Next task:** T7 Office-template migration only, after explicit scope/preservation/validation approval. T6 authorizes no installation, VM/network/directory change, remote enrollment or security-test execution.

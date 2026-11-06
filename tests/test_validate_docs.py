@@ -245,21 +245,60 @@ class AssignmentContractTests(unittest.TestCase):
         project = SCRIPT.parents[1]
         self.texts = {name: (project / name).read_text(encoding="utf-8") for name in (
             "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
-            "docs/testing/TEST-PLAN.md", ".github/workflows/documentation.yml")}
+            "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
+            "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml")}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
+        self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
+        self.plan = "docs/testing/TEST-PLAN.md"
 
-    def test_approved_assignment_is_complete_and_maps_each_requirement_to_submission(self):
+    def assert_rejected(self, name, before, after, expected):
+        texts = dict(self.texts)
+        self.assertIn(before, texts[name])
+        texts[name] = texts[name].replace(before, after, 1)
+        self.assertTrue(any(expected in item for item in validator.completeness_issues(texts)))
+
+    def test_focused_specification_is_complete(self):
         self.assertEqual(validator.completeness_issues(self.texts), [])
 
     def test_duplicate_filename_wrong_format_and_missing_coverage_are_rejected(self):
-        cases = (("02-Architecture-and-Network-Design.docx", "01-Lab-Environment.xlsx", "filenames"),
-                 ("Word (.docx)", "Excel (.xlsx)", "format mismatch"),
-                 ("(R02).", "(R01).", "cover all"))
-        for before, after, expected in cases:
+        for before, after, expected in (
+            ("02-Identity-and-Zero-Trust-Implementation.docx", "01-Lab-Environment-and-Architecture.xlsx", "filenames"),
+            ("Word (.docx)", "Excel (.xlsx)", "format mismatch"),
+            ("(FWR-01, FWR-02).", "(FWR-01).", "cover all"),
+        ):
             with self.subTest(expected=expected):
-                texts = dict(self.texts)
-                texts[self.assignment] = texts[self.assignment].replace(before, after)
-                self.assertTrue(any(expected in item for item in validator.completeness_issues(texts)))
+                self.assert_rejected(self.assignment, before, after, expected)
+
+    def test_wrong_weights_are_rejected_even_when_total_remains_100(self):
+        texts = dict(self.texts)
+        texts[self.assignment] = texts[self.assignment].replace("| 25 |", "| 24 |", 1).replace("| 20 |", "| 21 |", 1)
+        self.assertTrue(any("rubric" in x for x in validator.completeness_issues(texts)))
+
+    def test_wrong_phase_or_missing_recovery_field_is_rejected(self):
+        self.assert_rejected(self.guide, "## Phase 3: Zero Trust Access Controls",
+                             "## Phase 3: More systems", "five approved phases")
+        self.assert_rejected(self.guide, "### Rollback procedures", "### Other", "missing field")
+
+    def test_historical_mapping_gaps_are_rejected(self):
+        self.assert_rejected(self.guide, "| R02, R03, R04 |", "| R02, R04 |", "historical requirement transition")
+        self.assert_rejected(self.guide, "| T18 |", "| Old automation |", "historical test transition")
+
+    def test_wrong_test_mapping_or_filled_actual_is_rejected(self):
+        self.assert_rejected(self.assignment, "| FWT-01 |", "| FWT-02 |", "wrong primary test")
+        self.assert_rejected(self.plan, "| Actual result | |", "| Actual result | PASS |", "must be present and empty")
+        self.assert_rejected(self.plan, "| Evidence reference | |", "| Evidence reference | invented |", "must be present and empty")
+
+    def test_incomplete_six_cases_and_wrong_traceability_are_rejected(self):
+        self.assert_rejected(self.plan, "| C06 |", "| C07 |", "six approved")
+        self.assert_rejected(self.plan, "| FSC-03 | FWT-03 | FAC-03 |", "| FSC-03 | FWT-03 | FAC-04 |", "invalid architecture")
+
+    def test_security_control_mapping_drift_is_rejected(self):
+        self.assert_rejected("docs/security/SECURITY-REQUIREMENTS.md",
+                             "FWR-03; FWT-03", "FWR-03; FWT-04", "invalid security")
+
+    def test_ordered_status_and_future_template_status_are_required(self):
+        self.assert_rejected(self.guide, "Xeon W-2145", "Unspecified CPU", "ordered hardware")
+        self.assert_rejected(self.assignment, "approved T7 target, not yet created", "already created", "future T7 status")
 
 
 if __name__ == "__main__":
