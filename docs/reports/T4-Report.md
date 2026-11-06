@@ -1,6 +1,8 @@
 # T4 - Project assignment redesign, submission filenames and report-folder migration
 
-Report state: DRAFT
+Report state: FINALIZED
+
+Evidence cutoff: 2026-11-06 07:37:45 UTC (2026-11-06, America/Toronto). Finalization date: 2026-11-06, America/Toronto. Later report-commit CI, merge and final synchronization are outside this cutoff.
 
 ## A. Task Information
 
@@ -12,7 +14,7 @@ Report state: DRAFT
 | Approval reference | Owner T4 assignment-redesign request and report-relocation/deliverable-filename addenda, 2026-11-06; private originals retained by owner |
 | Baseline | Clean main at 0d28d105a517606e7a0a1cdaf4939f166b2f3a53; local and remote main matched; git pull --ff-only origin main reported already up to date |
 | Dependencies | Existing pinned documentation runtime and Poppler; no software installed; supported GitHub authentication and repository write access verified |
-| Status at draft update | Local implementation/verification complete; first publication and CI pending |
+| Status at evidence cutoff | Local implementation/verification complete; implementation commit published and initial push/PR CI successful; report-finalization commit, final-head CI, merge and main synchronization pending |
 
 The design review covered the assignment, architecture, security/threat requirements, tests, acceptance, decision/risk registers, reporting convention and PDF build. The measurable T4 outcomes are a concise readable assignment, unchanged R01-R16/rubric obligations, eight unique filenames covering all outcomes, eleven byte-preserved migrated files, working navigation, Markdown-only reporting and reproducible document PDFs. Threat/control changes are out of scope; public disclosure and broken historical navigation are the relevant risks.
 
@@ -71,7 +73,7 @@ Results below are documentation engineering checks, not executed lab tests. The 
 | Historical file comparison with pre-T4 Git blobs and saved SHA-256 inventory | All eleven relocated files identical, old directory absent, no report copies | All eleven hashes identical; five archived PDFs unchanged; original source appendix/bootstrap evidence preserved. PASS |
 | Guide stage-body comparison against pre-T4 Git bytes | No substantive stage A-L edits | Byte-identical from the Stage A heading through Stage L; only introductory navigation/report references changed. PASS |
 | Assignment requirement/deliverable/rubric review and regression checks | R01-R16 once; all outcomes mapped; eight unique correct Office names; original eleven scores | Complete R01-R16 coverage; all eight names unique and formats match; all rubric labels/weights match baseline exactly, total 100. PASS |
-| Poppler rendering; visual inspection of assignment pages 1-6 and representative related PDFs | Readable type, complete names/tables, correct page numbers, no clipping/overlap/missing glyphs | Every assignment page inspected after final content/layout change; eighteen representative pages from ten other changed documents inspected. PASS |
+| Poppler rendering; visual inspection of assignment pages 1-6 and representative related PDFs | Readable type, complete names/tables, correct page numbers, no clipping/overlap/missing glyphs | Every assignment page inspected after final content/layout change; representative pages from all ten other changed documents inspected, including the latest acceptance/decision/build-guide revisions. PASS |
 | pypdf inspection independent of PNG rendering | Searchable content, preserved links and navigation; no executable content | Assignment text-token coverage 1.0, ten named destinations, eighteen internal link annotations and twelve unique HTTPS links; no script/attachment/form. PASS |
 | NIST 800-207, NIST 800-53 Rev. 5 and CIS v8.1 primary-page reads | Essential external reference pages accessible | All three official pages opened on 2026-11-06; project destinations/anchors checked locally. PASS; no lab/vendor procedure was executed |
 | T5 Office-shell/infrastructure execution check | No templates or lab changes | No docs/deliverables/ artifacts, new report PDFs, installation, VM/network/identity change or security test. PASS for scope control; lab controls NOT TESTED |
@@ -112,7 +114,7 @@ Eight unaffected document PDFs, including architecture, security requirements, r
 
 ## D. Security and Quality Review
 
-Manual review covers the complete candidate paths, text/code changes, PDF metadata/content and proposed history before each publication. Automated scanning supports that review but is not a complete secret detector. Public examples remain synthetic/reserved; no credentials, actual internal addresses, private inventory, raw evidence or proprietary content was introduced. No background upload, production access, lab probes or new trust occurred.
+Manual review covered the complete candidate paths, staged text/code changes, PDF metadata/content and new commit history before initial publication. The staged-diff and new-history focused scans passed. Automated scanning supports that review but is not a complete secret detector. Public examples remain synthetic/reserved; no credentials, actual internal addresses, private inventory, raw evidence or proprietary content was introduced. No background upload, production access, lab probes or new trust occurred.
 
 The workflow retains contents: read, full-SHA official checkout, fetch-depth: 0 and persist-credentials: false. It runs documentation checks only. Existing non-noreply metadata findings remain RK-17; T4 does not rewrite history. New commits and the planned local merge must verify both author/committer noreply fields.
 
@@ -120,22 +122,25 @@ Independent observations comprise Git/remote read-back, baseline raw-hash compar
 
 ## E. GitHub Operations
 
-| Item | Observed state at draft update |
+| Item | Observed state at evidence cutoff |
 | --- | --- |
-| Repository | [waqashamdani-ca/enterprise-zero-trust-security](https://github.com/waqashamdani-ca/enterprise-zero-trust-security), PUBLIC, default main |
+| Repository | [waqashamdani-ca/Enterprise-Zero-Trust-Security](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security), PUBLIC, default main; repository ID 1447671295 |
 | Authenticated account / permission | waqashamdani-ca; push/admin verified with connector and GitHub CLI/API |
 | Branch | task/004-assignment-redesign |
 | Dependency baseline | 0d28d105a517606e7a0a1cdaf4939f166b2f3a53, clean/synchronized before branch creation |
-| Verified implementation commit | Pending first commit |
-| Pull request | Pending |
-| Actual CI | Pending |
-| Merge and main synchronization | Pending publication/checks; not claimed |
+| Verified implementation commit | [f08a8d44f1c174a77cf54a622c470a92d0808222](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/f08a8d44f1c174a77cf54a622c470a92d0808222); both author/committer verified noreply; new-history scan passed |
+| Pull request | [PR 5](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/5), OPEN and mergeable/CLEAN at cutoff, exact head f08a8d44f1c174a77cf54a622c470a92d0808222; no submitted reviews or review threads |
+| Actual CI | [Push run 42181713894](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42181713894) and [PR run 42181862000](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42181862000): completed / success at the implementation head; all PR validation job steps successful |
+| Branch synchronization | git ls-remote confirmed the T4 branch at f08a8d44f1c174a77cf54a622c470a92d0808222 and remote main at baseline 0d28d105a517606e7a0a1cdaf4939f166b2f3a53 |
+| Merge and final main synchronization | Pending report-finalization publication and exact-final-head checks; not claimed at cutoff |
 
-No protection, reviewer setting or account privacy setting changed. Use a normal local merge with verified noreply author/committer only after exact-head PR CI and all applicable review/protection requirements pass; confirm GitHub records the PR as merged. Do not infer owner acceptance from permission to merge.
+GitHub reported a case-only repository rename during the first push. The connector confirmed the same repository ID, account, permissions, visibility and default branch; the configured lowercase origin remains a working redirect. T4 did not rename the repository or change origin. The connected integration returned 403 for PR creation; the existing authenticated GitHub CLI successfully created PR 5 using a reviewed body file, and connector/CLI reads independently confirmed it.
+
+No protection, reviewer setting or account privacy setting changed. A normal local merge with verified noreply author/committer is planned only after exact-final-head CI and all applicable review/protection requirements pass; GitHub's merged state and local/remote main must then be read back. These later outcomes belong in the final chat response. Permission to merge is not owner acceptance.
 
 ## F. Outstanding Issues
 
-Publication/CI/report finalization are pending at this draft. No unresolved assignment, relocation or local-check defect is known after correction. Existing implementation decisions remain open: inspected hardware/disk/backup readiness, isolated egress, supported versions/evaluation terms, provider identities/plans, log transport/retention and recovery scope. Licensing, repository rules/reviewers and historical metadata remediation remain owner decisions. None blocks the bounded documentation result or authorizes implementation.
+Publication/CI of the report-finalization commit, final PR merge and main synchronization remain outside this cutoff. No unresolved assignment, relocation or local-check defect is known after correction. Existing implementation decisions remain open: inspected hardware/disk/backup readiness, isolated egress, supported versions/evaluation terms, provider identities/plans, log transport/retention and recovery scope. Licensing, repository rules/reviewers and historical metadata remediation remain owner decisions. None blocks the bounded documentation result or authorizes implementation.
 
 The old report index is intentionally byte-frozen; use INDEX.md for current instructions. Compatibility aliases are navigation records, and some historical Markdown links take that extra step. Archived PDFs retain their historical text and URLs, including old report paths; use the current index/Markdown for navigation rather than altering archive bytes. A PDF viewer may handle external named destinations differently; current document destinations and embedded URLs passed structural checks. The standard-library scanner and text-token coverage do not replace manual review.
 
@@ -143,15 +148,15 @@ The old report index is intentionally byte-frozen; use INDEX.md for current inst
 
 | Dimension | State |
 | --- | --- |
-| Local documentation implementation | IMPLEMENTED and engineering checks passed |
-| Report/publication completion | IN PROGRESS at draft update |
+| Local documentation implementation | VALIDATED for the documentation scope; engineering checks passed |
+| Report state / publication | FINALIZED at this cutoff; implementation publication/initial CI verified; final report publication, merge and main synchronization still pending |
 | Independent observations | PASS for scope described in C/D; same engineering verifier |
 | Independent human reviewer sign-off | NOT TESTED / not performed |
 | Owner UAT | PENDING; no explicit acceptance reference received |
 | T5 shells | NOT STARTED; filenames defined only |
 | Lab stages A-L | PLANNED / NOT TESTED; not authorized by T4 |
 
-Finalize this report after evidence review and observed first-publication CI, then run python scripts/validate_docs.py --require-finalized. The finalization commit's own SHA, later CI, merge and synchronization must be reported after observation in the final chat response; do not insert predictions into this record.
+This report is finalized after review of the local evidence, published implementation commit and successful initial push/PR CI. The required python scripts/validate_docs.py --require-finalized gate will run against these final bytes before completion/merge. Its post-cutoff result, the finalization commit SHA, later CI, merge and synchronization must be reported after observation in the final chat response. This record makes no prediction about those outcomes.
 
 ## H. Next Task
 
