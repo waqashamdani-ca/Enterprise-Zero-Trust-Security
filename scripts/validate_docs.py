@@ -47,8 +47,8 @@ REQUIRED_DIRS = (
     "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
 PHASE_FIELDS = (
-    "Prerequisites", "Required tools", "Implementation instructions", "Expected results",
-    "Verification steps", "Troubleshooting", "Rollback procedures",
+    "A. Objective", "B. Prerequisites", "C. Required tools", "D. Step-by-step implementation",
+    "E. Expected results", "F. Verification checklist", "G. Troubleshooting", "H. Rollback / recovery",
 )
 PHASE_TITLES = (
     "Infrastructure and Network", "Identity and Endpoint Security", "Zero Trust Access Controls",
@@ -98,8 +98,9 @@ REPORT_SECTIONS = (
     "G. Completion Status", "H. Next Task",
 )
 REPORT_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Report\.md")
-# Owner-authorized companion report; does not allocate T7 or generalize lettered tasks.
-COMPANION_REPORTS = {"docs/reports/T6A-Report.md": ("T6A", 6)}
+# Explicit owner-authorized companions; no T7 allocation or other lettered tasks.
+COMPANION_REPORTS = {"docs/reports/T6A-Report.md": ("T6A", 6),
+                     "docs/reports/T6B-Report.md": ("T6B", 6)}
 ADDENDUM_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
     "Project Overview", "Learning Objectives", "What You Will Build", "Project Requirements",
@@ -396,8 +397,10 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         issues.append("assignment must state the docs/deliverables/ submission location")
     if "planned and not yet available" not in deliverables:
         issues.append("assignment: template availability must remain explicit")
-    if "approved T7 target, not yet created" not in guide:
-        issues.append("guide: future T7 status must be explicit")
+    if "planned and not yet available" not in guide:
+        issues.append("guide: template availability must remain explicit")
+    if re.search(r"\b(?:T6[AB]?|T7|Codex)\b", guide):
+        issues.append("guide: internal task jargon belongs in reports")
     aliases = set(re.findall(r'^<a id="([a-z][a-z0-9-]*)"></a>\s*$', assignment, re.M))
     if aliases != ASSIGNMENT_COMPATIBILITY_ANCHORS:
         issues.append("assignment: preserve compatibility anchors for existing links")
@@ -411,9 +414,9 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
             issues.append("assignment: preserve concise hardware readiness/data/safety controls")
     if any(part in assignment for part in ORDERED_HARDWARE):
         issues.append("assignment: detailed procurement belongs in the guide")
-    guide_files = guide.partition("## Five future T7 deliverables")[2].split("\n## ", 1)[0]
+    guide_files = guide.partition("## Required lab deliverables")[2].split("\n## ", 1)[0]
     if tuple(re.findall(r"^\|\s*`([^`]+)`\s*\|", guide_files, re.M)) != DELIVERABLE_FILENAMES:
-        issues.append("guide must match the five future T7 filenames")
+        issues.append("guide must match the five approved filenames")
     phases = re.split(r"^## Phase (\d): ([^\n]+)\n", guide, flags=re.M)
     phase_rows = [tuple(phases[i:i + 3]) for i in range(1, len(phases), 3)]
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
@@ -422,6 +425,20 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         for field in PHASE_FIELDS:
             if not re.search(rf"^### {re.escape(field)}\s*$", section, re.M):
                 issues.append(f"phase {number} missing field: {field}")
+        expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
+                          "4": (7, 8, 9), "5": (10,)}.get(number, ())
+        for test in expected_tests:
+            if f"FWT-{test:02d}" not in section:
+                issues.append(f"phase {number}: missing existing test mapping")
+    for meaning in ("each stage A-L", "original Windows disk", "backup/recovery",
+                    "independently isolated", "lab-owned mocks", "separate test accounts",
+                    "manually assigned roles", "NOT TESTED", "PENDING"):
+        if meaning not in guide:
+            issues.append("guide: preserve stage approval, readiness, isolation and identity safeguards")
+    for match in re.finditer(r"^```[^\n]*\n.*?^```", guide, re.M | re.S):
+        context = guide[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
+        if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
+            issues.append("guide: command/configuration block needs a risk/target context")
     transition = guide.partition("## Historical requirement and test transition")[2].split("\n## ", 1)[0]
     if set(re.findall(r"\bR\d{2}\b", transition)) != {f"R{i:02d}" for i in range(1, 17)}:
         issues.append("guide historical requirement transition must preserve all R01-R16 IDs")
