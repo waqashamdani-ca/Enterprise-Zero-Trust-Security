@@ -14,7 +14,7 @@
 
 Staff need access to business services without gaining unnecessary access to other systems. In this assignment, a synthetic Purple Eye organization has analysts, engineers, and administrators with different responsibilities. The lab must support their approved work, restrict other actions, and produce evidence that explains each access decision.
 
-Design an isolated lab, then build and evaluate it in separately approved stages. Apply Zero Trust principles: check identity and permission for the requested resource rather than treating network membership as permission. Combine identity, device controls, network restrictions, application permissions, and audit records. Explain the lab's limits, including the absence of resilient identity services, continuous device attestation, hardware-protected certificate authority keys, or a staffed monitoring function. Use [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final) and the [project glossary](GLOSSARY.md) for terminology.
+Design an isolated lab, then build and evaluate it in separately approved stages. Apply Zero Trust principles: check identity and permission for the requested resource rather than treating network membership as permission. Combine identity, device controls, network restrictions, application permissions, and audit records. Explain the lab's limits, including the absence of resilient identity services, continuous device attestation, hardware-protected certificate authority keys, or a staffed monitoring function. Use [NIST SP 800-207](https://csrc.nist.gov/pubs/sp/800/207/final) and the [project glossary](../guides/GLOSSARY.md) for terminology.
 
 ## Enterprise scenario and business case
 
@@ -38,7 +38,7 @@ The learning goals relate to Certified Information Systems Security Professional
 
 ## Measurable technical requirements
 
-Lab requirements below are **PLANNED**. Completed repository/documentation work is recorded in the [individual task reports](../reports/README.md), beginning with [T1](../reports/T1-Report.md). Use the requirement IDs unchanged when linking implementation, tests, evidence, and acceptance. The test procedures are in [TEST-PLAN.md](TEST-PLAN.md); approval and acceptance gates are in [ACCEPTANCE-CRITERIA.md](ACCEPTANCE-CRITERIA.md).
+Lab requirements below are **PLANNED**. Completed repository/documentation work is recorded in the [individual task reports](../../reports/README.md), beginning with [T1](../../reports/T1-Report.md). Use the requirement IDs unchanged when linking implementation, tests, evidence, and acceptance. The test procedures are in [TEST-PLAN.md](../testing/TEST-PLAN.md); approval and acceptance gates are in [ACCEPTANCE-CRITERIA.md](../testing/ACCEPTANCE-CRITERIA.md).
 
 | ID | Required outcome and measurement | Future evidence / tests | Stage |
 | --- | --- | --- | --- |
@@ -79,7 +79,7 @@ The detailed dependency chain is A → B → C → D → E → F → G → H →
 
 Use the Dell as a proposed single virtualization host, subject to Stage A verification. Separate management, identity/PKI, user endpoints, application services, monitoring, and remote-access connector zones using private virtual bridges with no physical ports. An optional, separately approved egress bridge may connect only the firewall WAN to a dedicated uplink. The default baseline remains disconnected from home and production networking.
 
-Proxmox is the hypervisor management plane. OPNsense enforces inter-zone and egress policies. Active Directory supplies lab identity; host/application authorization remains necessary even when a packet is permitted. A powered-off root CA with no virtual NIC anchors a separate issuing CA. A dedicated administrative path, central event collectors, and scoped remote-access components support control and investigation. See the [architecture and flow matrix](ARCHITECTURE.md).
+Proxmox is the hypervisor management plane. OPNsense enforces inter-zone and egress policies. Active Directory supplies lab identity; host/application authorization remains necessary even when a packet is permitted. A powered-off root CA with no virtual NIC anchors a separate issuing CA. A dedicated administrative path, central event collectors, and scoped remote-access components support control and investigation. See the [architecture and flow matrix](../architecture/ARCHITECTURE.md).
 
 Map NIST's logical policy engine/administrator/enforcement roles to a combination of documented authorization policy, directory/remote-access administration, firewall/host controls, and application authorization. The lab is a bounded approximation: segmentation or deploying a VPN product alone does not establish full Zero Trust maturity.
 
@@ -96,17 +96,17 @@ Map NIST's logical policy engine/administrator/enforcement roles to a combinatio
 | Automation | PowerShell, Python, Ansible | Use the smallest supported tool for the approved operation; avoid overlapping automation ownership |
 | Repository checks | Standard-library Python and GitHub Actions | Add dependencies only for a demonstrated gap with an approved supply-chain review |
 
-These are proposed choices. Confirm owner approval, supported versions, and compatibility before the relevant stage. Use the [official technical references](REFERENCES.md); do not copy an unverified deployment command into an execution record.
+These are proposed choices. Confirm owner approval, supported versions, and compatibility before the relevant stage. Use the [official technical references](../governance/REFERENCES.md); do not copy an unverified deployment command into an execution record.
 
 ## Security requirements and threat model
 
 Protect home/production separation, administrative authority, directory credentials, CA keys, synthetic resource integrity, audit trails, and repository publication. Model a compromised ordinary endpoint, stolen lab credentials, a misconfigured connector, an overly broad firewall rule, a malicious or mistaken privileged user, supply-chain changes, and accidental data publication.
 
-For each threat, identify entry point, trust boundary, prevention, detection, safe validation, and residual risk in [SECURITY-REQUIREMENTS.md](SECURITY-REQUIREMENTS.md). Use default deny, separate standard/admin identities, explicit resource authorization, scoped DNS and remote access, private secrets storage, and recovery evidence. No production attacks or real credential collection are permitted.
+For each threat, identify entry point, trust boundary, prevention, detection, safe validation, and residual risk in [SECURITY-REQUIREMENTS.md](../security/SECURITY-REQUIREMENTS.md). Use default deny, separate standard/admin identities, explicit resource authorization, scoped DNS and remote access, private secrets storage, and recovery evidence. No production attacks or real credential collection are permitted.
 
 ## Standards alignment
 
-The [tailored control matrix](SECURITY-REQUIREMENTS.md#tailored-control-matrix) links requirement/test IDs to NIST SP 800-207 principles, NIST SP 800-53 Rev. 5 controls (Release 5.2.0 baseline reference), and CIS Controls v8.1. It is a project-authored mapping for learning and review, not an official crosswalk or an assertion of compliance. Consult the current catalogs linked in [REFERENCES.md](REFERENCES.md) before implementation.
+The [tailored control matrix](../security/SECURITY-REQUIREMENTS.md#tailored-control-matrix) links requirement/test IDs to NIST SP 800-207 principles, NIST SP 800-53 Rev. 5 controls (Release 5.2.0 baseline reference), and CIS Controls v8.1. It is a project-authored mapping for learning and review, not an official crosswalk or an assertion of compliance. Consult the current catalogs linked in [REFERENCES.md](../governance/REFERENCES.md) before implementation.
 
 ## Deliverables and final outcomes
 
@@ -118,7 +118,7 @@ Later approved stages must deliver the isolated lab; reviewed inventory/design s
 
 Use predeclared synthetic sources, destinations, identities, and expected outcomes. Positive tests prove required workflows; negative tests prove denied reachability or authorization; security tests evaluate scoped controls; recovery tests prove restoration. Tests that would touch a protected network use lab-owned mock destinations and policy inspection instead. Security tests require separate stage approval.
 
-Each test needs a second observation and a reviewed public-safe evidence record. A critical failure blocks acceptance. Mark unexecuted tests NOT TESTED, state unsupported functions as gaps, and record any owner-approved exception with its remaining risk. See the [test procedures](TEST-PLAN.md) and [acceptance gates](ACCEPTANCE-CRITERIA.md). Repository checks establish documentation/Git quality only.
+Each test needs a second observation and a reviewed public-safe evidence record. A critical failure blocks acceptance. Mark unexecuted tests NOT TESTED, state unsupported functions as gaps, and record any owner-approved exception with its remaining risk. See the [test procedures](../testing/TEST-PLAN.md) and [acceptance gates](../testing/ACCEPTANCE-CRITERIA.md). Repository checks establish documentation/Git quality only.
 
 ## 100-point evaluation rubric
 
@@ -142,7 +142,7 @@ Total: **100 points**. Assess each row as demonstrated, partly demonstrated, or 
 
 Use the authorized public repository under `waqashamdani-ca`, default branch `main`, and a supported secure credential store. Check for existing remote work and reconcile it without overwriting or force-pushing. Publish only reviewed project artifacts, using a noreply commit email; no license is selected in Task 001.
 
-Scan the entire proposed file set, staged diff, and history for secrets, actual internal addresses, sensitive identities, images/log metadata, production exports, and proprietary source. Exclude raw evidence and private inventories. Use least-privilege documentation CI; do not connect Actions to the lab. For future work use focused task branches, checks, PR review, and fast-forward synchronization as defined in [AGENTS.md](../AGENTS.md). Confirm remote URL, visibility, default branch, commit equality, clean status, and actual CI outcome.
+Scan the entire proposed file set, staged diff, and history for secrets, actual internal addresses, sensitive identities, images/log metadata, production exports, and proprietary source. Exclude raw evidence and private inventories. Use least-privilege documentation CI; do not connect Actions to the lab. For future work use focused task branches, checks, PR review, and fast-forward synchronization as defined in [AGENTS.md](../../AGENTS.md). Confirm remote URL, visibility, default branch, commit equality, clean status, and actual CI outcome.
 
 ## Evidence-backed resume achievement objectives
 
@@ -158,4 +158,4 @@ State exact observed measurements and lab scope, cite evidence IDs, and disclose
 
 ## Authoritative references
 
-Use the maintained [reference catalog](REFERENCES.md) for NIST, CIS, Proxmox, OPNsense, Microsoft, IETF, Tailscale, Twingate, Ansible, systemd, and GitHub. References were researched for the bootstrap on 2026-11-05; recheck current versions, licensing, security advisories, and exact syntax before a future stage is approved.
+Use the maintained [reference catalog](../governance/REFERENCES.md) for NIST, CIS, Proxmox, OPNsense, Microsoft, IETF, Tailscale, Twingate, Ansible, systemd, and GitHub. References were researched for the bootstrap on 2026-11-05; recheck current versions, licensing, security advisories, and exact syntax before a future stage is approved.

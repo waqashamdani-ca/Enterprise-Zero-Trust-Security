@@ -3,5 +3,8 @@
 *.py text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+*.pdf binary
 .gitignore text eol=lf
 .gitattributes text eol=lf

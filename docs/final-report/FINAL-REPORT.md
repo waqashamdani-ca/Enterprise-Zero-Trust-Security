@@ -2,11 +2,11 @@
 
 **Project: HL-CYB-001 — Enterprise Zero Trust Security Architecture.** Infrastructure implementation has not started. This file is the template for the eventual project-wide assessment; it is not an individual task report.
 
-Individual task outcomes belong in [reports/](../reports/README.md). The original Task 001 report and its evidence are preserved in [T1-Report.md](../reports/T1-Report.md), including an exact source appendix. Later task reports and addenda must not overwrite that historical record.
+Individual task outcomes belong in [reports/](../../reports/README.md). The original Task 001 report and its evidence are preserved in [T1-Report.md](../../reports/T1-Report.md), including an exact source appendix. Later task reports and addenda must not overwrite that historical record.
 
 ## Completion rules
 
-Complete the project assessment only after the owner authorizes and the engineer verifies the relevant implementation scope. Use the [assignment](PROJECT-ASSIGNMENT.md), [test plan](TEST-PLAN.md), [acceptance criteria](ACCEPTANCE-CRITERIA.md), and finalized individual reports to support each claim. State incomplete or excluded requirements, actual observation periods, scope exceptions, and unresolved risks.
+Complete the project assessment only after the owner authorizes and the engineer verifies the relevant implementation scope. Use the [assignment](../assignments/PROJECT-ASSIGNMENT.md), [test plan](../testing/TEST-PLAN.md), [acceptance criteria](../testing/ACCEPTANCE-CRITERIA.md), and finalized individual reports to support each claim. State incomplete or excluded requirements, actual observation periods, scope exceptions, and unresolved risks.
 
 Keep engineering verification, independent observations/reviewer participation, and owner UAT separate. Owner UAT is PENDING until explicit confirmation. A documentation CI pass does not demonstrate that the lab exists, is secure, or meets a business outcome.
 

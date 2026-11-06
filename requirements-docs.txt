@@ -1,0 +1,7 @@
+# Free documentation-only dependencies; no lab or infrastructure provisioning.
+reportlab==4.4.9
+pypdf==6.10.0
+mistune==3.4.0
+Pygments==2.21.0
+pillow==13.0.0
+charset-normalizer==3.5.2

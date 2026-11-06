@@ -2,7 +2,7 @@
 
 **Status: PLANNED controls; operational effectiveness NOT TESTED.** These requirements protect the lab's boundaries, privileged access, and engineering evidence. They define what later implementation must demonstrate; they do not establish compliance or show that a control is already working.
 
-Use this document with the [architecture](ARCHITECTURE.md), [test plan](TEST-PLAN.md), and [glossary](GLOSSARY.md). The tables keep the exact security IDs and standards mappings used for traceability.
+Use this document with the [architecture](../architecture/ARCHITECTURE.md), [test plan](../testing/TEST-PLAN.md), and [glossary](../guides/GLOSSARY.md). The tables keep the exact security IDs and standards mappings used for traceability.
 
 ## Assets, actors, and boundaries
 

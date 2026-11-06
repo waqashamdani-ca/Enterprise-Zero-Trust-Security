@@ -2,7 +2,7 @@
 
 **Status: PLANNED. Operational controls are NOT TESTED.** Hardware has not been inspected and the lab has not been installed or configured. Address labels are symbolic; actual addresses and protected-network inventories stay in private records outside Git.
 
-The design separates user work, administration, identity services, applications, and audit collection so one allowed connection does not grant access to everything. It also defines how the lab can recover without depending on production. A trust boundary is a point where access must be checked; the [glossary](GLOSSARY.md) explains the specialist terms used below.
+The design separates user work, administration, identity services, applications, and audit collection so one allowed connection does not grant access to everything. It also defines how the lab can recover without depending on production. A trust boundary is a point where access must be checked; the [glossary](../guides/GLOSSARY.md) explains the specialist terms used below.
 
 ## Design principles
 
@@ -137,4 +137,4 @@ Sources retain local logs from initial deployment. Stage J aggregates six classe
 
 Recovery order: console/private inventory and secrets → hypervisor/bridges → firewall isolation → directory/DNS/time → PKI/revocation publication → logging → applications/endpoints → scoped remote access. Restore into disconnected networks before reconnecting. Use application-aware identity/CA backups; snapshots are short-lived rollback aids, not a substitute for supported recovery. The approved representative recovery scope and timed objectives are in R13/T19.
 
-See [decisions](DECISIONS.md), [risks](RISKS.md), and the [implementation guide](LAB-IMPLEMENTATION-GUIDE.md) for unresolved topology, egress, version, backup, and capacity gates.
+See [decisions](../governance/DECISIONS.md), [risks](../governance/RISKS.md), and the [implementation guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md) for unresolved topology, egress, version, backup, and capacity gates.
