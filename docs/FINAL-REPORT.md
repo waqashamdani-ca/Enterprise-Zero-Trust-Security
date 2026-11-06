@@ -1,67 +1,16 @@
-# Task 001 report and future implementation report
+# Project-level final report template
 
-## Current project status
+**Project: HL-CYB-001 — Enterprise Zero Trust Security Architecture.** Infrastructure implementation has not started. This file is the template for the eventual project-wide assessment; it is not an individual task report.
 
-| Area | State |
-| --- | --- |
-| Project | HL-CYB-001 — Enterprise Zero Trust Security Architecture |
-| Task 001 | Bootstrap published; documentation checks and initial CI passed; synchronized publication snapshot recorded below |
-| Operational implementation | **NOT STARTED** |
-| Stages A–L | **NOT STARTED; separate owner approval required** |
-| Owner review / UAT | **PENDING** |
-| License | **NOT SELECTED; owner decision required** |
+Individual task outcomes belong in [reports/](../reports/README.md). The original Task 001 report and its evidence are preserved in [T1-Report.md](../reports/T1-Report.md), including an exact source appendix. Later task reports and addenda must not overwrite that historical record.
 
-## Bootstrap scope and preflight
+## Completion rules
 
-The owner authorized planning, scaffolding, documentation checks, safe local Git initialization, and reviewed public GitHub creation/synchronization. The GitHub addendum fixes the account as `waqashamdani-ca`, the repository as `enterprise-zero-trust-security`, public visibility, and the new default branch as `main`.
+Complete the project assessment only after the owner authorizes and the engineer verifies the relevant implementation scope. Use the [assignment](PROJECT-ASSIGNMENT.md), [test plan](TEST-PLAN.md), [acceptance criteria](ACCEPTANCE-CRITERIA.md), and finalized individual reports to support each claim. State incomplete or excluded requirements, actual observation periods, scope exceptions, and unresolved risks.
 
-Preflight found an empty project directory with no Git repository, existing files, ancestor AGENTS.md instructions, or content conflicts. Git, GitHub CLI, Python, and Node were available. The initial sandboxed CLI authentication check could not validate the saved login; the network-enabled check confirmed the existing authenticated `waqashamdani-ca` account without reauthentication or storing a project token. Both the GitHub integration lookup and authenticated CLI lookup found no accessible target repository. The CLI account's authenticated identity was verified before repository creation.
+Keep engineering verification, independent observations/reviewer participation, and owner UAT separate. Owner UAT is PENDING until explicit confirmation. A documentation CI pass does not demonstrate that the lab exists, is secure, or meets a business outcome.
 
-Hardware descriptions remain supplied information, not inspected inventory. No host/VM/network/security test or implementation readiness assessment was run. No software was installed, no production system was accessed for testing, and no infrastructure configuration was changed.
-
-## Created artifact groups
-
-- Root README, governance, public-safe ignore rules, line-ending policy, and documentation-only workflow.
-- Assignment with sixteen measurable requirements, business case, scope, deliverables, standards mapping references, and a 100-point rubric.
-- Proposed architecture and detailed A–L blueprint, including dependencies, expected outcomes, tests, rollback, and per-stage approvals.
-- Security/threat model, functional/negative/security/recovery test plan, acceptance criteria, decision/risk registers, and authoritative reference catalog.
-- Standard-library documentation/publication validator and focused rejection-case unit tests.
-- Future infrastructure/configuration folder guidance and public evidence handling conventions.
-
-## Technical validation and publication
-
-Initial local validation passed for twenty public text candidates, including fifteen Markdown files: required structure, local links/anchors, twelve stages with all seven required fields, sixteen requirement mappings, twenty-one test definitions, 100-point rubric, workflow constraints, and focused publication checks. All twelve unit tests passed using normal filesystem permissions; the restricted Windows context could not access temporary fixture directories, so those checks were rerun in the supported context. Independent counts confirmed the proposed 36 GiB guest RAM and 248 GiB guest-disk totals. The completion evidence record adds one reviewed Markdown file; repository checks are rerun before publishing that record.
-
-The reference catalog contains fifty external URLs. The local HTTPS reachability check confirmed HTTP success for thirty-seven; thirteen could not be verified by that client because of certificate/transport validation issues. Relevant primary-source pages were also researched through the browsing tool. No TLS verification was disabled. An obsolete Google Help link was removed rather than published as verified. These external-reference limits do not affect local Markdown links, and references must be rechecked at stage entry.
-
-| Publication item | Observed result |
-| --- | --- |
-| Repository | [waqashamdani-ca/enterprise-zero-trust-security](https://github.com/waqashamdani-ca/enterprise-zero-trust-security) |
-| Authenticated owner and push actor | `waqashamdani-ca` |
-| Permissions | Administrator and push permissions confirmed by CLI/API and connected GitHub metadata |
-| Visibility / default branch | PUBLIC / `main` |
-| Origin | `https://github.com/waqashamdani-ca/enterprise-zero-trust-security.git` |
-| Initial bootstrap commit | [2640261ad2738f1e6d4497ee68636621ed403ea3](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/commit/2640261ad2738f1e6d4497ee68636621ed403ea3) |
-| Initial documentation CI | [Run 42139263675: SUCCESS](https://github.com/waqashamdani-ca/enterprise-zero-trust-security/actions/runs/42139263675), including validation, unit tests, and whitespace steps |
-| Synchronization snapshot | Local `main`, `origin/main`, remote HEAD, and remote `refs/heads/main` matched the initial bootstrap SHA; clean worktree |
-| Credentials | Existing secure Git Credential Manager authentication used; no project token or global Git configuration change |
-| Owner UAT / stage execution | PENDING / NOT STARTED |
-
-The initial CLI-backed push was rejected because its OAuth token lacked the workflow scope. The existing Git Credential Manager login successfully published the same reviewed commit, without force-push, history alteration, token disclosure, or requesting a new credential. GitHub recorded the expected owner as the push actor.
-
-See [the bootstrap evidence record](../evidence/BOOTSTRAP-VALIDATION.md) for commands and limits. This report records the verified initial snapshot; its completion-record commit has its own SHA and CI run, which are verified separately and reported in the final Task 001 response. Avoid embedding a commit's own hash inside itself. A passing documentation check is not operational security verification.
-
-Publication includes only reviewed public-safe text artifacts; actual addressing/inventories, secrets, raw logs/media, production exports, and proprietary code are excluded. No software license was added. No Task 001 publication blocker remains; stage-specific design dependencies and owner UAT remain open.
-
-## Open decisions and risks
-
-Resolve safe egress topology, inspected hardware/disk/backup capacity, exact supported software versions and evaluation terms, private addressing, lab-only provider identities/plans, log transports/retention capacity, PKI custody, representative recovery scope, licensing, and repository protection/reviewer choices. See [DECISIONS.md](DECISIONS.md) and [RISKS.md](RISKS.md). None is silently approved by publication.
-
-## Recommended next single task and stop
-
-After owner review, obtain explicit approval for **Stage A: read-only hardware and isolation readiness assessment**. Stop after Task 001. No Proxmox installation, VM creation, OPNsense configuration, AD deployment, remote-access enrollment, or security validation is authorized by this report.
-
-## Future final implementation report requirements
+## Required project assessment
 
 This section is a reporting contract for later stages, not completed project results. Replace it with actual, reviewed outcomes only after the implementation scope is approved and verified.
 
@@ -79,3 +28,9 @@ This section is a reporting contract for later stages, not completed project res
 | Repository and handover | Reviewed PRs/commits, CI, synchronization, operating/recovery instructions, next bounded task |
 
 Do not fabricate screenshots, test outputs, observed metrics, independent reviewer participation, acceptance decisions, or production impact.
+
+## Project-wide completion decision
+
+Record the assessment date and evidence cutoff; implementation scope; requirements passed, failed, and NOT TESTED; engineering verdict; independent review actually performed; owner UAT decision and confirmation reference; accepted residual risks; and one approved next action. Until that evidence exists, the project implementation remains PLANNED / NOT TESTED and owner acceptance remains PENDING.
+
+This template may be completed in a later authorized project-reporting task. It does not authorize installation, VM creation, network changes, identity deployment, remote access, or security testing.

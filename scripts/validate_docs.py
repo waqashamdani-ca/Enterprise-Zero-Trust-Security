@@ -8,6 +8,8 @@ a complete secret detector; a manual staged-content/history review is required.
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import ipaddress
 import re
 import subprocess
@@ -27,15 +29,24 @@ REQUIRED_FILES = (
     "docs/REFERENCES.md", "infrastructure/README.md",
     "configurations/README.md", "scripts/validate_docs.py",
     "tests/test_validate_docs.py", "evidence/README.md",
+    "reports/README.md", "reports/T1-Report.md",
 )
 REQUIRED_DIRS = (
     ".github/workflows", "docs", "infrastructure", "configurations",
-    "scripts", "tests", "evidence",
+    "scripts", "tests", "evidence", "reports",
 )
 STAGE_FIELDS = (
     "Prerequisites", "Procedures", "Proposed commands", "Expected outcome",
     "Verification", "Rollback", "Completion criteria",
 )
+REPORT_SECTIONS = (
+    "A. Task Information", "B. Implementation Summary",
+    "C. Testing and Validation", "D. Security and Quality Review",
+    "E. GitHub Operations", "F. Outstanding Issues",
+    "G. Completion Status", "H. Next Task",
+)
+REPORT_NAME = re.compile(r"reports/T([1-9][0-9]*)-Report\.md")
+ADDENDUM_NAME = re.compile(r"reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
     "Description and background", "Enterprise scenario and business case",
     "Purpose, objectives, and learning goals", "Measurable technical requirements",
@@ -278,7 +289,86 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     return issues
 
 
+def report_issues(texts: dict[str, str], require_finalized: bool = False) -> list[str]:
+    issues = []
+    numbers = []
+    addenda: dict[int, list[int]] = {}
+    for name, content in texts.items():
+        if not name.startswith("reports/") or name == "reports/README.md":
+            continue
+        report = REPORT_NAME.fullmatch(name)
+        addendum = ADDENDUM_NAME.fullmatch(name)
+        if not report and not addendum:
+            issues.append(f"{name}: invalid task-report/addendum filename")
+            continue
+        number = int((report or addendum)[1])
+        if report:
+            numbers.append(number)
+        else:
+            addenda.setdefault(number, []).append(int(addendum[2]))
+        visible, _ = strip_fences(content)
+        headings = [match[2] for match in HEADING.finditer(visible) if len(match[1]) == 2]
+        required = [heading for heading in headings if heading in REPORT_SECTIONS]
+        if required != list(REPORT_SECTIONS):
+            issues.append(f"{name}: required report sections A–H must occur once in order")
+        task_id = re.search(r"^\|\s*Task ID\s*\|\s*T([1-9][0-9]*)\b", visible, re.M)
+        if not task_id or int(task_id[1]) != number:
+            issues.append(f"{name}: missing/mismatched Task ID row")
+        states = re.findall(r"^Report state: (DRAFT|FINALIZED)$", visible, re.M)
+        if len(states) != 1:
+            issues.append(f"{name}: exactly one DRAFT/FINALIZED state marker required")
+        elif require_finalized and states[0] != "FINALIZED":
+            issues.append(f"{name}: report must be finalized before task completion/merge")
+    if not numbers or sorted(numbers) != list(range(1, max(numbers, default=0) + 1)):
+        issues.append("task report numbers must be unique and sequential starting at T1")
+    for parent, sequence in addenda.items():
+        if parent not in numbers:
+            issues.append(f"T{parent}: addendum has no parent task report")
+        if sorted(sequence) != list(range(1, max(sequence) + 1)):
+            issues.append(f"T{parent}: addendum numbers must be unique/sequential starting at 001")
+    return issues
+
+
+def finalized_history_issues(root: Path, texts: dict[str, str]) -> list[str]:
+    """Compare current reports with every committed finalized version, offline."""
+    def git(*args: str) -> bytes:
+        return subprocess.check_output(["git", "-C", str(root), *args], stderr=subprocess.PIPE)
+
+    if git("rev-parse", "--is-shallow-repository").strip() == b"true":
+        return ["report immutability requires complete Git history (fetch-depth: 0)"]
+    frozen: dict[str, set[str]] = {}
+    objects: dict[str, bytes] = {}
+    for commit in git("log", "--all", "--format=%H", "--", "reports").decode().splitlines():
+        for entry in git("ls-tree", "-r", "-z", commit, "--", "reports").split(b"\0"):
+            if not entry:
+                continue
+            metadata, raw_name = entry.split(b"\t", 1)
+            name = raw_name.decode("utf-8")
+            if not (REPORT_NAME.fullmatch(name) or ADDENDUM_NAME.fullmatch(name)):
+                continue
+            _, kind, oid = metadata.decode().split()
+            if kind != "blob":
+                return [f"{name}: unexpected report object in history"]
+            if oid not in objects:
+                objects[oid] = git("cat-file", "blob", oid)
+            content = objects[oid]
+            if re.search(rb"^Report state: FINALIZED$", content, re.M):
+                frozen.setdefault(name, set()).add(hashlib.sha256(content).hexdigest())
+    issues = []
+    for name, hashes in frozen.items():
+        if len(hashes) != 1:
+            issues.append(f"{name}: finalized report was changed in committed history")
+        elif name not in texts:
+            issues.append(f"{name}: finalized report deleted or renamed")
+        elif hashlib.sha256(texts[name].encode("utf-8")).hexdigest() not in hashes:
+            issues.append(f"{name}: finalized report modified; use a separate addendum")
+    return issues
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--require-finalized", action="store_true", help="Reject draft reports before task completion or merge")
+    args = parser.parse_args()
     try:
         paths = candidate_paths(ROOT)
     except (OSError, subprocess.CalledProcessError):
@@ -294,6 +384,11 @@ def main() -> int:
             if relative.endswith(".md"):
                 issues.extend(link_issues(ROOT, relative, content))
     issues.extend(completeness_issues(texts))
+    issues.extend(report_issues(texts, args.require_finalized))
+    try:
+        issues.extend(finalized_history_issues(ROOT, texts))
+    except (OSError, subprocess.CalledProcessError, UnicodeError):
+        issues.append("report immutability history could not be verified; inspect Git before completion")
     if issues:
         print(f"FAIL: {len(issues)} finding(s)")
         for issue in sorted(set(issues)):
@@ -302,6 +397,7 @@ def main() -> int:
     markdown_count = sum(path.endswith(".md") for path in paths)
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
     print("PASS: structure, local links/anchors, stage fields, R01–R16/T00–T20 coverage, rubric, workflow, focused publication scan.")
+    print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")
     return 0
 
