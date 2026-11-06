@@ -1,6 +1,6 @@
 # T6A - Project Assignment editorial, design and layout improvement
 
-Report state: DRAFT
+Report state: FINALIZED
 
 ## A. Task Information
 
@@ -8,6 +8,8 @@ Report state: DRAFT
 | --- | --- |
 | Task ID | T6A |
 | Execution date | 2026-11-06, America/Toronto |
+| Evidence cutoff | 2026-11-06 18:54:42 UTC (13:54:42 America/Toronto) |
+| Finalization date | 2026-11-06; publication of this finalized record and later CI/merge/synchronization are outside the evidence cutoff |
 | Authority | Owner T6A Project Assignment Content, Language, Design and Layout Improvement request, 2026-11-06; private original retained by owner |
 | Scope | Assignment editorial/design/layout improvement and necessary renderer, validation, manifest, build-reference and reporting navigation changes; reviewed GitHub publication/CI/merge/synchronization |
 | Dependency baseline | T6 FINALIZED; PR 7 merged; local main, origin/main and live remote main 36a2eb0a5e65dd344b165dda158d75b129f5585b; final-head PR workflow 42205248861 successful |
@@ -75,7 +77,8 @@ Engineering verifier: Codex. Separate tool/source observations below were perfor
 | PDF text/legacy destination inspection | All five exact filenames together on one page; all ten FWT labels together in requirements table; all six legacy destinations resolve to their correct new heading pages | PASS |
 | Every-page visual review | All four final assignment pages and all three build-guide pages inspected; no clipping/overlap/orphan headings/awkward filename breaks observed; complete short tables, readable bullets/headers/footers | PASS |
 | git diff --check and manual source/code/candidate review | Whitespace clean, only the scoped files differ, synthetic/public-safe content and no operational result fabrication | PASS |
-| --require-finalized completion gate | To run after report finalization and before merge; not yet executed for the finalized T6A state at this draft cutoff | NOT TESTED |
+| Initial GitHub push/PR workflows | Content head c37a15612cf23204eeea28a4b6fb3a8411308be0 passed push 42274679125 and PR 42274772085; PR logs confirm 81 candidates, 19 pairs/78 pages and 65 tests | PASS |
+| --require-finalized completion gate | Outside this evidence cutoff; run after finalization and before merge, then report the observed result in the final chat response | NOT TESTED |
 | Lab/security tests, readiness, installation and owner UAT | No infrastructure operation, lab test, procurement or Office edit performed; no owner acceptance confirmation | NOT TESTED |
 
 Initial layout trials were corrected before review: a forced section break created an extra page; table/bullet grouping and spacing restored four useful pages. Narrow Week/Points headers were widened; requirement, filename, schedule and rubric tables now stay intact. Initial HTML parsing rejected bare compatibility anchors; the renderer now admits only identifier-only assignment anchors and still rejects active attributes. Historical T1 Task ID parenthetical forms were preserved in the companion-report validator; no frozen report was edited.
@@ -94,22 +97,28 @@ The one supporting build-reference paragraph/PDF is necessary to avoid stale con
 
 Authorized repository is public, default main, using existing origin; verified owner login waqashamdani-ca has push/admin permissions. Both new author/committer identities are the existing GitHub noreply identity; global settings were not changed.
 
-Branch: codex/006a-assignment-quality. Baseline main: 36a2eb0a5e65dd344b165dda158d75b129f5585b. At this draft cutoff no T6A commit, push, PR, CI, merge or final synchronization is claimed. Finalization will record only observed publication evidence; later completed-head CI/merge/main state will be reported in the final chat response.
+Branch: codex/006a-assignment-quality. Baseline main: 36a2eb0a5e65dd344b165dda158d75b129f5585b. Content commit [c37a15612cf23204eeea28a4b6fb3a8411308be0](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/c37a15612cf23204eeea28a4b6fb3a8411308be0) was published normally after reviewing all eleven explicit paths, matching staged/reviewed bytes, complete candidates/diff and new history. GitHub confirms both author and committer use 315227303+waqashamdani-ca@users.noreply.github.com. The clean isolated branch tracks its matching remote head; original main remains at the synchronized T6 baseline until merge.
+
+[PR 8](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/8) is OPEN and mergeable at the cutoff. [Push workflow 42274679125](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42274679125) and [PR workflow 42274772085](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42274772085) completed SUCCESS at the content head. Linux PR logs confirm 81 candidates/37 Markdown files, 19 pairs/78 pages with no binary regeneration, and 65 passing tests. No reviews, requests or comments exist at this observation; no independent approval is claimed. The main branch is unprotected and its effective rules list is empty; no setting was changed.
+
+The connected GitHub integration's previously observed PR-creation HTTP 403 limits its write capability; the already authenticated owner GitHub CLI created this authorized PR. This was not an automatic safety-approval rejection. Origin's lowercase URL redirects to the same verified case-renamed repository and is preserved.
+
+Publication of this finalized report, its own commit/checks and any merge/synchronization are future to the cutoff. Before a normal merge, recheck the completed head, checks, review requests/threads and effective rules without bypassing a requirement; preserve noreply author and committer. Confirm GitHub records the merge, fast-forward original main preserving the owner's five deletions, and compare local/live remote IDs. Report those later observed results in the final chat response without editing this finalized record.
 
 ## F. Outstanding Issues
 
 No known unresolved local editorial/layout/check failure. Templates remain planned/unavailable pending separately authorized T7. Hardware delivery/readiness, safe isolated egress and each implementation-stage approval remain future dependencies. Font portability is preserved through the existing embedded font; a different font would need an approved portable build strategy.
 
-Owner UAT PENDING; independent human review NOT TESTED. Original checkout retains its five owner PDF deletions and is not clean; T6A engineering uses the isolated checkout. Initial publication, report finalization gate and final GitHub/CI/merge/synchronization remain pending at this draft cutoff.
+Owner UAT PENDING; independent human review NOT TESTED. Original checkout retains its five owner PDF deletions and is not clean; T6A engineering uses the isolated checkout. The finalized-report gate, publication of this finalized record, completed-head CI, merge and final main synchronization remain outside the evidence cutoff.
 
 ## G. Completion Status
 
 | Area | State |
 | --- | --- |
-| Assignment editorial/layout implementation | IMPLEMENTED / locally VALIDATED for checks above |
+| Assignment editorial/layout implementation | IMPLEMENTED / VALIDATED for local and initial-head CI checks above; completed-head publication verification pending |
 | Second observations | PASS through rendered pages, PDF/Markdown/navigation comparison and byte-preservation checks; same engineering verifier |
 | Independent human review | NOT TESTED |
-| Report / GitHub publication | DRAFT / pending |
+| Report / GitHub publication | FINALIZED at cutoff; initial push/PR CI PASS; finalized-record publication, completed-head gate/CI, merge and main synchronization pending |
 | Operational lab implementation | PLANNED / NOT TESTED; no operation performed |
 | Owner UAT / acceptance | PENDING |
 
