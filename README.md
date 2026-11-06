@@ -4,7 +4,7 @@
 
 Design an isolated, virtual enterprise to study identity, least privilege, segmentation, PKI, remote access, monitoring, and recovery. The business scenario uses a synthetic Purple Eye environment. This is an independent educational project; it has no production trust, corporate identities, customer data, or production connectivity.
 
-**Implementation status: NOT STARTED.** The repository contains a proposed architecture, an engineering assignment, an approval-gated implementation blueprint, and documentation validation. A published repository or passing documentation CI is not evidence that the lab exists or its security controls work.
+The repository contains a proposed architecture, an engineering assignment, an approval-gated implementation blueprint, and documentation validation. A published repository or passing documentation CI is not evidence that the lab exists or its security controls work.
 
 Task 001 bootstrap publication and initial CI verification are recorded in [the completion evidence](evidence/BOOTSTRAP-VALIDATION.md). Owner review remains pending.
 
