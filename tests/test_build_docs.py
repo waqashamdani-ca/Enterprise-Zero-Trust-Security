@@ -185,18 +185,50 @@ class PdfArtifactTests(unittest.TestCase):
             (root / name).write_bytes(docs.render_pdf("fixture.md", self.content, {"fixture.md"}))
             self.assertTrue(any("prohibited" in issue for issue in validator.generated_pdf_issues(root, name)))
 
-    def test_diagram_keeps_offline_and_protected_nodes_disconnected(self):
+    def test_diagram_preserves_physical_chain_three_boundaries_and_app_only_overlay(self):
         source = (ROOT / "docs/architecture/ARCHITECTURE.md").read_text(encoding="utf-8")
         diagrams = [token for token in docs.MARKDOWN(source) if token["type"] == "block_code" and token.get("attrs", {}).get("info") == "mermaid"]
         self.assertEqual(len(diagrams), 1)
-        nodes, edges = docs.parse_diagram(diagrams[0]["raw"])
-        self.assertEqual(len(nodes), 11)
-        self.assertEqual(len(edges), 10)
-        self.assertFalse(any(a in {"CA", "HOME"} or b in {"CA", "HOME"} for a, b, _, _ in edges))
+        nodes, edges, boundaries = docs.parse_diagram(diagrams[0]["raw"])
+        self.assertEqual(len(nodes), 10)
+        self.assertEqual(len(edges), 9)
+        self.assertEqual(set(boundaries), {"Management", "Corporate", "Restricted"})
+        self.assertIn("physical OPNsense", nodes["FW"])
+        self.assertIn("Dell Precision 5820", nodes["Host"])
+        self.assertEqual({(a, b) for a, b, _, dotted in edges if not dotted},
+                         {("FW", "Switch"), ("Switch", "Host"), ("Host", "Corp"),
+                          ("Host", "App"), ("Admin", "Mgmt")})
+        self.assertIn(("WAN", "FW", "Egress approval gate", True), edges)
+        self.assertFalse(any(a == "HOME" or b == "HOME" for a, b, _, _ in edges))
         self.assertEqual({b for a, b, label, _ in edges if a == "Remote"}, {"App"})
-        self.assertEqual([label for a, b, label, _ in edges if a == "Remote"], ["HTTPS only"])
+        self.assertEqual([label for a, b, label, _ in edges if a == "Remote"], ["FF-06: APP1 TCP 443"])
         with self.assertRaisesRegex(ValueError, "Unsupported Mermaid"):
             docs.parse_diagram(diagrams[0]["raw"] + "\nclick FW https://example.com\n")
+        with self.assertRaisesRegex(ValueError, "boundaries changed"):
+            docs.parse_diagram(diagrams[0]["raw"].replace("subgraph Corporate", "subgraph Extra"))
+        with self.assertRaisesRegex(ValueError, "Unclosed"):
+            docs.parse_diagram(diagrams[0]["raw"].replace("    end\n", "", 1).split("subgraph Corporate")[0])
+
+    def test_architecture_capacity_and_flow_contract(self):
+        content = (ROOT / "docs/architecture/ARCHITECTURE.md").read_text(encoding="utf-8")
+        rows = re.findall(r"^\| (DC1|WIN1|APP1) \| (\d+) \| (\d+) \| (\d+) \|", content, re.M)
+        self.assertEqual({name: tuple(map(int, values)) for name, *values in rows},
+                         {"DC1": (2, 6, 64), "WIN1": (2, 6, 64), "APP1": (2, 4, 32)})
+        self.assertEqual(tuple(sum(int(row[i]) for row in rows) for i in range(1, 4)), (6, 16, 160))
+        self.assertIn("| Total | 6 | 16 | 160 |", content)
+        self.assertIn("**320 GiB**", content)
+        self.assertEqual(re.findall(r"^\| (FF-\d\d) \|", content, re.M), [f"FF-{n:02d}" for n in range(1, 9)])
+        self.assertNotRegex(content, r"\b(?:Ordered|Delivered|Installed|T9[A-F]?|Codex)\b")
+        self.assertNotRegex(content, r"\b(?:\d{1,3}\.){3}\d{1,3}\b|\bVLAN\s+\d+|\bvmbr\d+")
+        sources = set(docs.discover_sources(ROOT))
+        data = docs.render_pdf("docs/architecture/ARCHITECTURE.md", content.encode(), sources)
+        extracted = "\n".join(p.extract_text() for p in docs.PdfReader(io.BytesIO(data)).pages)
+        for phrase in ("physical OPNsense", "Dell Precision 5820", "TL-SG108E", "Management boundary",
+                       "Corporate boundary", "Restricted boundary", "APP1 TCP 443", "320 GiB"):
+            self.assertIn(phrase, extracted)
+        self.assertNotIn("operational controls NOT TESTED", extracted)
+        self.assertIn("Contents", docs.PdfReader(io.BytesIO(data)).pages[0].extract_text())
+        self.assertIn("hardware-status-and-preparation", docs.PdfReader(io.BytesIO(data)).named_destinations)
 
     def test_pdf_link_targets_cannot_escape_or_use_active_schemes(self):
         with self.assertRaises(ValueError):
@@ -250,11 +282,13 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_assignment_aliases_do_not_allow_active_html(self):
         content = b'# Assignment\n\n<a id="legacy" onclick="unsafe()"></a>\n\n## Section\n'
-        with self.assertRaisesRegex(ValueError, "Unreviewed inline HTML"):
-            docs.render_pdf(docs.ASSIGNMENT, content, {docs.ASSIGNMENT})
+        for source in (docs.ASSIGNMENT, docs.ARCHITECTURE):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, "Unreviewed inline HTML"):
+                docs.render_pdf(source, content, {source})
 
     def test_office_migration_preserves_unaffected_sources_pdfs_and_frozen_records(self):
         base = "d408c4571105bd42396dd5e71aae22f4f3d9290c"
+        published = "1fbc006450d5a9815844202bf3f1098283f8a0b6"
         sources = {"README.md", "AGENTS.md", "docs/README.md", docs.ASSIGNMENT, docs.GUIDE,
                    "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
                    "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
@@ -265,12 +299,14 @@ class PdfArtifactTests(unittest.TestCase):
             if name in allowed or name.startswith("docs/deliverables/") or not name.endswith((".md", ".pdf", ".docx", ".xlsx")):
                 continue
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
-            self.assertEqual((ROOT / name).read_bytes(), old, name)
+            actual = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+            self.assertEqual(actual, old, name)
 
     def test_t9_initialization_preserves_t8_specifications_office_and_history(self):
-        # T9 initialization permits governance only, including AGENTS/PDF; later
-        # microtasks require a separately approved scope/preservation baseline.
+        # Check the immutable published initialization snapshot. T9A's live
+        # checkout receives its own exact-path preservation contract below.
         base = "1f8c7f9a99ee488fcb5673f6b3914e87ec50fed9"
+        published = "1fbc006450d5a9815844202bf3f1098283f8a0b6"
         allowed = {"AGENTS.md", "AGENTS.pdf", "docs/reports/INDEX.md", docs.MANIFEST,
                    "scripts/validate_docs.py", "tests/test_validate_docs.py", "tests/test_build_docs.py"}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
@@ -278,7 +314,23 @@ class PdfArtifactTests(unittest.TestCase):
             if name in allowed:
                 continue
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
-            self.assertEqual((ROOT / name).read_bytes(), old, name)
+            actual = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+            self.assertEqual(actual, old, name)
+
+    def test_t9a_preserves_all_excluded_sources_pdfs_office_and_history(self):
+        base = "1fbc006450d5a9815844202bf3f1098283f8a0b6"
+        allowed = {"docs/architecture/ARCHITECTURE.md", "docs/architecture/ARCHITECTURE.pdf",
+                   "docs/governance/DECISIONS.md", "docs/governance/DECISIONS.pdf",
+                   "docs/governance/RISKS.md", "docs/governance/RISKS.pdf",
+                   "scripts/build_docs.py", "tests/test_build_docs.py", docs.MANIFEST,
+                   "docs/reports/T9-Report.md"}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files), "T9A introduces no additional public files")
+        for name in files:
+            if name not in allowed:
+                old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+                self.assertEqual((ROOT / name).read_bytes(), old, name)
 
     def test_guide_pdf_keeps_filenames_whole_and_preserves_navigation(self):
         content = (ROOT / docs.GUIDE).read_bytes()

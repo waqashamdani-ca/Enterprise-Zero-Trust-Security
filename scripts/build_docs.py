@@ -57,6 +57,7 @@ ALIASES = {
 REPORT_PREFIXES = ("docs/reports/", "reports/")
 ASSIGNMENT = "docs/assignments/PROJECT-ASSIGNMENT.md"
 GUIDE = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
+ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
 WIDTH, HEIGHT = letter
@@ -188,65 +189,93 @@ def inline(tokens: list[dict], source: str, sources: set[str]) -> str:
     return "".join(result)
 
 
-def parse_diagram(raw: str) -> tuple[dict[str, str], list[tuple[str, str, str, bool]]]:
-    nodes, edges = {}, []
+def parse_diagram(raw: str) -> tuple[dict[str, str], list[tuple[str, str, str, bool]], dict]:
+    nodes, edges, boundaries = {}, [], {}
+    current = None
     for line in raw.splitlines():
         line = line.strip()
         if not line or line == "flowchart TB":
             continue
         node = re.fullmatch(r"(\w+)\[([^]]+)\]", line)
+        boundary = re.fullmatch(r"subgraph (\w+)\[([^]]+)\]", line)
         edge = re.fullmatch(r"(\w+)\s+-->\s+(\w+)", line)
         dotted = re.fullmatch(r"(\w+)\s+-\.\s*(.*?)\s*\.->\s+(\w+)", line)
-        if node:
+        if boundary:
+            if current or boundary[1] in boundaries:
+                raise ValueError("Unsupported Mermaid boundary nesting/duplication")
+            current = boundary[1]
+            boundaries[current] = (boundary[2], [])
+        elif line == "end":
+            if current is None:
+                raise ValueError("Unsupported Mermaid boundary ending")
+            current = None
+        elif node:
+            if node[1] in nodes:
+                raise ValueError("Duplicate Mermaid node")
             nodes[node[1]] = node[2]
+            if current:
+                boundaries[current][1].append(node[1])
         elif edge:
             edges.append((edge[1], edge[2], "", False))
         elif dotted:
             edges.append((dotted[1], dotted[3], dotted[2], True))
         else:
             raise ValueError("Unsupported Mermaid syntax; review before publication")
-    if set(nodes) != {"Admin", "Mgmt", "FW", "Corp", "App", "Remote", "Logs", "Backup", "CA", "WAN", "HOME"}:
+    if current:
+        raise ValueError("Unclosed Mermaid boundary")
+    if set(nodes) != {"Admin", "Mgmt", "FW", "Switch", "Host", "Corp", "App", "Remote", "WAN", "HOME"}:
         raise ValueError("Architecture nodes changed; review the vector layout")
+    expected = {"Management": ("Management boundary", ["Admin", "Mgmt"]),
+                "Corporate": ("Corporate boundary", ["Corp"]),
+                "Restricted": ("Restricted boundary", ["App"])}
+    if boundaries != expected:
+        raise ValueError("Architecture boundaries changed; review the vector layout")
     if any(a not in nodes or b not in nodes for a, b, _, _ in edges):
         raise ValueError("Mermaid edge references an undefined node")
-    return nodes, edges
+    return nodes, edges, boundaries
 
 
 class ArchitectureFigure(Flowable):
     def __init__(self, raw: str):
         super().__init__()
-        self.nodes, self.edges = parse_diagram(raw)
-        self.width, self.height = CONTENT_WIDTH, 550
+        self.nodes, self.edges, self.boundaries = parse_diagram(raw)
+        self.width, self.height = CONTENT_WIDTH, 530
 
     def draw(self):
         canvas = self.canv
         layout = {
-            "Admin": (252, 523, 300, 36), "Mgmt": (252, 465, 300, 42),
-            "FW": (252, 397, 240, 40), "Corp": (118, 310, 210, 52),
-            "App": (386, 310, 210, 52), "Remote": (386, 222, 210, 40),
-            "Logs": (118, 211, 210, 50), "Backup": (386, 130, 210, 42),
-            "WAN": (118, 120, 210, 42), "CA": (118, 42, 210, 42),
-            "HOME": (386, 42, 210, 42),
+            "WAN": (252, 522, 300, 38), "FW": (252, 456, 300, 38),
+            "Switch": (252, 390, 300, 38), "Host": (252, 324, 300, 38),
+            "Corp": (119, 236, 210, 50), "App": (385, 236, 210, 50),
+            "Mgmt": (119, 127, 210, 42), "Admin": (119, 64, 210, 34),
+            "Remote": (385, 128, 210, 40), "HOME": (385, 54, 210, 40),
         }
         routes = {
-            ("Remote", "App"): [(386, 242), (386, 284)],
-            ("FW", "Corp"): [(252, 377), (252, 355), (118, 355), (118, 336)],
-            ("FW", "App"): [(252, 377), (252, 355), (386, 355), (386, 336)],
-            ("FW", "Logs"): [(132, 397), (2, 397), (2, 211), (13, 211)],
-            ("Corp", "Logs"): [(118, 284), (118, 236)],
-            ("App", "Logs"): [(281, 310), (252, 310), (252, 211), (223, 211)],
-            ("App", "Backup"): [(491, 310), (502, 310), (502, 130), (491, 130)],
-            ("FW", "WAN"): [(132, 397), (7, 397), (7, 120), (13, 120)],
+            ("Remote", "App"): [(385, 148), (385, 211)],
+            ("Host", "Corp"): [(252, 305), (252, 236), (224, 236)],
+            ("Host", "App"): [(252, 305), (252, 236), (280, 236)],
+            ("Admin", "Mgmt"): [(119, 81), (119, 106)],
+            ("Mgmt", "FW"): [(14, 134), (2, 134), (2, 456), (102, 456)],
+            ("Mgmt", "Host"): [(14, 120), (7, 120), (7, 324), (102, 324)],
         }
         labels = {
-            ("Remote", "App"): (397, 256, 92),
-            ("FW", "Logs"): (12, 357, 100),
-            ("Corp", "Logs"): (20, 258, 92),
-            ("App", "Logs"): (148, 258, 96),
-            ("App", "Backup"): (289, 164, 180),
-            ("FW", "WAN"): (18, 158, 115),
+            ("Remote", "App"): (396, 170, 96),
+            ("Mgmt", "FW"): (14, 416, 82),
+            ("Mgmt", "Host"): (14, 294, 82),
+            ("WAN", "FW"): (264, 482, 205),
         }
         canvas.saveState()
+        canvas.translate(0, -18)
+        frames = {"Management": (12, 34, 214, 130), "Corporate": (12, 199, 214, 88),
+                  "Restricted": (278, 199, 214, 88)}
+        for key, (label, _) in self.boundaries.items():
+            x, y, width, height = frames[key]
+            canvas.setFillColor(colors.HexColor("#f7f9fb"))
+            canvas.setStrokeColor(colors.HexColor("#183b56"))
+            canvas.roundRect(x, y, width, height, 5, stroke=1, fill=1)
+            canvas.setFillColor(colors.HexColor("#183b56"))
+            canvas.setFont("Vera-Bold", 8.5)
+            canvas.drawString(x + 9, y + height - 12, label)
         for start, end, label, dotted in self.edges:
             x1, y1, _, h1 = layout[start]
             x2, y2, _, h2 = layout[end]
@@ -278,7 +307,7 @@ class ArchitectureFigure(Flowable):
         for node, label in self.nodes.items():
             x, y, width, height = layout[node]
             canvas.setStrokeColor(colors.HexColor("#718391"))
-            canvas.setFillColor(colors.HexColor("#eef3f7" if node not in {"CA", "HOME"} else "#f1f1f1"))
+            canvas.setFillColor(colors.HexColor("#eef3f7" if node != "HOME" else "#f1f1f1"))
             canvas.roundRect(x - width / 2, y - height / 2, width, height, 4, stroke=1, fill=1)
             style = ParagraphStyle("node", fontName="Vera", fontSize=8.8, leading=10.5, alignment=TA_CENTER)
             paragraph = Paragraph(html.escape(normalize(label)), style)
@@ -355,6 +384,8 @@ class Builder:
             self.style = ParagraphStyle("guide-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=6,
                                         allowWidows=0, allowOrphans=0)
             self.cell_style = ParagraphStyle("guide-cell", parent=self.style, fontSize=8.9, leading=11.7, spaceAfter=0)
+        elif source == ARCHITECTURE:
+            self.style = ParagraphStyle("architecture-body", parent=self.style, allowWidows=0, allowOrphans=0)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
                                         borderWidth=0.4, borderPadding=6, leftIndent=7, rightIndent=7, spaceAfter=11)
@@ -437,7 +468,13 @@ class Builder:
         rows = [head] + [row["children"] for row in token["children"][1]["children"]]
         headers = [plain(cell["children"]) for cell in head]
         count = len(headers)
-        if self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
+        if self.source == ARCHITECTURE and headers == ["Component", "Role and boundary"]:
+            widths = [144, 360]
+        elif self.source == ARCHITECTURE and headers == ["Zone", "Members and enforcement"]:
+            widths = [105, 399]
+        elif self.source == ARCHITECTURE and headers == ["Flow", "Source to destination", "Permission and enforcement owner"]:
+            widths = [55, 150, 299]
+        elif self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
             widths = [55, 389, 60]
         elif self.source == ASSIGNMENT and headers == ["Filename", "What to record"]:
             widths = [300, 204]
@@ -494,7 +531,7 @@ class Builder:
                         style = ParagraphStyle("points", parent=style, alignment=TA_RIGHT)
                     values.append(Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), style))
             cells.append(values)
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in {ASSIGNMENT, GUIDE, "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in {ASSIGNMENT, GUIDE, ARCHITECTURE, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
@@ -582,7 +619,7 @@ class Builder:
                 if language == "mermaid":
                     self.figure_count += 1
                     story.append(ArchitectureFigure(token["raw"]))
-                    story.append(Paragraph(f"Figure {self.figure_count}. Proposed logical architecture; paths remain policy-controlled.", ParagraphStyle("figure-caption", parent=self.style, fontName="Vera-Italic", fontSize=8.3)))
+                    story.append(Paragraph(f"Figure {self.figure_count}. Target physical and logical architecture; lines do not grant access.", ParagraphStyle("figure-caption", parent=self.style, fontName="Vera-Italic", fontSize=8.3)))
                 else:
                     code = self.code(token["raw"], language)
                     if self.source == GUIDE:
@@ -597,7 +634,7 @@ class Builder:
                 story.extend(self.blocks(token["children"], depth + 1))
             elif kind in {"blank_line", "thematic_break"}:
                 continue
-            elif kind == "block_html" and self.source == ASSIGNMENT and re.fullmatch(
+            elif kind == "block_html" and self.source in {ASSIGNMENT, ARCHITECTURE} and re.fullmatch(
                     r'(?:<a id="[a-z][a-z0-9-]*"></a>\s*)+', token.get("raw", "").strip()):
                 self.pending_anchors.extend(re.findall(r'<a id="([a-z][a-z0-9-]*)"></a>', token["raw"]))
             elif kind == "block_html" and token.get("raw", "").lstrip().startswith("<!--"):
@@ -613,7 +650,9 @@ def source_tokens(tokens: list[dict]) -> set[str]:
         if token["type"] in {"text", "codespan", "block_code"}:
             raw = token.get("raw", "")
             if token.get("attrs", {}).get("info") == "mermaid":
-                raw = " ".join(parse_diagram(raw)[0].values())
+                nodes, edges, boundaries = parse_diagram(raw)
+                raw = " ".join([*nodes.values(), *(label for _, _, label, _ in edges),
+                                *(label for label, _ in boundaries.values())])
             chunks.append(normalize(raw))
         if "children" in token:
             chunks.extend(source_tokens(token["children"]))
@@ -624,7 +663,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     if source.lower().startswith(REPORT_PREFIXES):
         raise ValueError("Task reports are Markdown only; docs/reports/ is excluded from PDF generation")
     tokens = MARKDOWN(content.decode("utf-8"))
-    if source == ASSIGNMENT:
+    if source in {ASSIGNMENT, ARCHITECTURE}:
         for token in tokens:
             if token["type"] == "paragraph":
                 raw = "".join("\n" if c["type"] == "softbreak" else c.get("raw", "")
@@ -638,7 +677,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     builder = Builder(source, sources)
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    if source in {ASSIGNMENT, GUIDE}:
+    if source in {ASSIGNMENT, GUIDE, ARCHITECTURE}:
         story.append(builder.heading(tokens[0]))
     elif formal:
         cover_status = ""
@@ -652,11 +691,11 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         story.append(PageBreak())
     else:
         story.append(builder.heading(tokens[0]))
-    if source == GUIDE:
+    if source in {GUIDE, ARCHITECTURE}:
         first_section = next(i for i, token in enumerate(tokens[1:], 1)
                              if token["type"] == "heading" and token["attrs"]["level"] == 2)
         story.extend(builder.blocks(tokens[1:first_section]))
-        story.append(Paragraph("Guide contents", ParagraphStyle("guide-contents", parent=builder.style,
+        story.append(Paragraph("Guide contents" if source == GUIDE else "Contents", ParagraphStyle("guide-contents", parent=builder.style,
                                fontName="Vera-Bold", fontSize=11, leading=14, spaceBefore=6, spaceAfter=5)))
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("guide-toc", fontName="Vera", fontSize=9, leading=12, spaceBefore=0)]
@@ -666,8 +705,10 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
                                          ("TOPPADDING", (0, 0), (-1, -1), 0),
                                          ("BOTTOMPADDING", (0, 0), (-1, -1), 2)])
         story.extend([contents, Spacer(1, 6)])
+        if source == ARCHITECTURE:
+            story.append(PageBreak())
         tokens = [tokens[0], *tokens[first_section:]]
-    if source not in {ASSIGNMENT, GUIDE} and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
+    if source not in {ASSIGNMENT, GUIDE, ARCHITECTURE} and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
         story.append(Paragraph("Contents", ParagraphStyle("contents-title", parent=builder.style, fontName="Vera-Bold", fontSize=17, leading=22, spaceAfter=14)))
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
