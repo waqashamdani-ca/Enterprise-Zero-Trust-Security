@@ -2,7 +2,7 @@
 
 **T6 baseline, 2026-11-06. All operational tests below are NOT TESTED. Actual results and evidence fields are intentionally empty.**
 
-Ten focused tests check the [assignment](../assignments/PROJECT-ASSIGNMENT.md). Each includes named subchecks, not just a dashboard status. Obtain the relevant stage-specific approval before any lab action; T6 runs repository/document checks only. Home/production are never targets. The [guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#historical-requirement-and-test-transition) maps all historical R01-R16/T00-T20 IDs; no old result transfers to FWR/FWT.
+Ten focused tests check the [assignment](../assignments/PROJECT-ASSIGNMENT.md). Each includes named subchecks, not just a dashboard status. Obtain the relevant stage-specific approval before any lab action; T6 runs repository/document checks only. Home/production are never targets. The [historical appendix](../governance/HISTORICAL-REQUIREMENT-TRANSITION.md) maps all historical R01-R16/T00-T20 IDs; no old result transfers to FWR/FWT.
 
 ## Test governance and evidence
 
@@ -212,4 +212,4 @@ Every current requirement has a component/flow, security control, focused test, 
 | FWR-09 | APP1/encrypted off-compute backup | FSC-09 | FWT-09 | FAC-09 | 03 |
 | FWR-10 | Private/public boundary and handover | FSC-10 | FWT-10 | FAC-10 | 03, 04, 05 |
 
-The [guide transition tables](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#historical-requirement-and-test-transition) preserve all sixteen old requirements and all twenty-one old test IDs without renumbering their historical evidence.
+The [historical transition tables](../governance/HISTORICAL-REQUIREMENT-TRANSITION.md) preserve all sixteen old requirements and all twenty-one old test IDs without renumbering their historical evidence.
