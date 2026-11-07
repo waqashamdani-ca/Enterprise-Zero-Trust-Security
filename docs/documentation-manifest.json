@@ -11,16 +11,16 @@
   },
   "documents": [
     {
-      "bookmarks": 10,
+      "bookmarks": 11,
       "internal_links": 18,
-      "pages": 6,
+      "pages": 7,
       "pdf": "AGENTS.pdf",
-      "pdf_sha256": "a4aa06581ca626825e0dc663885e75441a88f3a10964bf6f320a209d2f8b7600",
+      "pdf_sha256": "dcb59440a1b6d9ee8c297ee69150831fa372272dad3cf7519a28a204d9668aae",
       "renderer_sha256": "2076839e72370fccf539e918afc41de5648c24122841ef922d44e1c013b4c25d",
       "searchable": true,
       "source": "AGENTS.md",
-      "source_sha256": "98a0a55bfe8330944f5b870541d7163b7a09556fa66de4b16338285279c676c4",
-      "source_tokens": 774,
+      "source_sha256": "b459f80f6ddc136e8c325d01c2f64c7d2b15b60b75a15e658d40dca425951b41",
+      "source_tokens": 809,
       "text_token_coverage": 1.0,
       "uri_links": 8
     },
