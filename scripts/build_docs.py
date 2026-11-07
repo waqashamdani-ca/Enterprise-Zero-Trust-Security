@@ -352,13 +352,14 @@ class Builder:
             self.style = ParagraphStyle("assignment-body", parent=self.style, fontSize=10, leading=13.4, spaceAfter=6)
             self.cell_style = ParagraphStyle("assignment-cell", parent=self.style, fontSize=9.0, leading=11.8, spaceAfter=0)
         elif source == GUIDE:
-            self.style = ParagraphStyle("guide-body", parent=self.style, fontSize=9.5, leading=13.2, spaceAfter=6)
-            self.cell_style = ParagraphStyle("guide-cell", parent=self.style, fontSize=8.6, leading=11.3, spaceAfter=0)
+            self.style = ParagraphStyle("guide-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=6,
+                                        allowWidows=0, allowOrphans=0)
+            self.cell_style = ParagraphStyle("guide-cell", parent=self.style, fontSize=8.9, leading=11.7, spaceAfter=0)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
                                         borderWidth=0.4, borderPadding=6, leftIndent=7, rightIndent=7, spaceAfter=11)
         if source == GUIDE:
-            self.code_style = ParagraphStyle("guide-code", parent=self.code_style, fontSize=8.4, leading=10.8)
+            self.code_style = ParagraphStyle("guide-code", parent=self.code_style, fontSize=8.8, leading=11.5)
 
     def heading(self, token: dict, cover: bool = False) -> Paragraph:
         level = token["attrs"]["level"]
@@ -376,7 +377,7 @@ class Builder:
             sizes.update({1: 21, 2: 12.8})
         elif self.source == GUIDE:
             sizes.update({1: 20, 2: 13, 3: 10.6})
-            if level >= 3:
+            if level >= 2:
                 label = inline(token["children"], self.source, self.sources)
         style = ParagraphStyle("heading", parent=self.style, fontName="Vera-Bold", fontSize=sizes[level], leading=sizes[level] * 1.3,
                                textColor=colors.HexColor("#193e58"), spaceBefore=12 if level > 1 else 0,
@@ -397,7 +398,7 @@ class Builder:
         lines, line = [], []
         def finish():
             nonlocal line
-            limit = 92 if self.source == GUIDE else 98
+            limit = 88 if self.source == GUIDE else 98
             while len(line) > limit:
                 split = max((i + 1 for i, (char, _) in enumerate(line[:limit]) if char == " "), default=limit)
                 lines.append(line[:split])
@@ -450,6 +451,16 @@ class Builder:
             widths = [210, 254, 40]
         elif self.source == GUIDE and headers[0] in {"Earlier requirement", "Earlier tests"}:
             widths = [104, 118, 282]
+        elif self.source == GUIDE and headers == ["Test / requirement", "What to do and compare"]:
+            widths = [110, 394]
+        elif self.source == GUIDE and headers == ["Private value", "Where it comes from"]:
+            widths = [210, 294]
+        elif self.source == GUIDE and headers == ["VM", "Zone / bridge", "vCPU", "RAM MiB", "Disk GiB"]:
+            widths = [65, 205, 55, 90, 89]
+        elif self.source == GUIDE and headers == ["Case", "App account", "Page", "Expected result"]:
+            widths = [45, 75, 105, 279]
+        elif self.source == GUIDE and headers == ["Event", "Approved action", "Source and expected observation"]:
+            widths = [100, 200, 204]
         elif count == 2:
             widths = [62, 442] if max(len(plain(row[0]["children"])) for row in rows) < 12 else [133, 371]
         elif count == 3:
@@ -519,14 +530,16 @@ class Builder:
 
     def blocks(self, tokens: list[dict], depth: int = 0) -> list:
         story = []
-        for token in tokens:
+        for token_index, token in enumerate(tokens):
             kind = token["type"]
             if kind in {"paragraph", "block_text"}:
                 style = self.style if not depth else ParagraphStyle("indented", parent=self.style, leftIndent=depth * 14)
                 if self.source == ASSIGNMENT and len(token["children"]) == 1 and token["children"][0]["type"] == "strong":
                     style = ParagraphStyle("assignment-label", parent=style, keepWithNext=1)
                 elif self.source == GUIDE and token["children"] and token["children"][0]["type"] == "strong":
-                    style = ParagraphStyle("guide-command-context", parent=style, keepWithNext=1)
+                    following = next((t for t in tokens[token_index + 1:] if t["type"] != "blank_line"), {})
+                    if following.get("type") == "block_code":
+                        style = ParagraphStyle("guide-command-context", parent=style, keepWithNext=1)
                 story.append(Paragraph(inline(token["children"], self.source, self.sources), style))
             elif kind == "heading":
                 title = plain(token["children"])
@@ -571,7 +584,15 @@ class Builder:
                     story.append(ArchitectureFigure(token["raw"]))
                     story.append(Paragraph(f"Figure {self.figure_count}. Proposed logical architecture; paths remain policy-controlled.", ParagraphStyle("figure-caption", parent=self.style, fontName="Vera-Italic", fontSize=8.3)))
                 else:
-                    story.append(self.code(token["raw"], language))
+                    code = self.code(token["raw"], language)
+                    if self.source == GUIDE:
+                        context = []
+                        if story and isinstance(story[-1], Paragraph) and story[-1].style.name == "guide-command-context":
+                            context.append(story.pop())
+                            context[0].keepWithNext = 0
+                        story.append(KeepTogether([*context, code]))
+                    else:
+                        story.append(code)
             elif kind == "block_quote":
                 story.extend(self.blocks(token["children"], depth + 1))
             elif kind in {"blank_line", "thematic_break"}:

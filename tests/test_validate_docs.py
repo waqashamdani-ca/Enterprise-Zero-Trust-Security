@@ -284,7 +284,8 @@ class AssignmentContractTests(unittest.TestCase):
         self.texts = {name: (project / name).read_text(encoding="utf-8") for name in (
             "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
             "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
-            "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml")}
+            "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml",
+            validator.GUIDE_TRANSITION)}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
         self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
         self.plan = "docs/testing/TEST-PLAN.md"
@@ -315,11 +316,19 @@ class AssignmentContractTests(unittest.TestCase):
     def test_wrong_phase_or_missing_recovery_field_is_rejected(self):
         self.assert_rejected(self.guide, "## Phase 3: Zero Trust Access Controls",
                              "## Phase 3: More systems", "five approved phases")
-        self.assert_rejected(self.guide, "### H. Rollback / recovery", "### Other", "missing field")
+        self.assert_rejected(self.guide, "### Phase 1 checkpoint and recovery", "### Other", "missing field")
 
     def test_historical_mapping_gaps_are_rejected(self):
-        self.assert_rejected(self.guide, "| R02, R03, R04 |", "| R02, R04 |", "historical requirement transition")
-        self.assert_rejected(self.guide, "| T18 |", "| Old automation |", "historical test transition")
+        self.assert_rejected(validator.GUIDE_TRANSITION, "| R02, R03, R04 |", "| R02, R04 |", "historical requirement transition")
+        self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
+
+    def test_guide_procedures_require_actions_context_and_failure_recovery(self):
+        self.assert_rejected(self.guide, "### Step 1 -", "### Step 0 -", "numbered procedures")
+        self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
+        self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
+
+    def test_guide_numbered_actions_cannot_merge_into_check_paragraphs(self):
+        self.assert_rejected(self.guide, "\n\n2. At the Proxmox console", "\n2. At the Proxmox console", "blank line")
 
     def test_wrong_test_mapping_or_filled_actual_is_rejected(self):
         self.assert_rejected(self.assignment, "| FWT-01 |", "| FWT-02 |", "wrong primary test")
@@ -352,7 +361,9 @@ class AssignmentContractTests(unittest.TestCase):
 
     def test_guide_retains_approval_and_existing_phase_test_mappings(self):
         self.assert_rejected(self.guide, "each stage A-L", "optional stages", "safeguards")
-        self.assert_rejected(self.guide, "FWT-01/FWT-02", "FWT-02", "existing test mapping")
+        texts = dict(self.texts)
+        texts[self.guide] = texts[self.guide].replace("FWT-01", "FWT-99")
+        self.assertTrue(any("existing test mapping" in item for item in validator.completeness_issues(texts)))
 
     def test_short_readiness_controls_remain_required(self):
         self.assert_rejected(self.assignment, "backup and recovery", "storage", "hardware readiness")

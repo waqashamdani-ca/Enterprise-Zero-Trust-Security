@@ -46,10 +46,7 @@ REQUIRED_DIRS = (
     "docs/assignments", "docs/lab-guides", "docs/architecture", "docs/security",
     "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
-PHASE_FIELDS = (
-    "A. Objective", "B. Prerequisites", "C. Required tools", "D. Step-by-step implementation",
-    "E. Expected results", "F. Verification checklist", "G. Troubleshooting", "H. Rollback / recovery",
-)
+GUIDE_TRANSITION = "docs/governance/HISTORICAL-REQUIREMENT-TRANSITION.md"
 PHASE_TITLES = (
     "Infrastructure and Network", "Identity and Endpoint Security", "Zero Trust Access Controls",
     "Monitoring, Automation and Recovery", "Validation and Final Submission",
@@ -452,8 +449,10 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        for field in PHASE_FIELDS:
-            if not re.search(rf"^### {re.escape(field)}\s*$", section, re.M):
+        if not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
+            issues.append(f"phase {number} missing field: checkpoint and recovery")
+        for field in ("**Outcome:**", "Approvals:", "Test"):
+            if field not in section:
                 issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
                           "4": (7, 8, 9), "5": (10,)}.get(number, ())
@@ -469,11 +468,26 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         context = guide[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
-    transition = guide.partition("## Historical requirement and test transition")[2].split("\n## ", 1)[0]
+    procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
+    if [int(n) for n, _ in procedures] != list(range(1, 28)):
+        issues.append("guide: preserve the 27 numbered procedures in order")
+    for number, body in procedures:
+        for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
+            if field not in body:
+                issues.append(f"guide procedure {number}: missing instructional context {field}")
+        if not re.search(r"^1\. ", body, re.M):
+            issues.append(f"guide procedure {number}: missing numbered actions")
+    lines = strip_fences(guide)[0].splitlines()
+    for previous, line in zip(lines, lines[1:]):
+        if re.match(r"^\d+\. ", line) and previous.strip() and not re.match(r"^\d+\. ", previous):
+            issues.append("guide: a numbered action after prose needs a blank line to render as a list")
+    transition = texts.get(GUIDE_TRANSITION, "")
+    if GUIDE_TRANSITION.split("/")[-1] not in guide:
+        issues.append("guide: historical appendix navigation is required")
     if set(re.findall(r"\bR\d{2}\b", transition)) != {f"R{i:02d}" for i in range(1, 17)}:
-        issues.append("guide historical requirement transition must preserve all R01-R16 IDs")
+        issues.append("appendix historical requirement transition must preserve all R01-R16 IDs")
     if set(re.findall(r"\bT\d{2}\b", transition)) != {f"T{i:02d}" for i in range(21)}:
-        issues.append("guide historical test transition must preserve all T00-T20 IDs")
+        issues.append("appendix historical test transition must preserve all T00-T20 IDs")
     for label, content in (("guide", guide),):
         for status in ("Existing", "Ordered", "Delivered", "Installed", "Validated"):
             if not re.search(rf"\b{status}\b", content, re.I):

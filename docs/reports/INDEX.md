@@ -17,6 +17,7 @@ Use this index for the current location and reporting rules. Every task in HL-CY
 | T6A | [T6A report](T6A-Report.md) | Owner-authorized assignment language/design/layout follow-up; T6 scope preserved |
 | T6B | [T6B report](T6B-Report.md) | Owner-authorized Lab Guide usability/language/layout follow-up; T6 scope preserved |
 | T7 | [T7 report](T7-Report.md) | Five four-week Office deliverables, legacy retirement, native/visual validation and publication |
+| T8 | [T8 report](T8-Report.md) | Practical Lab Guide rewrite, instructional/PDF redesign, full editorial/visual validation and publication |
 
 ## Numbering and required content
 

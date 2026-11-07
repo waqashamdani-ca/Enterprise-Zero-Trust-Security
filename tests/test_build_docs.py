@@ -285,19 +285,42 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertIn("required-lab-deliverables", reader.named_destinations)
         self.assertEqual(docs.inspect_pdf(data, docs.GUIDE, content, sources)["text_token_coverage"], 1.0)
         compact_pages = [re.sub(r"\s+", "", p) for p in pages]
-        for token in docs.MARKDOWN(content.decode()):
+        tokens = docs.MARKDOWN(content.decode())
+        for index, token in enumerate(tokens):
+            if token["type"] == "block_code":
+                code = re.sub(r"\s+", "", docs.normalize(token["raw"]))
+                self.assertTrue(any(code in p for p in compact_pages),
+                                "Code block split across pages: " + token["raw"][:70])
+                previous = next(t for t in reversed(tokens[:index]) if t["type"] != "blank_line")
+                context = re.sub(r"\s+", "", docs.normalize(docs.plain(previous["children"])))
+                self.assertTrue(any(code in p and context in p for p in compact_pages),
+                                "Command target/context split from code: " + token["raw"][:70])
             if token["type"] == "list" and token.get("attrs", {}).get("ordered"):
                 for item in token["children"]:
                     step = docs.normalize(docs.plain(item["children"][0]["children"]))
                     self.assertTrue(any(re.sub(r"\s+", "", step) in p for p in compact_pages),
                                     "Numbered step split across pages: " + step[:70])
 
-    def test_guide_reference_blocks_retain_their_exact_command_behavior(self):
+    def test_guide_retains_core_commands_and_moves_publication_details_to_build_guide(self):
         base = "a3d7b1c6effde3bd5b18ab1a4b529c07a7cc7c61"
         old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.GUIDE]).decode()
         current = (ROOT / docs.GUIDE).read_text(encoding="utf-8")
         fences = r"^```([^\n]*)\n(.*?)^```"
-        self.assertEqual(re.findall(fences, current, re.M | re.S), re.findall(fences, old, re.M | re.S))
+        current_blocks = re.findall(fences, current, re.M | re.S)
+        for language, block in re.findall(fences, old, re.M | re.S):
+            if block.startswith("<VirtualHost"):
+                site = next(b for lang, b in current_blocks if lang == "apache" and b.startswith("<VirtualHost *:443>"))
+                # T8 adds explicit site logs; every approved TLS/auth directive stays.
+                for line in block.splitlines():
+                    self.assertIn(line, site)
+            elif "python scripts/validate_docs.py" in block:
+                build_guide = (ROOT / "docs/governance/DOCUMENTATION-BUILD.md").read_text(encoding="utf-8")
+                for line in block.splitlines():
+                    # The build guide uses its explicit pinned-environment executable.
+                    self.assertIn(line.partition("python ")[2] if "python " in line else line, build_guide)
+                self.assertNotIn("scripts/validate_docs.py", current)
+            else:
+                self.assertIn((language, block), current_blocks)
         for command in ("Test-ComputerSecureChannel -Verbose", "apachectl configtest", "tailscale status",
                         "htpasswd -B -c /etc/labapp/users ava", "htpasswd -B /etc/labapp/users eli"):
             self.assertIn(command, old)
