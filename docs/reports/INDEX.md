@@ -18,12 +18,15 @@ Use this index for the current location and reporting rules. Every task in HL-CY
 | T6B | [T6B report](T6B-Report.md) | Owner-authorized Lab Guide usability/language/layout follow-up; T6 scope preserved |
 | T7 | [T7 report](T7-Report.md) | Five four-week Office deliverables, legacy retirement, native/visual validation and publication |
 | T8 | [T8 report](T8-Report.md) | Practical Lab Guide rewrite, instructional/PDF redesign, full editorial/visual validation and publication |
+| T9 | [T9 umbrella plan and draft report](T9-Report.md) | Initialization and six separately authorized documentation/architecture microtasks; umbrella IN PROGRESS |
 
 ## Numbering and required content
 
 Use `docs/reports/T1-Report.md`, `docs/reports/T2-Report.md`, and subsequent numbers without gaps, reuse or renumbering. Inspect local and remote work before allocation. A new number does not authorize a task. Corrections to finalized records use a separately numbered addendum such as `T4-Addendum-001-Correction.md`, with the same parent task ID and no new task number.
 
 The owner explicitly authorized `T6A-Report.md` and `T6B-Report.md` as companions to finalized T6, using their respective Task IDs. Both preserve the same A-H/finalization/history rules; neither allocates T7 nor authorizes other lettered tasks. T6B depends on completed T6A publication.
+
+T9 has a separate owner-approved umbrella exception: its six sequential microtasks T9A–T9F share exactly one [T9 report](T9-Report.md). Keep it DRAFT through initialization and intermediate microtasks, recording scope, acceptance criteria, validation, changes, issues and owner approvals/review in that report. Do not create lettered reports or automatically advance. The [T9 governance exception](../../AGENTS.md#approved-t9-umbrella-reporting-exception) permits interim PR publication with `python scripts/validate_docs.py --require-finalized --allow-t9-draft`, limited to this in-progress report. T9F must pass and all required approvals must be recorded before one-time finalization and the normal strict gate. T1–T8 and their history remain frozen; no T10 allocation occurs during T9.
 
 Start with a descriptive title and `Report state: DRAFT`. Include a `Task ID` table row in section A. Use these headings exactly, once and in order:
 

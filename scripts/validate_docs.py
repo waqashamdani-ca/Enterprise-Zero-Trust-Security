@@ -98,6 +98,8 @@ REPORT_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Report\.md")
 # Explicit owner-authorized companions; no T7 allocation or other lettered tasks.
 COMPANION_REPORTS = {"docs/reports/T6A-Report.md": ("T6A", 6),
                      "docs/reports/T6B-Report.md": ("T6B", 6)}
+# Explicit owner-approved interim publication; no general draft-report waiver.
+T9_UMBRELLA_REPORT = "docs/reports/T9-Report.md"
 ADDENDUM_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
     "Project Overview", "Learning Objectives", "What You Will Build", "Project Requirements",
@@ -550,8 +552,17 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     return issues
 
 
-def report_issues(texts: dict[str, str], require_finalized: bool = False) -> list[str]:
+def report_issues(texts: dict[str, str], require_finalized: bool = False,
+                  allow_t9_draft: bool = False) -> list[str]:
     issues = []
+    if allow_t9_draft:
+        umbrella = texts.get(T9_UMBRELLA_REPORT, "")
+        visible_umbrella, _ = strip_fences(umbrella)
+        if (not require_finalized
+                or re.findall(r"^Report state: (DRAFT|FINALIZED)$", visible_umbrella, re.M) != ["DRAFT"]
+                or not re.search(r"^\|\s*Umbrella status\s*\|\s*IN PROGRESS\s*\|$",
+                                 visible_umbrella, re.M)):
+            issues.append("T9 draft exception requires --require-finalized and the single DRAFT, IN PROGRESS T9 umbrella report")
     numbers = []
     addenda: dict[int, list[int]] = {}
     for name, content in texts.items():
@@ -584,7 +595,7 @@ def report_issues(texts: dict[str, str], require_finalized: bool = False) -> lis
         states = re.findall(r"^Report state: (DRAFT|FINALIZED)$", visible, re.M)
         if len(states) != 1:
             issues.append(f"{name}: exactly one DRAFT/FINALIZED state marker required")
-        elif require_finalized and states[0] != "FINALIZED":
+        elif require_finalized and states[0] != "FINALIZED" and not (allow_t9_draft and name == T9_UMBRELLA_REPORT):
             issues.append(f"{name}: report must be finalized before task completion/merge")
     if not numbers or sorted(numbers) != list(range(1, max(numbers, default=0) + 1)):
         issues.append("task report numbers must be unique and sequential starting at T1")
@@ -653,6 +664,8 @@ def report_migration_issues(root: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-finalized", action="store_true", help="Reject draft reports before task completion or merge")
+    parser.add_argument("--allow-t9-draft", action="store_true",
+                        help="With --require-finalized, allow only the owner-authorized in-progress T9 umbrella draft for interim publication; never T9F completion")
     args = parser.parse_args()
     try:
         paths = candidate_paths(ROOT)
@@ -670,7 +683,7 @@ def main() -> int:
                 issues.extend(link_issues(ROOT, relative, content))
     issues.extend(completeness_issues(texts))
     issues.extend(pdf_inventory_issues(paths, texts))
-    issues.extend(report_issues(texts, args.require_finalized))
+    issues.extend(report_issues(texts, args.require_finalized, args.allow_t9_draft))
     issues.extend(report_migration_issues(ROOT))
     if (ROOT / "docs/reports/T5-Report.md").exists() or (ROOT / "docs/deliverables").exists():
         issues.extend(template_set_issues(ROOT))
@@ -687,6 +700,8 @@ def main() -> int:
     print(f"PASS: {len(paths)} public candidate files; {markdown_count} Markdown files.")
     print("PASS: structure, local links/anchors and verified frozen T5 snapshot targets, five phase fields, FWR/FWT/FSC/FAC coverage, rubric, workflow, focused publication scan.")
     print("PASS: task-report numbering, A–H structure, and committed finalized-report preservation.")
+    if args.allow_t9_draft:
+        print("EXCEPTION: only the DRAFT, IN PROGRESS T9 umbrella report is permitted for interim publication; T9 completion is not verified.")
     print("PASS: docs/reports/ migration, eleven historical file hashes, Markdown-only reporting, and source/hash-matched document PDFs.")
     print("LIMITS: manual content/history/metadata review required; no external-link or operational-security verification.")
     return 0

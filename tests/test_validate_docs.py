@@ -139,6 +139,62 @@ class ReportingGovernanceTests(unittest.TestCase):
         self.assertEqual(validator.report_issues(texts), [])
         self.assertTrue(any("finalized" in item for item in validator.report_issues(texts, True)))
 
+    def t9_umbrella(self):
+        texts = {f"docs/reports/T{i}-Report.md": self.report(i, "FINALIZED") for i in range(1, 9)}
+        texts[validator.T9_UMBRELLA_REPORT] = self.report(9).replace(
+            "| Task ID | T9 |", "| Task ID | T9 |\n| Umbrella status | IN PROGRESS |")
+        return texts
+
+    def test_t9_interim_draft_requires_explicit_exception(self):
+        texts = self.t9_umbrella()
+        self.assertEqual(validator.report_issues(texts), [])
+        self.assertEqual(len(validator.report_issues(texts, True)), 1)
+        self.assertEqual(validator.report_issues(texts, True, True), [])
+
+    def test_t9_exception_does_not_exempt_other_reports(self):
+        texts = self.t9_umbrella()
+        texts["docs/reports/T8-Report.md"] = self.report(8)
+        findings = validator.report_issues(texts, True, True)
+        self.assertTrue(any("T8-Report.md: report must be finalized" in item for item in findings))
+        for label in "ABCDEF":
+            with self.subTest(label=label):
+                extra = dict(texts)
+                extra[f"docs/reports/T9{label}-Report.md"] = self.report(9)
+                self.assertTrue(any("invalid task-report" in item for item in validator.report_issues(extra, True, True)))
+
+    def test_t9_exception_rejects_missing_finalized_or_completed_umbrella(self):
+        for before, after in (("Report state: DRAFT", "Report state: FINALIZED"),
+                              ("| IN PROGRESS |", "| COMPLETE |"),
+                              ("| Umbrella status | IN PROGRESS |", "")):
+            with self.subTest(after=after):
+                texts = self.t9_umbrella()
+                texts[validator.T9_UMBRELLA_REPORT] = texts[validator.T9_UMBRELLA_REPORT].replace(before, after)
+                self.assertTrue(any("T9 draft exception requires" in item for item in validator.report_issues(texts, True, True)))
+        texts = self.t9_umbrella()
+        del texts[validator.T9_UMBRELLA_REPORT]
+        self.assertTrue(any("T9 draft exception requires" in item for item in validator.report_issues(texts, True, True)))
+        self.assertTrue(any("T9 draft exception requires" in item for item in validator.report_issues(self.t9_umbrella(), False, True)))
+
+    def test_t9_finalization_uses_normal_gate_and_history_protection(self):
+        texts = self.t9_umbrella()
+        name = validator.T9_UMBRELLA_REPORT
+        content = texts[name].replace("Report state: DRAFT", "Report state: FINALIZED")
+        texts[name] = content
+        self.assertEqual(validator.report_issues(texts, True), [])
+        with temporary_directory() as directory:
+            root = Path(directory)
+            (root / "docs/reports").mkdir(parents=True)
+            (root / name).write_text(content, encoding="utf-8", newline="\n")
+            subprocess.run(["git", "init", "--quiet", str(root)], check=True)
+            subprocess.run(["git", "-C", str(root), "add", name], check=True)
+            subprocess.run(["git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+                            "user.email=fixture@example.test", "-c", "commit.gpgsign=false",
+                            "commit", "--quiet", "-m", "Freeze synthetic T9"], check=True)
+            self.assertEqual(validator.finalized_history_issues(root, {name: content}), [])
+            (root / name).write_text(content + "Changed\n", encoding="utf-8", newline="\n")
+            self.assertTrue(any("modified" in item for item in validator.finalized_history_issues(root, {name: content + "Changed\n"})))
+            self.assertTrue(any("deleted or renamed" in item for item in validator.finalized_history_issues(root, {})))
+
     def test_addendum_requires_existing_parent_and_sequential_number(self):
         texts = {
             "docs/reports/T1-Report.md": self.report(),

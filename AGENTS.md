@@ -46,6 +46,14 @@ Every Codex task must create a Markdown-only report during execution and finaliz
 - Final reports describe a named evidence cutoff. Do not invent the report commit's own SHA, future CI result, merge outcome, synchronization, independent review, or owner acceptance. After publishing a report, verify its PR/CI/merge and local/remote state and give those observed results in the final response; later written corrections require a new addendum.
 - Run `python scripts/validate_docs.py --require-finalized` before declaring completion or merging the completed task. The checks cover report numbering, required sections, and preservation of committed finalized versions. They support review; they do not supply owner acceptance or enforce GitHub branch protection.
 
+### Approved T9 umbrella reporting exception
+
+The owner's T9 initialization request (2026-11-07; reference OWNER-T9-INIT-2026-11-07) authorizes one umbrella task, **Project Documentation & Architecture Alignment**, with six sequential microtasks T9A–T9F. Keep the umbrella plan, microtask register, scopes, acceptance criteria, changes, validation, issues, GitHub evidence and approval references in exactly one `docs/reports/T9-Report.md`. Do not create lettered T9 reports, allocate T10, or finalize T9 during initialization or an intermediate microtask.
+
+Keep that report `DRAFT` with `Umbrella status: IN PROGRESS` recorded in its Task Information table until T9F passes and every required owner approval is recorded. Initialization and each separately authorized intermediate microtask may use the normal branch/PR/CI/merge workflow with that single draft. Before each such merge run `python scripts/validate_docs.py --require-finalized --allow-t9-draft`; the explicit exception permits only the in-progress T9 report and leaves every other finalization/history check intact. For T9F completion, use the normal `--require-finalized` command without the exception, finalize T9 once, then preserve it unchanged. Interim completion responses link the draft and report only the authorized portion's observed results; they never declare the umbrella engineering-complete.
+
+Initialization authorizes planning/reporting governance and reviewed publication only. Obtain explicit owner authorization before each microtask, execute one at a time, validate and record its result and owner review status, then stop. A microtask PASS or PR merge does not authorize its successor, complete T9, supply owner UAT, or approve any implementation stage A–L. T1–T8 reports, addenda and historical evidence remain immutable.
+
 ## PDF deliverables and documentation organization
 
 - Keep editable documents in the approved purpose folders under `docs/`: assignments, lab-guides, architecture, security, testing, governance, final-report, and related guide/index locations. Keep README.md and AGENTS.md at the root; code/configurations/tests/evidence stay in their designated folders.

@@ -255,7 +255,7 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_office_migration_preserves_unaffected_sources_pdfs_and_frozen_records(self):
         base = "d408c4571105bd42396dd5e71aae22f4f3d9290c"
-        sources = {"README.md", "docs/README.md", docs.ASSIGNMENT, docs.GUIDE,
+        sources = {"README.md", "AGENTS.md", "docs/README.md", docs.ASSIGNMENT, docs.GUIDE,
                    "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
                    "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
                    "docs/governance/DOCUMENTATION-BUILD.md"}
@@ -263,6 +263,19 @@ class PdfArtifactTests(unittest.TestCase):
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
         for name in files:
             if name in allowed or name.startswith("docs/deliverables/") or not name.endswith((".md", ".pdf", ".docx", ".xlsx")):
+                continue
+            old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+            self.assertEqual((ROOT / name).read_bytes(), old, name)
+
+    def test_t9_initialization_preserves_t8_specifications_office_and_history(self):
+        # T9 initialization permits governance only, including AGENTS/PDF; later
+        # microtasks require a separately approved scope/preservation baseline.
+        base = "1f8c7f9a99ee488fcb5673f6b3914e87ec50fed9"
+        allowed = {"AGENTS.md", "AGENTS.pdf", "docs/reports/INDEX.md", docs.MANIFEST,
+                   "scripts/validate_docs.py", "tests/test_validate_docs.py", "tests/test_build_docs.py"}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        for name in files:
+            if name in allowed:
                 continue
             old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
             self.assertEqual((ROOT / name).read_bytes(), old, name)
