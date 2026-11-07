@@ -14,7 +14,7 @@ Report state: DRAFT
 | Authorized work | Preflight, umbrella plan/register, one draft report, necessary reporting governance/checks, reviewed GitHub publication and synchronization |
 | Dependency | T8 FINALIZED; PR 11 merged at 1f8c7f9a99ee488fcb5673f6b3914e87ec50fed9; branch and main CI SUCCESS; local/tracking/live main agree |
 | Branch | codex/009-documentation-alignment-init; isolated clean checkout from main, git pull --ff-only origin main already up to date |
-| Record cutoff | Working draft; each evidence entry names its actual observation; final evidence cutoff/date reserved for T9F |
+| Record cutoff | Initialization evidence: 2026-11-07 23:15:47 UTC (18:15:47 America/Toronto); this report update's commit/checks, merge and synchronization are outside this cutoff; final T9 cutoff/date reserved for T9F |
 | Finalization | Not authorized during initialization; finalize once after T9F passes and all required owner approvals are recorded |
 | Owner UAT | PENDING; no acceptance confirmation supplied |
 
@@ -38,7 +38,7 @@ User-facing documents must be timeless and reusable: omit procurement/delivery d
 
 | Portion | Owner authorization reference/date | Execution status | Owner review status |
 | --- | --- | --- | --- |
-| Initialization | OWNER-T9-INIT-2026-11-07 / 2026-11-07 | Planning/governance VALIDATED; publication pending | PENDING |
+| Initialization | OWNER-T9-INIT-2026-11-07 / 2026-11-07 | Planning/governance VALIDATED; PR 12 initial-head CI PASS; final publication read-back follows cutoff | PENDING |
 | T9A | Not supplied | PLANNED; NOT STARTED | PENDING |
 | T9B | Not supplied | PLANNED; NOT STARTED | PENDING |
 | T9C | Not supplied | PLANNED; NOT STARTED | PENDING |
@@ -148,11 +148,12 @@ All observations are repository/documentation checks by the primary Codex agent,
 | No-change build plus independent hash/mtime comparison | No binary churn | All 25 maintained/archive PDF hashes and modification times unchanged after the no-change build; only AGENTS.pdf differed from pre-edit baseline | PASS |
 | Independent Git blob-to-file comparison against T8 | Preserve specifications, Office files and historical reports | Final local comparison: 77 of 84 existing files byte-identical; only seven approved existing paths changed. All five Office packages and 18 frozen report/archive files unchanged; T9 report is the one new file | PASS |
 | Poppler render and primary-agent visual inspection | Legible governance PDF, intact text/navigation/page breaks | All seven pages reviewed: title/contents, body, new exception, page transitions and final page; no clipping/overlap/missing glyph observed. Poppler reported missing optional Symbol/ArialUnicode display fonts; visible embedded text remained intact | PASS |
-| Manual candidate/content/metadata review; git diff --check | Reviewed public-safe scope and clean whitespace | All 85 candidate paths, source diff, new report and governance PDF/manifest reviewed; no private value/secret/raw evidence found; whitespace check PASS | PASS; staged/history read-back follows commit |
+| Manual candidate/content/metadata/staged/history review; git diff --check and git show --format= --check HEAD | Reviewed public-safe scope, clean whitespace and correct identities | All 85 candidates and eight staged paths reviewed, including source/new report/PDF/manifest; no private value/secret/raw evidence found. Initial commit 61c66f53c7553501b6acc6c5398b8e7f17a25a94 read-back verified both noreply identities and intended history/diff | PASS |
+| Initial-head PR/CI read-back; gh run watch 42424397713 --interval 10 --exit-status | Reviewed PR and exact-head checks pass | PR 12 open; initial head 61c66f53c7553501b6acc6c5398b8e7f17a25a94 passes push CI 42424367934 and PR CI 42424397713; no requested/submitted review or unresolved thread; live branch rules empty, main unprotected | PASS for initial published head |
 
 ### Initialization publication checks
 
-Local initialization checks above are complete. Review the final staged diff and new commit identities/history before publication, and use the explicit interim gate on that revision. Observe actual PR/exact-head CI/merge and synchronization afterward. Existing Python 3.12.14 and the six pinned documentation libraries were used; Mistune/Pygments are read from the existing ignored documentation dependency directory, without installation or modification.
+Local initialization checks and initial-head publication checks above are complete. Review this report update's final staged diff/new commit identities/history and run the explicit interim gate before publishing it. Observe final-head CI/merge/synchronization afterward and report them from read-back; they are not predicted here. Existing Python 3.12.14 and the six pinned documentation libraries were used; Mistune/Pygments are read from the existing ignored documentation dependency directory, without installation or modification.
 
 No T9A-T9F validation has been executed. Office native/layout trials and operational security checks are NOT TESTED in initialization; existing T7/T8 evidence remains historical.
 
@@ -160,7 +161,7 @@ No T9A-T9F validation has been executed. Office native/layout trials and operati
 
 Threats considered: a draft falsely implying completion, unapproved progression, weakened report immutability, loss of owner edits, unreviewed binaries/private values and invented lab evidence. Mitigations are explicit per-microtask gates, the exact-path draft exception, unchanged ordinary/history validation, isolated checkout, bounded candidate review and observed evidence only.
 
-Manual candidate/content/metadata review and independent byte preservation comparison PASS. Staged diff/new commit history read-back remains the pre-push gate. Raw records/private conversations remain outside Git. Only symbolic/reserved lab examples may be public. No software install, device configuration, remote enrollment, security probe, production access or infrastructure operation is authorized or executed. Repository rules, licensing and owner UAT remain separate owner decisions.
+Manual candidate/content/metadata/staged/history review and independent byte preservation comparison PASS at the initialization cutoff. The final report update still receives the same pre-push gate. Raw records/private conversations remain outside Git. Only symbolic/reserved lab examples may be public. No software install, device configuration, remote enrollment, security probe, production access or infrastructure operation is authorized or executed. Repository rules, licensing and owner UAT remain separate owner decisions.
 
 ## E. GitHub Operations
 
@@ -168,11 +169,15 @@ Manual candidate/content/metadata review and independent byte preservation compa
 
 [T8 PR 11](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/11) and [main CI 42361085696](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42361085696) establish the dependency. The current branch is codex/009-documentation-alignment-init. Preflight found no active ruleset, main unprotected and no concurrent open PR; no setting was changed. Recheck review/rule requirements and exact-head CI before merge, without bypassing protection. Use a normal local noreply merge only where permitted.
 
-Initialization commit, PR, exact-head CI, merge and final synchronization: PENDING. Record actual observed references after each operation. The default workflow accepts working drafts; the explicit interim finalization gate is an additional local publication check. No future SHA, CI result or acceptance is claimed.
+Initialization content commit [61c66f53c7553501b6acc6c5398b8e7f17a25a94](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/commit/61c66f53c7553501b6acc6c5398b8e7f17a25a94) was pushed after the interim gate and noreply author/committer read-back. [PR 12](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/12) is open. This initial exact head passed [push CI 42424367934](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42424367934) and [PR CI 42424397713](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42424397713). Reviews/threads are empty and no reviewer is requested; this is no independent human sign-off. Live main remains the T8 merge at the cutoff.
+
+The GitHub connector could read the repository but returned HTTP 403 for PR creation. The already authenticated owner GitHub CLI created the same authorized PR; no account/permission setting changed. Git accepted the existing remote through its canonical-case redirect; its URL was preserved.
+
+This draft update's commit, final-head CI, merge and synchronization remain PENDING beyond the named initialization cutoff and must be observed before closing publication. The default workflow accepts working drafts; the explicit interim finalization gate is an additional local publication check. No future SHA, CI result or owner acceptance is claimed. This report remains DRAFT for the rest of the authorized umbrella process.
 
 ## F. Outstanding Issues
 
-- Initialization publication remains pending for this locally validated draft revision.
+- Final report-update publication/CI, merge and synchronization are outside the initialization cutoff; verify and give observed results in the completion response. No local documentation/check defect remains.
 - T9A-T9F each require their own owner authorization. No microtask has started.
 - Physical topology/private values, capacity and detailed design reconciliation belong to T9A. User-facing status/procurement/internal-task wording, validator contract changes and template updates belong to the corresponding later microtasks.
 - The specific prior Office formatting defect list is not in the supplied request; record confirmed issues before T9E repairs. No defect is declared fixed here.
@@ -183,7 +188,7 @@ Initialization commit, PR, exact-head CI, merge and final synchronization: PENDI
 
 | Area | Status |
 | --- | --- |
-| Initialization planning/governance | VALIDATED; local verification PASS; publication pending |
+| Initialization planning/governance | VALIDATED; local verification and initial-head PR CI PASS; final publication read-back follows cutoff |
 | T9A-T9F | PLANNED; NOT STARTED; engineering checks NOT TESTED |
 | T9 overall | IN PROGRESS; completion NOT TESTED |
 | Report | DRAFT; finalization deferred to approved T9F |
