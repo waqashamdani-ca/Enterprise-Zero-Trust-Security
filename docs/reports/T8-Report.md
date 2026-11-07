@@ -1,6 +1,6 @@
 # T8 - Plain-English Lab Guide Rewrite and Instructional Redesign
 
-Report state: DRAFT
+Report state: FINALIZED
 
 ## A. Task Information
 
@@ -8,7 +8,8 @@ Report state: DRAFT
 | --- | --- |
 | Task ID | T8 |
 | Execution date | 2026-11-07, America/Toronto |
-| Evidence cutoff | DRAFT; finalization/publication observations will be recorded before this report is frozen |
+| Evidence cutoff | 2026-11-07 09:43:51 UTC (04:43:51 America/Toronto); final report commit/checks/merge/synchronization are outside this cutoff |
+| Finalization date | 2026-11-07; immutable after finalization; later publication observations belong in the final response/PR read-back or an authorized addendum |
 | Authority | Owner T8 request and separate read-only reviewer-agent permission, 2026-11-07; originals retained privately |
 | Authorized scope | Lab Guide rewrite/PDF redesign, necessary navigation/references, focused checks, Markdown-only report and reviewed GitHub synchronization |
 | Dependency | T7 FINALIZED; PR 10 merged at df36c2a0495b83aa8036985d38de3d71a9242824; main workflow 42311527582 SUCCESS; local/tracking/live main agreed before changes |
@@ -45,7 +46,7 @@ Changed paths are limited to 15 documentation/validation artifacts:
 - [Report index](INDEX.md), this Markdown-only report and the generated [manifest](../documentation-manifest.json).
 - scripts/build_docs.py, scripts/validate_docs.py, tests/test_build_docs.py and tests/test_validate_docs.py.
 
-Guide-only rendering uses navy/gray headings, 10-point body text, 8.9-point table text and 8.8-point code, an uncluttered linked contents list, bookmarks/page numbers and intact filenames. Code blocks and their risk/target context stay together, each numbered action stays on a page, and tables repeat headers. The final guide has 41 pages and 45 named destinations. The other changed PDFs have 2 appendix, 3 build-guide and 8 Test Plan pages: 54 changed/new pages visually reviewed. No Office or report PDF was created.
+Guide-only rendering uses navy/gray headings, 10-point body text, 8.9-point table text and 8.8-point code, an uncluttered linked contents list, bookmarks/page numbers and intact filenames. Code blocks and their risk/target context stay together, each numbered action stays on a page, tables repeat headers and paragraph widow/orphan controls prevent a lone line at a page break. The final guide has 41 pages and 45 named destinations. The other changed PDFs have 2 appendix, 3 build-guide and 8 Test Plan pages: 54 changed/new pages visually reviewed. No Office or report PDF was created.
 
 No architectural decision, requirement, rubric, risk acceptance, license or repository setting changed. Conditional example profiles do not approve software versions/backends. Stage-entry values and approvals remain dependencies.
 
@@ -67,13 +68,15 @@ All results below are documentation engineering observations on 2026-11-07. They
 | Exact historical-table and Office-label comparison | Both old tables preserved exactly; every actual filename/worksheet/section reference present | PASS |
 | No-change build with before/after hashes and mtimes | All 25 current/archived public PDFs retain identical hashes/mtimes; 20 maintained outputs unchanged | PASS |
 | Poppler rendering and manual image review | All 41 guide pages plus all 13 supporting changed/new PDF pages reviewed; title/contents/tables/code/links/footers and transitions readable, no clipping/overlap/missing glyph observed | PASS |
-| Independent editorial read-through and correction read-back | Separate AI reviewer inspected the entire source and scope; final verdict PASS, no remaining substantive source finding | PASS |
-| git diff --check; complete candidate/staged/history review | No whitespace finding; reviewed public-safe paths only; final publication read-back remains pending at this draft cutoff | PASS for local review |
-| python scripts/validate_docs.py --require-finalized | Required after report finalization, before completed-task merge; not yet run at this draft cutoff | NOT TESTED |
+| Independent editorial/visual review and correction read-back | Separate AI reviewer inspected the entire source/scope, all 41 final PDF pages and 31 at original size; final verdicts PASS, no remaining substantive finding | PASS |
+| git diff --check; complete candidate/staged/history review | No whitespace finding; reviewed public-safe paths only; final publication read-back remains pending at the named evidence cutoff | PASS for local review |
+| python scripts/validate_docs.py --require-finalized | Required after report finalization, before completed-task merge; not yet run at the named evidence cutoff | NOT TESTED |
 | FWT-01 through FWT-10; hardware and lab procedures | No authorized operational execution in T8 | NOT TESTED |
 | Independent human review / owner UAT | No independent human sign-off or explicit owner acceptance supplied | NOT TESTED / PENDING |
 
-Commands used the existing pinned documentation environment; no dependencies were installed. Initial checks found a missing procedure recovery label, an outdated keyword/mutation fixture, and two Markdown paragraph/list boundaries; those were corrected. A visual pass found command context separated from its block; the renderer and regression now keep both together. Early temporary-fixture and Bash signal-pipe attempts failed under sandbox restrictions; the same bounded offline checks passed with normal local fixture access. Poppler emitted fallback-font notices for unused default font resources; used Vera body fonts are embedded, standard base-14 Courier code is searchable, and all reviewed glyphs display. pdffonts was unavailable; PDF font resources were inspected directly with pypdf. No unavailable tool or failed attempt was presented as a passing result.
+Commands used the existing pinned documentation environment; no dependencies were installed. Initial checks found a missing procedure recovery label, an outdated keyword/mutation fixture, and two Markdown paragraph/list boundaries; those were corrected. A visual pass found command context separated from its block; the renderer and regression now keep both together. Early temporary-fixture and Bash signal-pipe attempts failed under sandbox restrictions; the same bounded offline checks passed with normal local fixture access. Poppler emitted fallback-font notices for unused default font resources; used Vera body fonts are embedded, standard base-14 Courier code is searchable, and all reviewed glyphs display. pdffonts was unavailable; PDF font resources were inspected directly with pypdf. One ad-hoc stability invocation omitted the existing dependency path and failed to import Mistune; the corrected invocation passed using the same existing packages. No unavailable tool or failed attempt was presented as a passing result.
+
+The separate reviewer and primary read-back agree on final guide PDF SHA-256: 81eebfdcf0e9061002334b40bad525b7c80f3fa18c4d37985d6d98b98a879d64. The primary reviewed the 13 supporting pages and the guide during layout iteration; the separate reviewer covered every final-layout page after the last typography adjustment.
 
 ### Command and configuration review
 
@@ -93,15 +96,19 @@ Manual review covers the complete candidate set, filenames, source/configuration
 
 Authenticated identity: waqashamdani-ca, ID 315227303; push/admin permission verified. [Repository](https://github.com/waqashamdani-ca/enterprise-zero-trust-security): PUBLIC, default main. Both local author and committer identities resolve to 315227303+waqashamdani-ca@users.noreply.github.com. Global settings were not changed.
 
-The clean isolated checkout started from main and git pull --ff-only origin main was already up to date. Read-only live inspection found no concurrent open PR, no active ruleset and main unprotected; no protection/reviewer setting was modified. The focused branch is codex/008-plain-english-lab-guide. Commit, push, PR, CI, merge and final synchronization remain pending at this draft cutoff; no future result or report-commit SHA is claimed.
+The clean isolated checkout started from main and git pull --ff-only origin main was already up to date. Read-only live inspection found no concurrent open PR, no active ruleset and main unprotected; no protection/reviewer setting was modified. The focused branch is codex/008-plain-english-lab-guide.
+
+Reviewed content commit 7bad123bccb220d6cef11d1dee4e39535cd18e8d was pushed with the verified noreply author/committer. [PR 11](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/11) is open. Its exact initial head passed [push CI 42360623810](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42360623810) and [PR CI 42360674838](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42360674838). PR read-back showed MERGEABLE/CLEAN, no requested reviews and no submitted human review. The last paragraph-flow refinement was validated locally after this initial CI.
+
+The GitHub connector returned HTTP 403 for PR creation; the already authenticated owner GitHub CLI created the same authorized PR. Git accepted the existing remote URL with a case-canonical repository redirect; no remote/account setting changed. Final report/style commit, exact-final-head CI, merge and local/live synchronization remain outside the named evidence cutoff. They must be observed and reported after publication, without inventing this report commit's own SHA or future outcomes.
 
 ## F. Outstanding Issues
 
-No unresolved documentation defect after the final editorial read-back. Remaining implementation dependencies are owner approval of versions/backends/private values, delivered/compatible hardware and exact disk/recovery plan, lawful setup/activation, independently isolated egress and the selected encrypted-storage mount/unmount/recovery method. These are not completed by guide publication. No beginner usability trial or independent human review was performed. Publication/finalization remain to be observed.
+No unresolved documentation defect after the final editorial read-back. Remaining implementation dependencies are owner approval of versions/backends/private values, delivered/compatible hardware and exact disk/recovery plan, lawful setup/activation, independently isolated egress and the selected encrypted-storage mount/unmount/recovery method. These are not completed by guide publication. No beginner usability trial or independent human review was performed. Final report commit/checks, merge and synchronization remain outside the named evidence cutoff and must be reported from later actual observations.
 
 ## G. Completion Status
 
-Local documentation verification: PASS. Separate AI editorial review and primary-agent PDF visual review: PASS. Report finalization/publication: IN PROGRESS. Independent human review: NOT TESTED. Owner UAT: PENDING. Lab implementation: PLANNED; operational controls/tests: NOT TESTED. No stage A-L or next task is authorized by these results.
+Documentation implementation/local verification: PASS. Separate AI editorial/final-PDF review and primary-agent supporting/iterative PDF review: PASS. This report: FINALIZED. Final report publication/checks/merge/synchronization: PENDING beyond the cutoff, to be verified before declaring T8 complete. Independent human review: NOT TESTED. Owner UAT: PENDING. Lab implementation: PLANNED; operational controls/tests: NOT TESTED. No stage A-L or next task is authorized by these results.
 
 ## H. Next Task
 

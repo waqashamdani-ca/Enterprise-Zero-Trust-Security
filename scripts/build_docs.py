@@ -352,7 +352,8 @@ class Builder:
             self.style = ParagraphStyle("assignment-body", parent=self.style, fontSize=10, leading=13.4, spaceAfter=6)
             self.cell_style = ParagraphStyle("assignment-cell", parent=self.style, fontSize=9.0, leading=11.8, spaceAfter=0)
         elif source == GUIDE:
-            self.style = ParagraphStyle("guide-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=6)
+            self.style = ParagraphStyle("guide-body", parent=self.style, fontSize=10, leading=13.7, spaceAfter=6,
+                                        allowWidows=0, allowOrphans=0)
             self.cell_style = ParagraphStyle("guide-cell", parent=self.style, fontSize=8.9, leading=11.7, spaceAfter=0)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
