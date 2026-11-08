@@ -423,7 +423,34 @@ class AssignmentContractTests(unittest.TestCase):
 
     def test_short_readiness_controls_remain_required(self):
         self.assert_rejected(self.assignment, "backup and recovery", "storage", "hardware readiness")
-        self.assert_rejected(self.assignment, "owner approval", "student discretion", "hardware readiness")
+        self.assert_rejected(self.assignment, "owner approval covering changes, validation and rollback",
+                             "student discretion", "hardware readiness")
+
+    def test_prepared_environment_and_safety_gaps_are_rejected(self):
+        for before in ("three security boundaries", "sufficient resources", "home/production isolation",
+                       "required network flows and denials", "console recovery", "original Windows disk"):
+            with self.subTest(before=before):
+                self.assert_rejected(self.assignment, before, "omitted", "hardware readiness")
+        for before in ("keep uplinks disconnected", "never probe them", "lab-owned mock targets"):
+            with self.subTest(before=before):
+                # The first phrase begins a sentence in the assignment.
+                original = before[0].upper() + before[1:] if before.startswith("keep ") else before
+                self.assert_rejected(self.assignment, original, "omitted", "protected-network safeguards")
+
+    def test_physical_topology_and_timeless_assignment_are_required(self):
+        self.assert_rejected(self.assignment, "HP desktop with physical OPNsense",
+                             "virtual OPNsense", "physical firewall")
+        self.assert_rejected(self.assignment, "exactly three workload", "four virtual machines and other",
+                             "three-workload architecture")
+        for phrase in ("Status: PLANNED.", "Ordered equipment arrives soon.", "Start T9C now."):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(self.assignment, "## Learning Objectives",
+                                     "## Learning Objectives\n\n" + phrase,
+                                     "internal task" if "T9C" in phrase else "execution status")
+
+    def test_assignment_sections_cannot_be_duplicated_or_reordered(self):
+        self.assert_rejected(self.assignment, "## Completion Criteria", "## Learning Objectives",
+                             "seven required sections")
 
 
 if __name__ == "__main__":

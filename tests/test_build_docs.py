@@ -260,22 +260,24 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertLessEqual(len(reader.pages), 4)
         text = "\n".join(page.extract_text() for page in reader.pages)
         self.assertNotIn("Assignment contents", text)
-        self.assertNotRegex(text, r"\b(?:T6A?|T7|A-L)\b")
-        self.assertIn("PLANNED", text)
-        self.assertIn("NOT TESTED", text)
+        self.assertNotRegex(text, r"\b(?:T[0-9]+[A-F]?|Codex|A-L|PLANNED|NOT TESTED|UAT PENDING)\b")
         for name in validator.DELIVERABLE_FILENAMES:
             self.assertTrue(any(name in line for line in text.splitlines()), name)
         self.assertTrue(any(all(name in p.extract_text() for name in validator.DELIVERABLE_FILENAMES)
                             for p in reader.pages))
-        self.assertTrue(any(all(f"FWT-{n:02d}" in p.extract_text() for n in range(1, 11))
-                            for p in reader.pages))
+        pages = [page.extract_text() for page in reader.pages]
+        # Tables may continue with repeated headers; each complete requirement
+        # and its matching test must stay on one page without a split row.
+        for row in re.findall(r"^\| (FWR-\d{2}) \| ([^|]+) \| (FWT-\d{2}) \|$", content.decode(), re.M):
+            self.assertTrue(any(all(re.sub(r"\s+", "", cell) in re.sub(r"\s+", "", page)
+                                    for cell in row) for page in pages), row[0])
         for title in validator.ASSIGNMENT_HEADINGS:
             self.assertIn(docs.anchor_for(title, set()), reader.named_destinations)
         for alias in validator.ASSIGNMENT_COMPATIBILITY_ANCHORS:
             self.assertIn(alias, reader.named_destinations)
         self.assertIn("100 points", text)
         self.assertEqual(docs.inspect_pdf(data, docs.ASSIGNMENT, content, sources)["text_token_coverage"], 1.0)
-        rubric = content.decode().partition("## Evaluation Criteria")[2].split("\n## ", 1)[0]
+        rubric = content.decode().partition("## Evaluation Rubric")[2].split("\n## ", 1)[0]
         weights = [(name.strip(), int(points)) for name, points in
                    re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
         self.assertEqual(weights, list(validator.RUBRIC_WEIGHTS))
@@ -303,8 +305,8 @@ class PdfArtifactTests(unittest.TestCase):
             self.assertEqual(actual, old, name)
 
     def test_t9_initialization_preserves_t8_specifications_office_and_history(self):
-        # Check the immutable published initialization snapshot. T9A's live
-        # checkout receives its own exact-path preservation contract below.
+        # Check the immutable published initialization snapshot. Each later
+        # microtask has a separate bounded preservation contract below.
         base = "1f8c7f9a99ee488fcb5673f6b3914e87ec50fed9"
         published = "1fbc006450d5a9815844202bf3f1098283f8a0b6"
         allowed = {"AGENTS.md", "AGENTS.pdf", "docs/reports/INDEX.md", docs.MANIFEST,
@@ -319,18 +321,70 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_t9a_preserves_all_excluded_sources_pdfs_office_and_history(self):
         base = "1fbc006450d5a9815844202bf3f1098283f8a0b6"
+        published = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
         allowed = {"docs/architecture/ARCHITECTURE.md", "docs/architecture/ARCHITECTURE.pdf",
                    "docs/governance/DECISIONS.md", "docs/governance/DECISIONS.pdf",
                    "docs/governance/RISKS.md", "docs/governance/RISKS.pdf",
                    "scripts/build_docs.py", "tests/test_build_docs.py", docs.MANIFEST,
                    "docs/reports/T9-Report.md"}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", published]).decode().splitlines()
         self.assertEqual(set(current), set(files), "T9A introduces no additional public files")
         for name in files:
             if name not in allowed:
                 old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+                actual = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+                self.assertEqual(actual, old, name)
+
+    def test_t9b_preserves_every_excluded_file_and_other_t9_sections(self):
+        base = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
+        allowed = {docs.ASSIGNMENT, docs.ASSIGNMENT[:-3] + ".pdf", docs.MANIFEST,
+                   "scripts/validate_docs.py", "tests/test_validate_docs.py", "tests/test_build_docs.py",
+                   "scripts/validate_office_templates.py", "tests/test_office_templates.py",
+                   "docs/reports/T9-Report.md"}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files), "T9B introduces no additional public files")
+        for name in files:
+            if name not in allowed:
+                old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
                 self.assertEqual((ROOT / name).read_bytes(), old, name)
+        report = "docs/reports/T9-Report.md"
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + report])
+        new = (ROOT / report).read_bytes()
+        for value in (old, new):
+            self.assertEqual(value.count(b"### T9B - Assignment Refinement\n"), 1)
+            self.assertEqual(value.count(b"### T9C - Lab Guide Simplification\n"), 1)
+        def outside_t9b(value):
+            before, rest = value.split(b"### T9B - Assignment Refinement\n", 1)
+            _, after = rest.split(b"### T9C - Lab Guide Simplification\n", 1)
+            return before, after
+        self.assertEqual(outside_t9b(new), outside_t9b(old))
+        old_manifest = json.loads(subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.MANIFEST]))
+        new_manifest = json.loads((ROOT / docs.MANIFEST).read_bytes())
+        for manifest in (old_manifest, new_manifest):
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.ASSIGNMENT]
+        self.assertEqual(new_manifest, old_manifest)
+
+    def test_assignment_resources_match_architecture_and_unchanged_contracts(self):
+        content = (ROOT / docs.ASSIGNMENT).read_text(encoding="utf-8")
+        architecture = (ROOT / docs.ARCHITECTURE).read_text(encoding="utf-8")
+        rows = re.findall(r"^- \*\*(DC1|WIN1|APP1), (Corporate|Restricted):\*\* .+?; (\d+) vCPU / (\d+) GiB RAM / (\d+) GiB disk\.$", content, re.M)
+        self.assertEqual([(row[0], row[1]) for row in rows],
+                         [("DC1", "Corporate"), ("WIN1", "Corporate"), ("APP1", "Restricted")])
+        expected = re.findall(r"^\| (DC1|WIN1|APP1) \| (\d+) \| (\d+) \| (\d+) \|", architecture, re.M)
+        self.assertEqual([(r[0], *r[2:]) for r in rows], expected)
+        self.assertEqual([sum(int(row[i]) for row in rows) for i in (2, 3, 4)], [6, 16, 160])
+        self.assertIn("Physical OPNsense is separate from these totals", content)
+        base = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                        "7387219ab2c4690e5bbed3615c47d892f13b0e12:" + docs.ASSIGNMENT]).decode()
+        def retained_rows(value):
+            return [line for line in value.splitlines()
+                    if (re.match(r"^\| FWR-\d{2} \|", line) and not line.startswith("| FWR-02 |"))
+                    or re.match(r"^\| `0[1-5]-", line)
+                    or any(line.startswith("| " + title + " |") for title, _ in validator.RUBRIC_WEIGHTS[1:])]
+        self.assertEqual(retained_rows(content), retained_rows(base))
+        self.assertEqual(len(retained_rows(content)), 18)
 
     def test_guide_pdf_keeps_filenames_whole_and_preserves_navigation(self):
         content = (ROOT / docs.GUIDE).read_bytes()

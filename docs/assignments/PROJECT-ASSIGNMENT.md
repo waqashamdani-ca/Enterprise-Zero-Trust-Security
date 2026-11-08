@@ -2,59 +2,65 @@
 
 **HL-CYB-001 | Four-week cybersecurity engineering assignment**
 
-Status: **PLANNED**. Lab controls: **NOT TESTED**.
-
 ## Project Overview
 
 Purple Eye, a fictional organization, needs an analyst to read reports, an engineer to read maintenance instructions and an unassigned user to be denied access. A separate administrator manages the lab.
 
-Build an isolated lab that demonstrates these decisions, remote access and application recovery using synthetic people and data. Apply Zero Trust: check identity and permission for each resource; network membership alone grants no access.
+Use an isolated lab to demonstrate these access decisions, remote access and application recovery with synthetic people and data. Apply [Zero Trust](https://csrc.nist.gov/pubs/sp/800/207/final): check identity and permission for each resource; network membership alone grants no access. Submit evidence showing what works, what fails and any limits.
 
 <a id="project-objectives"></a>
 
 ## Learning Objectives
 
-- Build three network zones and protect administration.
-- Verify permitted, denied, remote and revoked access.
-- Investigate security events, automate one operation and restore a backup.
-- Present measured results and limitations with clear evidence.
+- Verify a prepared lab, protect administration and enforce network boundaries.
+- Manage Windows identities and distinguish standard from privileged permissions.
+- Enforce application roles, trusted HTTPS and narrow Tailscale access; revoke access.
+- Investigate security events, repeat one small automation safely and restore an encrypted backup in isolation.
+- Test the results and explain them through clear evidence and a final presentation.
 
 <a id="project-scope"></a>
 <a id="technologies-and-resources"></a>
+<a id="what-you-will-build"></a>
 
-## What You Will Build
+## Lab Environment
 
-**Infrastructure and identities**
+Use the existing **Dell Precision 5820 with Proxmox VE**, **HP desktop with physical OPNsense**, **TP-Link TL-SG108E managed switch** and **GL.iNet Beryl AX upstream router**. OPNsense provides physical firewall routing; the Dell hosts exactly three workload virtual machines (VMs):
 
-- One Proxmox host; four virtual machines (VMs): OPNsense firewall, Windows Server, Windows endpoint and Linux application server.
-- Three zones: **Management, Corporate and Restricted**.
-- Three synthetic standard users, three role groups and one separate privileged administrator.
-- Active Directory (AD), Domain Name System (DNS) and Group Policy for Windows accounts and settings.
-- One simple certificate authority (CA), one HTTPS application certificate for encrypted web access and Tailscale-only remote access.
+- **DC1, Corporate:** Windows Server with Active Directory (AD), Domain Name System (DNS) and Group Policy; 2 vCPU / 6 GiB RAM / 64 GiB disk.
+- **WIN1, Corporate:** Windows client; 2 vCPU / 6 GiB RAM / 64 GiB disk.
+- **APP1, Restricted:** Linux with Apache serving the HTTPS application; 2 vCPU / 4 GiB RAM / 32 GiB disk.
 
-**Application identity:** AD manages Windows lab accounts. The application uses separate test accounts, distinct passwords and manually assigned roles. Removing an application role must deny further access. Enterprise single sign-on is excluded.
+The guest allocation totals **6 vCPU / 16 GiB RAM / 160 GiB virtual disks**. Physical OPNsense is separate from these totals. The [Architecture](../architecture/ARCHITECTURE.md) owns the detailed capacity model; allocations do not prove available capacity. See the [glossary](../guides/GLOSSARY.md) for terms.
 
-**Readiness:** Use existing and ordered hardware. Confirm availability, compatibility, current data and services, backup and recovery readiness. Preserve the original Windows disk, data and services. Ordered equipment is not assumed delivered, installed or validated. Start the four weeks after readiness approval.
+Three logical security zones are required: **Management** for restricted administration, **Corporate** for DC1 and WIN1, and **Restricted** for APP1. The wider home lab's six-zone/VLAN design is optional.
 
-**Safety boundaries**
+**Verify the prepared environment before dependent work:**
 
-- Use lab identities, credentials and synthetic data only. No connectivity, trust or synchronization with home or production; no corporate Microsoft 365, PE-DAP, customer data, corporate website testing or hosting integration.
-- Start offline. Online access requires approved independent isolation. Inspect protected settings passively; use lab-owned mock targets, never probes of home or production systems.
-- Obtain owner approval before disk formatting, Proxmox installation, network changes or other destructive or high-risk work. Follow the Lab Guide's detailed controls.
+- Confirm Proxmox and physical OPNsense are accessible to the authorized administrator, with console recovery available.
+- Confirm the three security boundaries, restricted management and sufficient resources for the three workloads, host reserves and temporary restore.
+- Demonstrate home/production isolation and verify required network flows and denials using configuration inspection and lab-owned mock targets.
+- Record current data and services, backup and recovery readiness; preserve the original Windows disk, data and services.
 
-**Excluded**
+Resolve readiness gaps with the owner before continuing.
 
-- Extra VMs or zones, high availability, clustering and additional remote providers.
-- Multi-level CA and enterprise timing, retention or recovery targets.
+**Safety:** use separate lab identities, credentials and synthetic data. No home/production trust, synchronization, credential reuse, corporate Microsoft 365 connection, PE-DAP code, customer data, corporate website testing or hosting integration is permitted. Keep uplinks disconnected until independent isolation and egress receive owner approval. Inspect protected networks passively; never probe them. Each implementation stage requires explicit owner approval covering changes, validation and rollback; follow the [Lab Implementation Guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md).
 
-## Project Requirements
+<a id="implementation-approach"></a>
+<a id="four-week-implementation-plan"></a>
+<a id="project-requirements"></a>
 
-FWR labels a requirement; FWT labels its matching [test](../testing/TEST-PLAN.md). Keep these labels in your records and complete every mandatory subcheck.
+## Project Activities
+
+Plan for four weeks at 8-12 focused hours weekly after readiness approval: verify the environment; configure identity and endpoints; secure application and remote access; then investigate events, automate, restore and validate. Use the guide for procedures and approvals. Extra workload VMs, mandatory extra zones, enterprise single sign-on, high availability and additional remote providers are outside scope.
+
+Create three synthetic standard users, three role groups and one separate privileged administrator. AD manages Windows accounts. The application uses separate test accounts, distinct passwords and manually assigned roles. Removing an application role must deny further access; an AD change alone is insufficient. Demonstrate all [six application cases](../testing/TEST-PLAN.md#six-application-access-cases) and revocation of existing and fresh requests.
+
+FWR labels a requirement; FWT labels its matching [test](../testing/TEST-PLAN.md). Complete every mandatory subcheck and keep these IDs in the answer sheets.
 
 | ID | Required result | Test |
 | --- | --- | --- |
 | FWR-01 | Keep lab networks, trust, credentials and data separate from home and production; verify isolation by configuration review and a lab-owned mock boundary. | FWT-01 |
-| FWR-02 | Run one host, four VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits. | FWT-02 |
+| FWR-02 | Verify the prepared Dell/Proxmox host, physical HP/OPNsense firewall, three workload VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits. | FWT-02 |
 | FWR-03 | Create separate AD with three standard users, three role groups and one privileged admin. Pass six application allow/deny cases and revoke access. | FWT-03 |
 | FWR-04 | Use supported Windows and Linux systems, enabled host firewalls, recorded updates and separate standard-user and administrator rights. | FWT-04 |
 | FWR-05 | Sign one HTTPS application certificate with one CA; verify hostname, trust, validity and untrusted-client rejection. | FWT-05 |
@@ -64,11 +70,13 @@ FWR labels a requirement; FWT labels its matching [test](../testing/TEST-PLAN.md
 | FWR-09 | Restore the agreed application scope from one encrypted backup stored away from the host; record actual recovery time, data checks and exclusions. | FWT-09 |
 | FWR-10 | Link requirements and tests to reviewed evidence; submit files and sanitized GitHub work. Separate engineering verification from owner acceptance. | FWT-10 |
 
+Use one certificate authority (CA) to sign the APP1 HTTPS certificate. Restrict Tailscale to APP1 HTTPS only, without subnet routes, exit nodes or public sharing. Collect five event categories: directory logon success and failure, application allow and deny, and firewall denial. Use the guide's local-capacity summary as the single automation. Restore APP1 once into a disconnected segment, preserving the original and backup with copied Tailscale inactive; verify data, HTTPS and roles and measure elapsed recovery time.
+
 <a id="expected-deliverables"></a>
 
 ## Required Deliverables
 
-These five files are **available as blank templates** in the [deliverable library](../README.md#editable-lab-deliverable-templates). Complete them during approved lab work. Keep working copies and raw evidence private; submit reviewed summaries under `docs/deliverables/`.
+The five files are available as blank templates in the [deliverable library](../README.md#editable-lab-deliverable-templates). Complete them during approved lab work. Keep working copies and raw evidence private; submit reviewed summaries under `docs/deliverables/`.
 
 | Filename | What to record |
 | --- | --- |
@@ -78,40 +86,29 @@ These five files are **available as blank templates** in the [deliverable librar
 | `04-Troubleshooting-and-Lessons.xlsx` | Problems, diagnosis, fixes, retests and lessons (FWR-10). |
 | `05-Final-Project-Submission.docx` | Results, evidence, rubric, limits and acceptance (FWR-10). |
 
-<a id="implementation-approach"></a>
-
-## Four-Week Implementation Plan
-
-Follow the [Lab Implementation Guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md). Meet each phase checkpoint and obtain the required approvals.
-
-| Week | Phase and activities | Checkpoint |
-| --- | --- | --- |
-| 1 | 1. Infrastructure and Network: readiness, approved host and firewall installation and three zones. | Isolation, network policy and recovery access verified. |
-| 2 | 2. Identity and Endpoint Security: AD accounts, groups and endpoint baselines. | Standard logon, endpoint controls and separate privileges verified. |
-| 2-3 | 3. Zero Trust Access Controls: HTTPS, application roles and scoped Tailscale. | Six access cases, application revocation and remote allowed, denied and revoked access verified. |
-| 3-4 | 4. Monitoring, Automation and Recovery: events, denial investigation, one operation, backup and restore. | Five events, investigation, safe repetition and successful restore recorded. |
-| 4 | 5. Validation and Final Submission: tests, defect resolution and reviewed submission. | All ten tests have evidence; submission is ready for owner review. |
-
-Allow 8-12 focused hours weekly after readiness approval. Prerequisite delays move dates, never safety boundaries.
-
 <a id="success-criteria"></a>
+<a id="evaluation-criteria"></a>
 
-## Evaluation Criteria
-
-Grade demonstrated results, not plans alone. All mandatory subchecks must pass. Record actual results and failures; mark unexecuted checks **NOT TESTED**. Support denials with a working control and second policy/log observation. Critical isolation or security failures block acceptance regardless of score.
+## Evaluation Rubric
 
 | Assessment area | Points | Evidence for full credit |
 | --- | --- | --- |
-| Infrastructure and Network Security | 25 | Working four-VM lab, three zones, protected administration and isolation and default-deny evidence. |
+| Infrastructure and Network Security | 25 | Prepared-environment verification, three-zone segmentation, restricted management, correct network permissions and isolation evidence. |
 | Identity and Access Controls | 25 | AD and endpoint controls, six role cases, access revocation, HTTPS and restricted Tailscale. |
 | Security Monitoring and Operations | 20 | Five events, one explained denial and safely repeatable automation. |
 | Testing and Recovery | 20 | Complete test records, second observations and a successful restore with measured limits. |
 | Documentation and Final Submission | 10 | Five clear submissions, traceable sanitized evidence and accurate results and limitations. |
 
-**Total: 100 points.** Owner user acceptance testing (UAT) is a separate, explicit decision. See the [Acceptance Criteria](../testing/ACCEPTANCE-CRITERIA.md); a passing documentation check does not demonstrate a working lab.
+**Total: 100 points.**
 
-## References
+Grade demonstrated results, not plans alone. All mandatory subchecks must pass. Support each denial with a working allowed control and a separate policy or log observation. Critical isolation or security failures block acceptance regardless of score.
 
-- [NIST SP 800-207: Zero Trust Architecture](https://csrc.nist.gov/pubs/sp/800/207/final) - resource-focused access principles.
-- [Lab Implementation Guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md) and [Architecture](../architecture/ARCHITECTURE.md) - procedures, boundaries and sizing.
-- [Glossary](../guides/GLOSSARY.md) - terminology used in the project.
+<a id="references"></a>
+
+## Completion Criteria
+
+- Meet all ten requirements and every mandatory subcheck of FWT-01 through FWT-10, supported by actual results, evidence and second observations. Record failures and unexecuted checks honestly in the answer sheets.
+- Resolve critical/high safety issues and document remaining limitations, troubleshooting and recovery scope. A documentation check alone does not demonstrate a working lab.
+- Submit the five completed files and reviewed, sanitized GitHub artifacts. Keep credentials, actual addresses, private inventories, raw logs and backups outside the public repository.
+- Present the access decisions, security investigation, automation and isolated recovery results, with links to their evidence.
+- Record engineering verification separately from the owner's explicit user acceptance testing (UAT) decision, following the [Acceptance Criteria](../testing/ACCEPTANCE-CRITERIA.md).

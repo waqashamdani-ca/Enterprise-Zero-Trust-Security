@@ -6,6 +6,7 @@ complete secret detector. It never opens external links or executes formulas.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import posixpath
 import re
@@ -26,6 +27,20 @@ NS = {
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
 }
 FORMULAS = {"IF", "COUNT", "SUM"}
+
+# T9B changes only the assignment's FWR-02 architecture wording. Office
+# alignment is separately authorized later. Preserve the exact published T9A
+# packages and their old description, while still checking every mapping,
+# method, subcheck and package safeguard. This is preservation, not alignment.
+T9B_FWR02 = "Verify the prepared Dell/Proxmox host, physical HP/OPNsense firewall, three workload VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
+T9A_FWR02 = "Run one host, four VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
+T9A_OFFICE_HASHES = {
+    FILES[0]: "33a0a1ac1204c308b89cff131463d7c75f7ef804aeeef4d61073993f790b26c0",
+    FILES[1]: "5ff8ce00c7d83d530643cdbb8c32c6f1ccb8b9e9f9fd26f7dbc80c60824d4d54",
+    FILES[2]: "1281d20065d0c74e06e8e2490c81b99086f030b94af57fa75e465cda10e866ec",
+    FILES[3]: "084423d2c1daa47a23a8fe9bc2afb0cbc02866e6d0fca836050ead604fd368ae",
+    FILES[4]: "6e5622322ab962e03b159e31d4d5b1098d89de656fb7151ac09c24b7f53100c6",
+}
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -242,6 +257,11 @@ def template_set_issues(root: Path) -> list[str]:
             raise ValueError("Missing approved requirements")
         owners = ["01", "01", "02", "02", "02", "02", "03", "03", "03", "03, 04, 05"]
         for rn, ((rid, required_result), owner) in enumerate(zip(required, owners), 8):
+            if rid == "FWR-02" and required_result.strip() == T9B_FWR02:
+                if any(hashlib.sha256((root / "docs/deliverables" / name).read_bytes()).hexdigest() != expected
+                       for name, expected in T9A_OFFICE_HASHES.items()):
+                    issues.append("FWR-02 transition permits only the byte-frozen published Office baseline; package alignment requires its approved scope")
+                required_result = T9A_FWR02
             expected = [rid, required_result.strip(), rid.replace("FWR", "FSC"), rid.replace("FWR", "FWT"), rid.replace("FWR", "FAC"), owner]
             if [coverage.get(f"{col}{rn}", {}).get("value") for col in "ABCDEF"] != expected:
                 issues.append(f"Requirements Coverage: {rid} traceability differs from approved assignment")
@@ -322,6 +342,8 @@ def main() -> int:
             print("- " + issue)
         return 1
     print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
+    if T9B_FWR02 in (ROOT / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8"):
+        print("BASELINE: FWR-02 checks byte-frozen published Office content; physical-firewall alignment remains deferred to T9E, not validated here.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
 

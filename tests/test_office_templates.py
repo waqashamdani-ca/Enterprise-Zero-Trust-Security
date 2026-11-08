@@ -4,6 +4,7 @@ Fixtures are private temporary copies. No Office process, formula execution,
 external link, installation or lab resource is used by these tests.
 """
 from contextlib import contextmanager
+import hashlib
 from pathlib import Path
 import shutil
 import tempfile
@@ -57,6 +58,25 @@ def set_cell(raw, address, value=None, formula=None):
 
 
 class OfficeTemplateTests(unittest.TestCase):
+    def test_assignment_transition_requires_exact_published_packages_and_description(self):
+        baseline = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
+        for name, expected in office.T9A_OFFICE_HASHES.items():
+            data = subprocess.check_output(["git", "-C", str(ROOT), "show", baseline + ":" + REL + name])
+            self.assertEqual(hashlib.sha256(data).hexdigest(), expected, name)
+        source = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                          baseline + ":docs/assignments/PROJECT-ASSIGNMENT.md"]).decode()
+        self.assertIn("| FWR-02 | " + office.T9A_FWR02 + " | FWT-02 |", source)
+        with fixture() as root:
+            path = root / "docs/assignments/PROJECT-ASSIGNMENT.md"
+            path.write_text(path.read_text().replace(office.T9B_FWR02, "Unapproved requirement", 1))
+            self.assertTrue(any("FWR-02 traceability differs" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "B9", office.T9B_FWR02))
+            findings = office.template_set_issues(root)
+            self.assertTrue(any("only the byte-frozen" in x for x in findings))
+            self.assertTrue(any("FWR-02 traceability differs" in x for x in findings))
+
     def test_complete_shipped_shells_and_safe_parts(self):
         self.assertEqual(office.template_set_issues(ROOT), [])
         for filename in office.FILES:
