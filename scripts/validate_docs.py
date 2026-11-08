@@ -30,6 +30,8 @@ REQUIRED_FILES = (
     ".github/workflows/documentation.yml",
     "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
     "docs/lab-guides/reference/01-Prepared-Infrastructure.md",
+    "docs/lab-guides/reference/02-Windows-Directory-and-Policy.md",
+    "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md",
     "docs/architecture/ARCHITECTURE.md", "docs/security/SECURITY-REQUIREMENTS.md",
     "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
     "docs/governance/DECISIONS.md", "docs/governance/RISKS.md", "docs/final-report/FINAL-REPORT.md",
@@ -49,6 +51,8 @@ REQUIRED_DIRS = (
 )
 GUIDE_TRANSITION = "docs/governance/HISTORICAL-REQUIREMENT-TRANSITION.md"
 PREPARED_REFERENCE = "docs/lab-guides/reference/01-Prepared-Infrastructure.md"
+WINDOWS_REFERENCE = "docs/lab-guides/reference/02-Windows-Directory-and-Policy.md"
+LINUX_REFERENCE = "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md"
 PHASE_TITLES = (
     "Prepared Infrastructure", "Identity and Endpoint Security", "Zero Trust Access Controls",
     "Monitoring, Automation and Recovery", "Validation and Final Submission",
@@ -456,12 +460,93 @@ def prepared_infrastructure_issues(guide: str, reference: str) -> list[str]:
     return issues
 
 
+def identity_endpoint_issues(guide: str, windows: str, linux: str) -> list[str]:
+    """Check Phase 2's actionable controls without executing any proposed command."""
+    issues = []
+    phase = guide.partition("## Phase 2: Identity and Endpoint Security\n")[2].partition("## Phase 3:")[0]
+    expected = ["A. Verify or create the three workload VMs", "B. Configure DC1 and Active Directory",
+                "C. Create lab users and groups, then join WIN1", "D. Apply Windows security policies",
+                "E. Configure APP1 networking and host protection"]
+    procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+    if [title for title, _ in procedures] != expected:
+        issues.append("guide Phase 2: require exactly five identity/endpoint procedures")
+    for title, section in procedures:
+        if re.findall(r"^\*\*(WHERE|STEPS|CHECK|RECORD)\*\*$", section, re.M) != ["WHERE", "STEPS", "CHECK", "RECORD"]:
+            issues.append(f"guide Phase 2 {title}: missing ordered sample labels")
+        actions = [int(n) for n in re.findall(r"^(\d+)\. ", section, re.M)]
+        if not 3 <= len(actions) <= 7 or actions != list(range(1, len(actions) + 1)):
+            issues.append(f"guide Phase 2 {title}: require 3-7 sequential actions")
+        if "**RECORD**\n\n**Deliverable " not in section or not re.search(r"mismatch|failure|On failure", section, re.I):
+            issues.append(f"guide Phase 2 {title}: missing recording or recovery context")
+    for meaning in ("FWR-03/FWR-04", "FWT-03/FWT-04", "Approvals: E", "F for endpoint", "private identity/network plan",
+                    "original Windows disk", "physical", "Corporate", "Restricted", "Management",
+                    "6 vCPU / 16 GiB / 160 GiB", "2 / 6 GiB / 64 GiB", "2 / 4 GiB / 32 GiB",
+                    "missing guest only", "supported OS/build", "offline update/activation", "TPM 2.0",
+                    "Promote this server", "approved functional levels", "DSRM", "SYSVOL", "NETLOGON",
+                    "Role installation alone is insufficient", "ava", "eli", "uma", "LabReaders", "LabMaintainers", "LabAdmins",
+                    "separate administrator only", "Member Of", "Members", "approved folder", "DC1-only DNS",
+                    "ad.lab.test", "Domain Controllers", "Defender", "inbound **Block**", "FF-02", "same-zone",
+                    "standard-user denial/admin control", "second observations", "atomic replacement",
+                    "default-deny input/forward", "IPv4/IPv6", "Preserve other tables", "console recovery",
+                    "Before Phase 3", "NOT TESTED", "six access cases and revocation"):
+        if meaning not in phase:
+            issues.append("guide Phase 2: missing identity/endpoint safeguard: " + meaning)
+    visible = re.sub(r'<a id="[a-z][a-z0-9-]*"></a>', '', phase)
+    if re.search(r"\b(?:four (?:baseline )?VMs|virtual (?:OPNsense|firewall)|internal-only bridge|vmbr\d+|VLAN\s+\d+|"
+                 r"Ordered|Delivered|procurement|PLANNED|T9[A-F]?(?:\.[1-7])?)\b|\b(?:\d{1,3}\.){3}\d{1,3}\b|^```", visible, re.I | re.M):
+        issues.append("guide Phase 2: obsolete mapping, execution status, internal language or command block")
+    links = {
+        WINDOWS_REFERENCE: ("vm-profiles-and-installation", "ad-ds-and-dns", "directory-verification",
+                            "users-groups-and-permissions", "win1-domain-join-and-verification", "account-and-endpoint-policy",
+                            "auditing-and-effective-policy", "scoped-service-ports", "privilege-and-protection-checks", "recovery-and-version-notes"),
+        LINUX_REFERENCE: ("interface-and-backend-inspection", "netplan-configuration-and-rollback", "lab-only-time",
+                          "nftables-policy", "initial-load-and-persistence", "verification-and-console-recovery"),
+    }
+    for name, anchors in links.items():
+        for anchor in anchors:
+            if name.removeprefix("docs/lab-guides/") + "#" + anchor not in phase:
+                issues.append("guide Phase 2: missing technical-reference navigation: " + anchor)
+    safeguards = {
+        "Windows": (windows, ("Desktop Experience", "domain-capable", "approved functional levels", "DSRM", "private custody",
+                              "Install-WindowsFeature", "Install-ADDSForest", "Get-ADForest", "Get-ADDomainController",
+                              "SYSVOL,NETLOGON", "_ldap._tcp.dc._msdcs.ad.lab.test", "Root Hints", "no corporate/public",
+                              "domain root", "minimum length/history/age/complexity", "lockout threshold/duration/reset",
+                              "Domain/Private/Public", "Microsoft Defender", "Audit Kerberos Authentication Service",
+                              "**DC audit GPO** to the **Domain Controllers** OU", "Remote IP address", "TCP/UDP 53", "TCP/UDP 88 and 464", "TCP/UDP 389",
+                              "TCP 445", "TCP 135", "49152-65535", "UDP 123", "TCP 3268", "overlapping default rules",
+                              "Test-ComputerSecureChannel -Verbose", "gpresult /scope computer /r", "Access Denied", "winning-setting",
+                              "LabReaders", "LabMaintainers", "LabAdmins", "Domain Admins", "standard users", "snapshot",
+                              "distinct passwords", "FWT-03.01-.03", "FWT-04", "NOT TESTED")),
+        "Linux": (linux, ("APP1", "sudo/root", "F approval", "Restricted", "private recovery", "renderer/backend",
+                           "renderer: networkd", "dhcp4: false", "dhcp6: false", "accept-ra: false", "addresses: [LAB_DC1_IP]",
+                           "netplan generate", "netplan try --timeout 120", "rollback", "FallbackNTP=", "per-link",
+                           "systemd-timesyncd", "table inet lab_host", "hook input priority 10; policy drop",
+                           "hook forward priority 10; policy drop", "ip saddr { LAB_WIN1_IP, LAB_ADMIN_IP } tcp dport 443",
+                           'iifname "tailscale0" counter drop', "before established traffic", "APP1-only",
+                           "initial-load", "atomic", "delete table inet lab_host", 'include "/etc/nftables.conf"',
+                           "sudo nft -c -f /root/lab-host-replace.nft", "preserving other tables", "ExecStart/ExecStop",
+                           "approved reboot", "net.ipv6.conf.all.forwarding", "IPv4 and IPv6", "NOT TESTED", "console")),
+    }
+    for name, (text, meanings) in safeguards.items():
+        for meaning in meanings:
+            if meaning not in text:
+                issues.append(f"{name} reference: missing identity/endpoint safeguard: " + meaning)
+        for match in re.finditer(r"^```[^\n]*\n.*?^```", text, re.M | re.S):
+            context = text[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
+            if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
+                issues.append(f"{name} reference: command block needs a risk/target context")
+            if re.search(r"^\s*(?:sudo\s+)?nft\s+flush\s+ruleset\b", match.group(), re.M):
+                issues.append(f"{name} reference: blanket firewall flush is prohibited")
+    return issues
+
+
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
     assignment = texts.get("docs/assignments/PROJECT-ASSIGNMENT.md", "")
     guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
     issues.extend(prepared_infrastructure_issues(guide, texts.get(PREPARED_REFERENCE, "")))
+    issues.extend(identity_endpoint_issues(guide, texts.get(WINDOWS_REFERENCE, ""), texts.get(LINUX_REFERENCE, "")))
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
     if titles != ASSIGNMENT_HEADINGS:
@@ -535,12 +620,12 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        if number == "1":
-            if "**Before Phase 2:**" not in section:
-                issues.append("phase 1 missing field: checkpoint and recovery")
+        if number in {"1", "2"}:
+            if f"**Before Phase {int(number) + 1}:**" not in section:
+                issues.append(f"phase {number} missing field: checkpoint and recovery")
         elif not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
             issues.append(f"phase {number} missing field: checkpoint and recovery")
-        for field in (() if number == "1" else ("**Outcome:**", "Approvals:", "Test")):
+        for field in (() if number in {"1", "2"} else ("**Outcome:**", "Approvals:", "Test")):
             if field not in section:
                 issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
@@ -558,8 +643,8 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
     procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
-    if [int(n) for n, _ in procedures] != list(range(7, 28)):
-        issues.append("guide: preserve downstream numbered procedures 7-27 in order")
+    if [int(n) for n, _ in procedures] != list(range(13, 28)):
+        issues.append("guide: preserve downstream numbered procedures 13-27 in order")
     for number, body in procedures:
         for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
             if field not in body:

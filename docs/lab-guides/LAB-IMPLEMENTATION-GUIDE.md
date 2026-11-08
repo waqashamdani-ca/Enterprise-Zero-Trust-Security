@@ -97,268 +97,133 @@ Map/flows match. FWR-01/FWR-02 need FWT-01/FWT-02 evidence and second observatio
 
 ## Phase 2: Identity and Endpoint Security
 
-**Outcome:** DC1 manages Windows lab accounts, WIN1 uses those accounts, and APP1 has a restricted Linux baseline. Approvals: E for the directory and F for endpoint/server settings. Tests: FWT-03/FWT-04; requirements: FWR-03/FWR-04. Have verified media, private addresses, recovery credentials and a lawful approved update/activation path before installation.
+DC1 manages lab Windows accounts; WIN1 uses them; APP1 has a protected Linux baseline. Coverage: FWR-03/FWR-04 and FWT-03/FWT-04.
 
-### Step 7 - Create and install the three workload VMs
+**Before you start:** Approvals: E for directory work, F for endpoint settings; missing workload creation also needs the applicable host/network approval. Have the private identity/network plan, approved media, versions, policy values and console recovery. Keep lab DNS, time, credentials and identities separate from home/production; create no trust or identity synchronization.
 
-**Purpose and location:** in Proxmox **Create VM** and each guest's **Console**, create only the approved workloads. A virtual disk is a file-backed guest disk; do not pass through a physical Windows disk.
+<a id="step-7---create-and-install-the-three-workload-vms"></a>
 
-| VM | Zone / bridge | vCPU | RAM MiB | Disk GiB |
-| --- | --- | --- | --- | --- |
-| DC1 | Corporate / vmbr10 | 2 | 6144 | 64 |
-| WIN1 | Corporate / vmbr10 | 2 | 6144 | 64 |
-| APP1 | Restricted / vmbr20 | 2 | 4096 | 32 |
+### A. Verify or create the three workload VMs
 
-1. For each VM choose the approved unused ID, name, storage and verified OS ISO. Set its allocation from the table. Give it one zone NIC and record its MAC. Check selected OS minimums against real host capability; pause for an approved adjustment if they do not fit.
-2. For the conditional Windows 11 profile, select **System > BIOS: OVMF (UEFI)**, add an EFI disk with the approved Secure Boot keys and **TPM 2.0** storage. Use an approved supported CPU model. A compatible SATA disk/emulated NIC can avoid separate VirtIO drivers; if VirtIO is selected, attach only verified approved driver media. Never bypass setup requirements.
-3. Start DC1 > **Console**. In Windows Server Setup choose the approved edition **with Desktop Experience**, **Custom installation**, and only the empty 64 GiB VM disk. Finish setup and set the local Administrator password privately. Remove the ISO after successful boot. [Microsoft's installation guide](https://learn.microsoft.com/en-us/windows-server/get-started/install-windows-server) distinguishes Desktop Experience from Server Core.
-4. Install WIN1's approved domain-capable Windows edition to its own 64 GiB VM disk. Use the approved lab-only setup/activation method and the separate administrator's local setup identity; do not use a corporate/home account or a sign-in bypass. Missing lawful offline setup or safe connectivity is a blocker.
-5. Install APP1 using the approved Linux ISO. For the Ubuntu example choose the normal server installation, the 32 GiB virtual disk and hostname **APP1**. Use the same separate privileged person's lab administration identity, not another project persona. Leave optional services, cloud identity integration and SSH off unless specifically approved. Use the Proxmox console for administration.
-6. On Windows, **Server Manager > Local Server > Computer name** or **System Properties > Computer Name > Change** sets **DC1/WIN1** before domain work. Restart if asked. Record actual OS/build, media, resources, NIC and update/evaluation status in **01 / Virtual Machines**; do not describe an unactivated system as fully ready.
+**WHERE**
 
-**Check:** four baseline VMs exist including OPNsense; each guest boots from its own virtual disk with the intended single bridge attachment. RAM/storage reserves still fit. Record selected profile and limitations in **02 / Implementation Overview**.
+**Proxmox > Dell node**, then each guest's **Hardware** and **Console**.
 
-**If it fails:** use the VM console to check ISO, boot order, virtual disk/controller and supported hardware. Do not alter the host disk, add a VM or disable Windows security requirements to finish setup.
+**STEPS**
 
-### Step 8 - Give DC1 its lab address and install Active Directory
+1. Find **DC1**, **WIN1**, **APP1**. Verify existing guests; create a missing guest only with approval and the [guest profiles](reference/02-Windows-Directory-and-Policy.md#vm-profiles-and-installation). Protect the original Windows disk/services.
+2. Check CPU / RAM / disk: **DC1 2 / 6 GiB / 64 GiB; WIN1 2 / 6 GiB / 64 GiB; APP1 2 / 4 GiB / 32 GiB**; retain host/recovery reserves.
+3. In **Hardware > Network Device**, match the private bridge/tag/MAC map: one zone NIC each; Corporate for DC1/WIN1, Restricted for APP1. Management stays separate; physical OPNsense is on HP.
+4. Open **Console**. Verify name, supported OS/build, approved media, private recovery and lawful offline update/activation. Windows 11 needs supported CPU, UEFI/Secure Boot and TPM 2.0; no bypass.
 
-**Purpose and location:** on DC1 as local Administrator, create **ad.lab.test**, a separate Windows directory. Active Directory (AD) stores Windows users/groups; DNS resolves lab names. This creates a new forest, the top-level directory boundary, under E approval.
+**CHECK**
 
-1. Open **Server Manager > Local Server > Ethernet > adapter Properties > Internet Protocol Version 4 > Properties**. Enter LAB_DC1_IP, the Corporate mask/prefix and LAB_FW_CORPORATE_IP as gateway. Use LAB_DC1_IP as the planned lab DNS server; it begins serving after promotion. Remove public/corporate alternate resolvers. Confirm the guest is DC1, its MAC matches vmbr10 and time/timezone are correct.
-2. Open **Manage > Add Roles and Features > Role-based or feature-based installation**. Select DC1, check **Active Directory Domain Services**, accept its management tools and install.
-3. Select the notification flag > **Promote this server to a domain controller**. Choose **Add a new forest**, enter **ad.lab.test**, retain **DNS Server** and the approved supported functional levels. Enter the Directory Services Restore Mode recovery password privately.
-4. Review DNS options, the proposed NetBIOS name and database/log/SYSVOL paths. A missing parent delegation can be normal for this standalone .test forest; confirm that exact warning, rather than ignoring all prerequisite warnings. Install only after the prerequisite check is understood, then allow the approved restart. [Microsoft's deployment procedure](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/deploy/install-active-directory-domain-services--level-100-) governs these choices.
+Three workload VMs; own virtual disks; totals 6 vCPU / 16 GiB / 160 GiB. Resolve a mismatch through approved console recovery.
 
-**DESTRUCTIVE / HIGH-RISK - DC1, elevated Windows PowerShell as local Administrator, E approval.** This is an alternative to the role/promotion clicks above, not a second deployment. It installs AD tools and creates the same lab forest, prompting securely for recovery credentials and rebooting after promotion. No placeholder or inline password:
+**RECORD**
 
-```powershell
-Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
-Install-ADDSForest -DomainName 'ad.lab.test' -InstallDNS
-```
+**Deliverable 01 > Virtual Machines / Resource Allocation**; **02 > Implementation Overview**. Include update/activation gaps.
 
-**Check:** after reboot, **Server Manager > Tools** includes AD Users and Computers, DNS and Group Policy Management. In DNS expand **DC1 > Forward Lookup Zones > ad.lab.test** and inspect DC1 and directory service records. A role-install success alone does not prove promotion. Record in **02 / Active Directory and User Roles**, with FWT-03 evidence in **03 / Test Cases**.
+<a id="step-8---give-dc1-its-lab-address-and-install-active-directory"></a>
 
-**If it fails:** inspect the reported prerequisite, DC1 name, static address, DNS and time. Do not rerun forest creation, suppress checks, demote DC1 or revert a DC snapshot casually. Directory recovery requires an explicitly approved supported plan.
+### B. Configure DC1 and Active Directory
 
-### Step 9 - Create the users, groups and DNS record
+**WHERE**
 
-**Purpose and location:** in DC1 **Server Manager > Tools > Active Directory Users and Computers**, create three standard people and one separate administrator. A security group collects permissions; membership alone does not invent a permission.
+DC1 console, approved administrator: **Server Manager**. Active Directory (AD) manages Windows users.
 
-1. Right-click **ad.lab.test > New > Organizational Unit** to create the approved containers for standard users, privileged identities and member computers. An organizational unit (OU) organizes objects and lets you link policy; it is not another network zone. Keep DC1 in **Domain Controllers**.
-2. In the standard-user OU, select **New > User** for **ava**, **eli** and **uma**. Use those logon names, prompted unique private passwords and the approved password-change settings. In the privileged OU create only the separately named administrator. Secure built-in accounts separately; they are not extra project people.
-3. Use **New > Group**, **Global** scope and **Security** type for **LabReaders**, **LabMaintainers** and **LabAdmins**. In **Properties > Members > Add**, enter names, **Check Names**, then save the membership below.
+**STEPS**
 
-| Person | AD group membership | Application role planned later |
-| --- | --- | --- |
-| ava | LabReaders | Reports |
-| eli | LabReaders and LabMaintainers | Reports and maintenance instructions |
-| uma | Neither reader nor maintenance group | Neither page |
-| Separate privileged administrator | LabAdmins | Infrastructure only; no fourth app account |
+1. Open **Local Server > Ethernet > adapter Properties > Internet Protocol Version 4 > Properties**. Set approved Corporate address/mask/gateway and **DC1 as DNS**, without external alternates. Check name/MAC/time.
+2. Verify an existing directory; otherwise use **Manage > Add Roles and Features > Role-based or feature-based installation > DC1 > Active Directory Domain Services**. Include tools; install.
+3. For a new forest only: notification flag > **Promote this server to a domain controller > Add a new forest**. Enter **ad.lab.test**, retain DNS and approved functional levels; store the DSRM recovery credential privately.
+4. Review [prerequisites and paths](reference/02-Windows-Directory-and-Policy.md#ad-ds-and-dns), resolve warnings, install and restart.
+5. Open **Tools > DNS > DC1 > Forward Lookup Zones > ad.lab.test**. Check host/service records and [forest/controller health](reference/02-Windows-Directory-and-Policy.md#directory-verification), including SYSVOL/NETLOGON.
 
-4. Under the same approved rights plan, assign **LabAdmins** the required infrastructure rights. For WIN1 local administration, add that group to WIN1's local **Administrators** using the approved local/group-policy setting. Any DC Domain Admins membership must be explicitly covered by E approval; the custom LabAdmins name itself grants no rights. Check ava/eli/uma are absent from privileged built-in groups.
-5. Open **Server Manager > Tools > DNS > DC1 > Forward Lookup Zones > ad.lab.test > New Host (A or AAAA)**. Enter **Name: app**, **IP address: LAB_APP1_IP**, replacing it privately. Add the IPv4 A record; do not invent an AAAA record or corporate forwarding. Check **app.ad.lab.test** resolves to the intended Restricted address. [Microsoft documents DNS record management](https://learn.microsoft.com/en-us/windows-server/networking/dns/manage-resource-records?tabs=dns-manager).
+**CHECK**
 
-**Check:** inspect each group's Members tab and each user's Member Of tab. Exactly three standard users, three project role groups and one separate privileged administrator are recorded in **02 / Active Directory and User Roles**; built-in/service objects are secured but not counted as project personas.
+Forest/controller/DNS work. Role installation alone is insufficient. On failure inspect DNS/time/prerequisites; use [supported directory recovery](reference/02-Windows-Directory-and-Policy.md#recovery-and-version-notes).
 
-**If it fails:** correct only the wrong entry under the approved change. Preserve the previous membership. Do not grant Domain Admins to a standard user to resolve a logon problem.
+**RECORD**
 
-### Step 10 - Join WIN1 and check Windows logon
+**Deliverable 02 > Active Directory and User Roles**; **03 > Test Cases**, FWT-03.01-.03.
 
-**Purpose and location:** on WIN1 using its approved local administrator, join the separate lab directory so standard users can sign in and receive Windows policy.
+<a id="step-9---create-the-users-groups-and-dns-record"></a>
+<a id="step-10---join-win1-and-check-windows-logon"></a>
 
-1. In WIN1's adapter IPv4 properties, enter LAB_WIN1_IP, Corporate mask and LAB_FW_CORPORATE_IP. Set **Preferred DNS: LAB_DC1_IP**, with no external alternate. Ensure DC1 is running and time agrees.
-2. Open **System Properties > Computer Name > Change**. Verify **WIN1**, select **Domain**, enter **ad.lab.test**, and provide the approved lab join credential through the prompt. On confirmation restart, following [Microsoft's domain-join procedure](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/join-computer-to-domain).
-3. On DC1, find WIN1 in AD Users and Computers and move it into the approved member-computer OU. On WIN1 choose **Other user**, sign in as **ava@ad.lab.test** and confirm the Windows session uses the lab domain. Test eli and uma logon only within the approved test scope.
-4. As the lab administrator, open PowerShell for the bounded checks below. Record name resolution, standard logon and effective policy as separate observations.
+### C. Create lab users and groups, then join WIN1
 
-**READ-ONLY - WIN1, Windows PowerShell as the approved lab administrator; elevation for the secure-channel check.** DNS queries must show the private DC1/APP1 addresses. The final command checks this member machine's domain relationship; it is not a DC1 health test. No replacements:
+**WHERE**
 
-```powershell
-Resolve-DnsName dc1.ad.lab.test
-Resolve-DnsName app.ad.lab.test
-Test-ComputerSecureChannel -Verbose
-```
+DC1 **Server Manager > Tools > Active Directory Users and Computers**; WIN1 console.
 
-**Check:** correct private answers and **True** for the [secure-channel test](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/test-computersecurechannel?view=powershell-5.1), plus actual standard-user logon and policy. Record configuration in **02 / Active Directory and User Roles** and results in **03 / Test Cases**, FWT-03.
+**STEPS**
 
-**If it fails:** inspect WIN1's DNS address, DNS records, time, domain name and DC1 host rules. WIN1/DC1 are on the same bridge; an OPNsense allow cannot fix a DC1 host denial. Do not add **-Repair**, rejoin repeatedly or use public DNS without a bounded correction approval.
+1. In **ad.lab.test**, verify or create the approved organizational units (OUs) or containers for users, groups, privileged identities and member computers. Keep DC1 in **Domain Controllers**; do not assume **Users** is the approved folder.
+2. In the user folder select **New > User**. Create missing **ava**, **eli**, **uma**, with unique private passwords and approved first-logon choices. Verify the separate named administrator in its privileged folder.
+3. Select **New > Group** in the group folder: **Global**, **Security**. Create/verify **LabReaders**, **LabMaintainers**, **LabAdmins**. In **Properties > Members > Add**, use **Check Names**: Readers = ava/eli; Maintainers = eli; Admins = separate administrator only.
+4. Inspect each user's **Member Of** and each group's **Members**. Keep uma outside both application-related groups and all three standard users outside privileged groups. [Assign only approved administrator rights](reference/02-Windows-Directory-and-Policy.md#users-groups-and-permissions); group names grant none.
+5. Open DC1 **Tools > DNS > Forward Lookup Zones > ad.lab.test > New Host (A or AAAA)**. Add/verify **app**, IPv4 A record, with APP1's approved private address.
+6. On WIN1 set its approved Corporate address/gateway and DC1-only DNS. Open **System Properties > Computer Name > Change > Domain**, enter **ad.lab.test**, use the prompted join credential and restart. Move WIN1 to the approved computer OU on DC1.
+7. Sign in on WIN1 as **ava@ad.lab.test**. Verify lab DNS, domain membership and policy using the [join checks](reference/02-Windows-Directory-and-Policy.md#win1-domain-join-and-verification). Test eli/uma logon within approval.
 
-### Step 11 - Apply essential Windows policy and host rules
+**CHECK**
 
-**Purpose and location:** under F approval, use DC1 **Group Policy Management** and Windows firewall/health views to protect DC1/WIN1. Group Policy distributes settings to the domain or selected OUs; a setting is useful only if it actually reaches its target.
+Three standard users, three role groups and one separate privileged administrator; memberships and standard logon agree. AD groups do not assign Apache roles. On failure, inspect DNS/time/membership and correct only the approved object; never elevate a standard user.
 
-1. In **Group Policy Management > Forest: ad.lab.test > Domains > ad.lab.test**, create/link the approved lab account-policy Group Policy Object (GPO) at the **domain root**. Edit **Computer Configuration > Policies > Windows Settings > Security Settings > Account Policies**. Enter the owner-approved minimum length/history/age/complexity and lockout threshold/duration/reset values from F approval. Do not invent those numeric values or link domain-account password policy only to a member OU.
-2. Create/link the endpoint GPO to WIN1's computer OU. Under **Security Settings > Windows Defender Firewall with Advanced Security > Windows Defender Firewall Properties**, keep Domain/Private/Public profiles **On**, inbound **Block** and only reviewed exceptions. Keep Microsoft Defender protection enabled using **Computer Configuration > Policies > Administrative Templates > Windows Components > Microsoft Defender Antivirus**; do not enable a policy that turns antivirus off.
-3. On DC1 and WIN1 open **Windows Defender Firewall with Advanced Security > Inbound Rules**. Inspect enabled built-in AD/DNS rules. In each required rule's **Properties > Scope > Remote IP address**, restrict it to the actual lab clients; check protocol/local service ports and enabled profiles too. If creating a missing rule, use **New Rule > Custom**, exact service/program, protocol/local ports, remote addresses, **Allow**, the reviewed profiles and a clear FF-02 name.
+**RECORD**
 
-| WIN1 to DC1 dependency | Destination port to review in DC1 host policy |
-| --- | --- |
-| DNS | TCP/UDP 53; APP1 may also use only DNS/time under FF-04 |
-| Kerberos logon/password service | TCP/UDP 88 and 464 |
-| Directory lookup and policy files | TCP/UDP 389; TCP 445 |
-| RPC endpoint mapper and dynamic RPC | TCP 135 and the selected modern-server range, normally TCP 49152-65535 |
-| Lab time | UDP 123 only if that is the approved Windows time service |
-| Global Catalog | TCP 3268 only if selected-version client behavior requires it |
+**Deliverable 02 > Active Directory and User Roles**; **03 > Test Cases**, FWT-03.01-.03. Later application roles use distinct passwords; six access cases and revocation remain required.
 
-Use [Microsoft's AD service table](https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/config-firewall-for-ad-domains-and-trusts) for the selected versions. Do not permit replication/trust/LDAPS services merely because they appear in the vendor's wider table. The dynamic range is a service dependency scoped to WIN1/DC1, not an all-host/all-port permit. Check overlapping default rules do not keep broad remote scope.
+<a id="step-11---apply-essential-windows-policy-and-host-rules"></a>
 
-4. In the **WIN1 endpoint GPO** edit **Computer Configuration > Policies > Windows Settings > Security Settings > Advanced Audit Policy Configuration > Audit Policies > Logon/Logoff > Audit Logon**, enabling approved success/failure auditing. Create/link the separately approved **DC audit GPO** to the **Domain Controllers** OU, then edit its **Account Logon > Audit Kerberos Authentication Service** success/failure settings under that same advanced-audit path. WIN1's OU policy cannot apply to DC1. Include approved account-management auditing and ensure basic audit settings do not override advanced policy; inspect the effective advanced audit selection on each actual target before Phase 4.
-5. On WIN1 use the local policy-result commands below. Check the intended GPOs are applied and WIN1 is in the correct OU; compare specific values with the local effective security-policy/firewall views. In **Windows Security**, inspect antivirus, firewall and update status. Log off/restart only when the approved setting needs it.
-6. In **Computer Management > Local Users and Groups > Groups > Administrators**, confirm the three standard users are absent and the approved LabAdmins rights are present. Use the same read-only computer-policy query below as the harmless standard/admin privilege comparison; no configuration write is needed.
+### D. Apply Windows security policies
 
-**READ-ONLY - WIN1, first in ava's unelevated Windows PowerShell, then in the separate lab administrator's elevated shell.** The first query shows ava's applied user policy. Run the second in each context: expect Access Denied as ava, then a computer-policy summary as the authorized administrator. No passwords/remote target arguments or placeholders. [Microsoft documents gpresult](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/gpresult):
+**WHERE**
 
-```powershell
-gpresult /scope user /r
-gpresult /scope computer /r
-```
+DC1 **Server Manager > Tools > Group Policy Management**; DC1/WIN1 security consoles.
 
-**Check:** the actual user/computer policy and privilege behavior agree with membership. An unexpected standard-user success requires investigation before PASS; a missing policy result requires checking OU/application/logon, not disabling protection. Use the full winning-setting view where the summary alone cannot prove a value.
+**STEPS**
 
-**Check:** applied policy, enabled protection and scoped rules agree with standard logon, the standard-user denial and approved admin control. Record in **02 / Windows and Linux Endpoint Controls** and **03 / Test Cases**, FWT-04. Record update/activation gaps honestly.
+1. Link the account-policy Group Policy Object (GPO) at **Domains > ad.lab.test**. Enter [approved password/lockout values](reference/02-Windows-Directory-and-Policy.md#account-and-endpoint-policy).
+2. Link WIN1's endpoint GPO to its computer OU: Microsoft Defender enabled; all Windows firewall profiles **On**, inbound **Block**; reviewed exceptions only.
+3. Apply WIN1 logon auditing and a separate DC1 GPO at **Domain Controllers**, using the [exact auditing paths](reference/02-Windows-Directory-and-Policy.md#auditing-and-effective-policy).
+4. In **Windows Defender Firewall with Advanced Security > Inbound Rules**, scope [AD/DNS/time rules](reference/02-Windows-Directory-and-Policy.md#scoped-service-ports). Remove approved broad overlaps; FF-02 needs same-zone host enforcement.
+5. Inspect winning policy, protection and updates on both targets. Check WIN1 **Administrators**; run the [standard-user denial/admin control](reference/02-Windows-Directory-and-Policy.md#privilege-and-protection-checks).
 
-**If it fails:** inspect OU link, security filtering, winning policy, profile and enabled rule scope. Restore only the changed pilot settings through retained administrator/console access. Never disable the firewall or antivirus as a shortcut.
+**CHECK**
 
-### Step 12 - Configure APP1 networking and its host firewall
+Settings and privileges match approval; policy/log evidence supports behavior. On failure restore changed pilot settings at console; keep protections enabled.
 
-**Purpose and location:** at APP1's Proxmox console under F approval, set a fixed Restricted address and permit only the application. The following is the conditional Ubuntu/Netplan/nftables profile. APP1 remains outside AD.
+**RECORD**
 
-1. Match APP1's interface to its Proxmox MAC and inspect existing addresses/routes using the commands below. Save the current **/etc/netplan/** and firewall configuration into new approved private backup paths before editing; do not overwrite an earlier recovery copy. Record the actual renderer/backend in **02 / Windows and Linux Endpoint Controls**.
+**Deliverable 02 > Windows and Linux Endpoint Controls**; **03 > Test Cases**, FWT-03/FWT-04.
 
-**READ-ONLY - APP1 console, normal user for network views; sudo/root for protected firewall rules.** These inspect addresses, routes, DNS and existing rules. No placeholders. Do not infer isolation from one view:
+<a id="step-12---configure-app1-networking-and-its-host-firewall"></a>
 
-```sh
-ip -br address
-ip route
-resolvectl status
-sudo nft list ruleset
-```
+### E. Configure APP1 networking and host protection
 
-**Check:** a single zone NIC matches vmbr20, with no home/production resolver or unintended forwarding rules. If a tool/backend differs, stop and verify the selected profile rather than installing another manager.
+**WHERE**
 
-2. Using the approved privileged editor, edit the one existing Netplan YAML that owns the NIC. Preserve indentation and remove conflicting definitions from the approved source only; a second YAML file can merge with old settings. Replace all capitals with approved private values. [Ubuntu's network guide](https://ubuntu.com/server/docs/explanation/networking/configuring-networks/) explains the fields.
+APP1 Proxmox **Console**, approved sudo administrator. APP1 stays outside AD.
 
-**CONFIGURATION CHANGE - APP1, root-owned /etc/netplan configuration, privileged editor.** File content only; LAB_NIC, addresses, prefix and gateways come from the private Network Zones record. IPv6 routing/autoconfiguration is not enabled in this baseline:
+**STEPS**
 
-```yaml
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    LAB_NIC:
-      dhcp4: false
-      dhcp6: false
-      accept-ra: false
-      addresses: [LAB_APP1_IP/LAB_PREFIX_LENGTH]
-      routes:
-        - to: default
-          via: LAB_FW_RESTRICTED_IP
-      nameservers:
-        addresses: [LAB_DC1_IP]
-        search: [ad.lab.test]
-```
+1. Match interface MAC with **Hardware > Network Device** and the private map. Inspect [addresses/routes/DNS/rules](reference/03-Linux-Network-and-Host-Policy.md#interface-and-backend-inspection); save recovery copies.
+2. If needed, edit [Netplan](reference/03-Linux-Network-and-Host-Policy.md#netplan-configuration-and-rollback): approved private interface/address/gateway, DC1-only DNS. Check syntax, use the timed trial and verify rollback.
+3. Verify [lab-only time](reference/03-Linux-Network-and-Host-Policy.md#lab-only-time), without public/corporate DNS/time fallback or another backend.
+4. Apply [nftables policy](reference/03-Linux-Network-and-Host-Policy.md#nftables-policy): default-deny input/forward, exact WIN1/admin HTTPS, IPv4/IPv6 restrictions; future overlay on APP1 alone.
+5. Use [initial load or scoped atomic replacement](reference/03-Linux-Network-and-Host-Policy.md#initial-load-and-persistence). Preserve other tables. Verify [rules/routes/services/reboot persistence](reference/03-Linux-Network-and-Host-Policy.md#verification-and-console-recovery); test HTTPS permit/deny when its listener exists.
 
-**Check before applying:** the address belongs to Restricted, the gateway is its OPNsense interface and DNS is DC1. Do not paste the placeholders literally. Preserve any release-specific required fields.
+**CHECK**
 
-**CONFIGURATION CHANGE - APP1 console, sudo/root, F approval.** Generate checks the merged syntax; try temporarily applies it and asks for confirmation. No placeholders after the file is filled:
+Configuration/state agree; forwarding is off. On failure restore saved files at console. Never flush all rules or add another firewall manager.
 
-```sh
-sudo netplan generate
-sudo netplan try --timeout 120
-```
+**RECORD**
 
-**Check:** confirm only after the address/route/resolver views match and lab DNS works. [Netplan warns that rollback must be checked](https://netplan.readthedocs.io/en/stable/netplan-try/); on error or timeout verify the actual state at console and restore the saved file/settings before continuing.
+**Deliverable 02 > Windows and Linux Endpoint Controls**; **03 > Test Cases**, FWT-04. Include second observations.
 
-3. For the conditional Ubuntu **systemd-timesyncd** profile, preserve its current configuration. Confirm this service exists and no other time daemon/per-link DHCP NTP source overrides the plan; if a different daemon is selected, obtain its reviewed equivalent before continuing. FF-04 must permit the corresponding lab-only time dependency.
-
-**CONFIGURATION CHANGE - APP1 console, sudo/root, F approval.** Create the selected service's configuration directory if absent; existing directory contents are preserved:
-
-```sh
-sudo install -d -o root -g root -m 0755 /etc/systemd/timesyncd.conf.d
-```
-
-**Check:** the directory is root-owned. In the approved editor save the following at **/etc/systemd/timesyncd.conf.d/10-lab-time.conf**, preserving an existing file before any edit.
-
-**CONFIGURATION CHANGE - APP1 root editor, 10-lab-time.conf.** File content only. Replace LAB_TIME_IP with the exact approved lab time server; empty FallbackNTP removes the default fallback list:
-
-```ini
-[Time]
-NTP=LAB_TIME_IP
-FallbackNTP=
-```
-
-**Check:** only the selected lab server appears and permissions prevent ordinary-user edits. Do not use a public/corporate time source.
-
-**CONFIGURATION CHANGE followed by READ-ONLY - APP1 console, sudo/root for restart; conditional installed systemd-timesyncd only.** Apply the reviewed time drop-in and inspect the selected source/clock. No placeholders after its NTP field is completed:
-
-```sh
-sudo systemctl restart systemd-timesyncd
-timedatectl timesync-status
-timedatectl status
-```
-
-**Check:** the intended lab source is selected, synchronization/timezone and observer UTC difference are recorded, and no fallback public server appears. If unavailable/unsynchronized, keep the dependency unresolved; do not add an Internet pool or change DC1 time. The [systemd configuration reference](https://www.freedesktop.org/software/systemd/man/latest/timesyncd.conf.html) describes global/per-link sources.
-
-4. Prepare **/etc/nftables.conf** with the approved editor. The example below owns one fresh **inet lab_host** table; if that table already exists, review/reconcile it first instead of duplicating it. Preserve other tables. Do not use **flush ruleset**, which would erase other services' rules. Keep IP forwarding off and check both IPv4/IPv6 effective values at stage entry.
-
-**CONFIGURATION CHANGE - APP1, sudo/root editor, nftables only.** Replace LAB_WIN1_IP and LAB_ADMIN_IP with exact approved IPv4 hosts. This table allows local HTTPS, restricts future overlay packets to HTTPS before established traffic, and drops forwarding. No SSH service is enabled by this example:
-
-```text
-table inet lab_host {
-    chain input {
-        type filter hook input priority 10; policy drop;
-        iifname "lo" accept
-        ct state invalid drop
-        iifname "tailscale0" tcp dport 443 counter accept
-        iifname "tailscale0" counter drop
-        ct state established,related accept
-        ip saddr { LAB_WIN1_IP, LAB_ADMIN_IP } tcp dport 443 counter accept
-    }
-    chain forward {
-        type filter hook forward priority 10; policy drop;
-    }
-}
-```
-
-**Check:** review the [Ubuntu nftables behavior](https://documentation.ubuntu.com/security/security-features/network/firewall/nftables/) with the selected release: an accept in another base chain does not override a later drop here. The overlay rule still depends on Tailscale's exact source/destination grant in Phase 3. Approved egress remains restricted by OPNsense/physical isolation; this input example does not authorize Internet access.
-
-**CONFIGURATION CHANGE, preceded/followed by READ-ONLY - APP1 console, sudo/root.** Check syntax first; only then load the new table and enable the package's persistent service. No replacements after the file is complete. Use this initial-load sequence once on the reviewed fresh table:
-
-```sh
-sudo nft -c -f /etc/nftables.conf
-sudo nft -f /etc/nftables.conf
-sudo systemctl enable nftables
-sudo nft list table inet lab_host
-```
-
-**Check:** the input/forward drop policies and exact permits are active. Confirm persistence at an approved reboot, then test the HTTPS permit and denied listener once the application exists. If syntax/load fails, remain at console and restore the saved rules using the approved method; do not disable all filtering. Later edits need a reviewed table-replacement transaction, not repeated table creation.
-
-For a later approved change to this existing table, preserve the active rules and boot file first. Edit the complete **/etc/nftables.conf** to include only the intended narrow change. Save the following separate root-owned transaction as **/root/lab-host-replace.nft**; it is for an already existing table, not the boot configuration.
-
-**CONFIGURATION CHANGE - APP1 root editor, /root/lab-host-replace.nft.** This file replaces only lab_host in one [atomic nftables transaction](https://wiki.nftables.org/wiki-nftables/index.php/Atomic_rule_replacement), preserving other tables. The included boot file must contain the complete reviewed lab_host definition:
-
-```text
-delete table inet lab_host
-include "/etc/nftables.conf"
-```
-
-**Check:** **/etc/nftables.conf** still contains table creation only, without an unconditional delete that would fail at a fresh boot. If lab_host is absent, use the initial-load path instead.
-
-**CONFIGURATION CHANGE preceded/followed by READ-ONLY - APP1 console, sudo/root, exact approved rule scope.** [nft -c](https://netfilter.org/projects/nftables/manpage.html) checks without applying; continue only after it succeeds:
-
-```sh
-sudo nft -c -f /root/lab-host-replace.nft
-sudo nft -f /root/lab-host-replace.nft
-sudo nft list table inet lab_host
-```
-
-**Check:** the specific changed rule and existing drop policies agree with the saved reviewed file; retest affected permit/deny paths. On failure restore the saved complete table/boot file at console using the same reviewed transaction, never flush other tables. This replacement method also handles the temporary mock and restored-client permits later in the manual.
-
-**If it fails:** stay at console, keep external access disconnected and restore the saved network/firewall files only through the approved method. Verify the actual rollback and source/route/rule state before resuming; do not stack another manager or disable the host firewall.
-
-### Phase 2 checkpoint and recovery
-
-Compare the directory/group/policy configuration with actual standard WIN1 logon, DNS and harmless privilege checks (FWT-03/FWT-04). Record supported builds, updates, host firewalls and no bypass adapters. Restore only the approved changed memberships/policy/network settings at console. A directory rebuild or DC snapshot rollback needs separate supported recovery approval.
+**Before Phase 3:** Compare directory/logon/DNS/policy/privilege evidence. Unperformed FWT-03/FWT-04 checks, including later app cases, stay **NOT TESTED**. Resolve failures through approved console recovery; directory rebuild/snapshot rollback needs separate supported recovery approval.
 
 ## Phase 3: Zero Trust Access Controls
 
