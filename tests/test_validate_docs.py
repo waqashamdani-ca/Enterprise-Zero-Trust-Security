@@ -5,6 +5,7 @@ Only temporary synthetic text is created. No network access or lab testing.
 
 import importlib.util
 import hashlib
+import json
 import subprocess
 import tempfile
 import unittest
@@ -28,6 +29,34 @@ def temporary_directory():
 
 
 class PublicReviewTests(unittest.TestCase):
+    def test_recovery_reference_name_allows_only_reviewed_document_pair_and_still_scans(self):
+        with temporary_directory() as directory:
+            root = Path(directory)
+            source = root / validator.RECOVERY_REFERENCE
+            source.parent.mkdir(parents=True)
+            source.write_text("# Backup and recovery reference\n", encoding="utf-8")
+            self.assertEqual(validator.file_issues(root, validator.RECOVERY_REFERENCE)[0], [])
+            synthetic = "ghp_" + "A" * 36
+            source.write_text("# Reference\n" + synthetic, encoding="utf-8")
+            findings, _ = validator.file_issues(root, validator.RECOVERY_REFERENCE)
+            self.assertTrue(any("GitHub token" in x for x in findings))
+            self.assertNotIn(synthetic, "\n".join(findings))
+            for name in ("07-Backup-and-Recovery-copy.md", "APP1-backup.md", "APP1-backup.vma", "07-Backup-and-Recovery.zip"):
+                path = source.with_name(name)
+                path.write_text("# Synthetic fixture\n", encoding="utf-8")
+                findings, _ = validator.file_issues(root, path.relative_to(root).as_posix())
+                self.assertTrue(any("sensitive filename" in x for x in findings), name)
+            pdf = source.with_suffix(".pdf")
+            pdf.write_bytes(b"not a generated PDF")
+            (root / validator.PDF_MANIFEST).write_text(json.dumps({"documents": [{
+                "source": validator.RECOVERY_REFERENCE,
+                "pdf": validator.RECOVERY_REFERENCE[:-3] + ".pdf",
+                "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                "pdf_sha256": hashlib.sha256(pdf.read_bytes()).hexdigest(),
+            }]}), encoding="utf-8")
+            findings, _ = validator.file_issues(root, pdf.relative_to(root).as_posix())
+            self.assertTrue(any("invalid/oversized generated PDF" in x for x in findings))
+
     def test_token_findings_do_not_disclose_value(self):
         synthetic = "ghp_" + "A" * 36
         findings = validator.public_content_issues("sample.md", synthetic)
@@ -342,7 +371,7 @@ class AssignmentContractTests(unittest.TestCase):
             "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
             "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml",
             validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE, validator.WINDOWS_REFERENCE, validator.LINUX_REFERENCE,
-            validator.HTTPS_REFERENCE, validator.TAILSCALE_REFERENCE)}
+            validator.HTTPS_REFERENCE, validator.TAILSCALE_REFERENCE, validator.MONITORING_REFERENCE, validator.RECOVERY_REFERENCE)}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
         self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
         self.plan = "docs/testing/TEST-PLAN.md"
@@ -351,6 +380,12 @@ class AssignmentContractTests(unittest.TestCase):
         texts = dict(self.texts)
         self.assertIn(before, texts[name])
         texts[name] = texts[name].replace(before, after, 1)
+        self.assertTrue(any(expected in item for item in validator.completeness_issues(texts)))
+
+    def assert_all_rejected(self, name, before, after, expected):
+        texts = dict(self.texts)
+        self.assertIn(before, texts[name])
+        texts[name] = texts[name].replace(before, after)
         self.assertTrue(any(expected in item for item in validator.completeness_issues(texts)))
 
     def test_focused_specification_is_complete(self):
@@ -380,12 +415,52 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
 
     def test_guide_procedures_require_actions_context_and_failure_recovery(self):
-        self.assert_rejected(self.guide, "### Step 20 -", "### Step 0 -", "numbered procedures")
+        self.assert_rejected(self.guide, "### Step 24 -", "### Step 0 -", "numbered procedures")
         self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
         self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
 
     def test_guide_numbered_actions_cannot_merge_into_check_paragraphs(self):
-        self.assert_rejected(self.guide, "\n\n2. At the Proxmox console", "\n2. At the Proxmox console", "blank line")
+        self.assert_rejected(self.guide, "\n\n4. Locate each event", "\n4. Locate each event", "blank line")
+
+    def test_phase4_requires_five_categories_investigation_and_time_evidence(self):
+        for before, after, expected in (
+            ("| E02 Directory authentication failure |", "| E01 Directory authentication success |", "five distinct"),
+            ("### B. Investigate one denied-access event", "### B. Review logs", "exactly four"),
+            ("**Before Phase 5:**", "**Later:**", "checkpoint and recovery"),
+            ("one working allowed control", "a failed connection", "operational safeguard"),
+            ("source/observer UTC", "local time", "operational safeguard"),
+        ):
+            self.assert_rejected(self.guide, before, after, expected)
+        for before in ("one deliberately wrong-password attempt", "lockout margin", "source UTC minus observer UTC",
+                       "private originals", "reference-only extraction", "Keep the vendor TCP-443-only grant unchanged"):
+            self.assert_all_rejected(validator.MONITORING_REFERENCE, before, "REMOVED", "safeguard")
+
+    def test_phase4_rejects_changed_automation_and_missing_negative_checks(self):
+        for before, after in (("$system.Name -ne 'WIN1'", "$system.Name -ne 'OTHER'"),
+                              ("$system.Domain -ne 'ad.lab.test'", "$system.Domain -ne 'example.test'"),
+                              ("'DriveType=3'", "'DriveType=2'"),
+                              ("'WIN1-capacity.json'", "'another.json'"),
+                              ("$cursor = $cursor.Parent", "$cursor = $null")):
+            self.assert_rejected(validator.MONITORING_REFERENCE, before, after, "capacity script must remain identical")
+        for before in ("junctions/symlinks/reparse points", "WIN1-INVALID-TEST", "unchanged hash/mtime",
+                       "second time successfully", "A07"):
+            self.assert_all_rejected(validator.MONITORING_REFERENCE, before, "REMOVED", "safeguard")
+
+    def test_phase4_recovery_remains_blocked_without_private_map_and_backend(self):
+        for before in ("Operational procedure: BLOCKED pending private design", "owner-selected encrypted storage backend",
+                       "not a verified physical connection recipe", "physical HP firewall on the routed test path",
+                       "Do not connect them directly on a shared bridge"):
+            self.assert_all_rejected(validator.RECOVERY_REFERENCE, before, "REMOVED", "safeguard")
+        texts = dict(self.texts)
+        texts[validator.RECOVERY_REFERENCE] += "\nDisconnect OPNsense's vmbr20 NIC.\n"
+        self.assertTrue(any("obsolete virtual-firewall" in x for x in validator.completeness_issues(texts)))
+
+    def test_phase4_preserves_encryption_original_copy_time_and_function_safeguards(self):
+        for before in ("recovery-key access", "is_mountpoint", "findmnt --mountpoint", "sole archive",
+                       "Start at boot: No", "disable --now tailscaled", "is-enabled tailscaled", "sha256sum -c",
+                       "independent observer clock", "HTTP 200", "HTTP 403", "Disconnect every restored NIC first",
+                       "unmount, lock and detach", "AD/CA/host/physical-firewall"):
+            self.assert_all_rejected(validator.RECOVERY_REFERENCE, before, "REMOVED", "safeguard")
 
     def test_wrong_test_mapping_or_filled_actual_is_rejected(self):
         self.assert_rejected(self.assignment, "| FWT-01 |", "| FWT-02 |", "wrong primary test")

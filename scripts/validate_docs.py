@@ -34,6 +34,8 @@ REQUIRED_FILES = (
     "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md",
     "docs/lab-guides/reference/04-HTTPS-and-Application-Roles.md",
     "docs/lab-guides/reference/05-Tailscale-Policy.md",
+    "docs/lab-guides/reference/06-Logs-Automation-and-Test-Tools.md",
+    "docs/lab-guides/reference/07-Backup-and-Recovery.md",
     "docs/architecture/ARCHITECTURE.md", "docs/security/SECURITY-REQUIREMENTS.md",
     "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
     "docs/governance/DECISIONS.md", "docs/governance/RISKS.md", "docs/final-report/FINAL-REPORT.md",
@@ -57,6 +59,8 @@ WINDOWS_REFERENCE = "docs/lab-guides/reference/02-Windows-Directory-and-Policy.m
 LINUX_REFERENCE = "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md"
 HTTPS_REFERENCE = "docs/lab-guides/reference/04-HTTPS-and-Application-Roles.md"
 TAILSCALE_REFERENCE = "docs/lab-guides/reference/05-Tailscale-Policy.md"
+MONITORING_REFERENCE = "docs/lab-guides/reference/06-Logs-Automation-and-Test-Tools.md"
+RECOVERY_REFERENCE = "docs/lab-guides/reference/07-Backup-and-Recovery.md"
 PHASE_TITLES = (
     "Prepared Infrastructure", "Identity and Endpoint Security", "Zero Trust Access Controls",
     "Monitoring, Automation and Recovery", "Validation and Final Submission",
@@ -314,7 +318,11 @@ def file_issues(root: Path, relative: str) -> tuple[list[str], str | None]:
         return [f"{relative}: missing/nonregular candidate file"], None
     if any(part.lower() in PRIVATE_PARTS for part in path.relative_to(root).parts):
         issues.append(f"{relative}: private directory in publication set")
-    if PRIVATE_NAME.search(path.name):
+    # These two exact owner-requested paths are technical documentation. They
+    # still receive ordinary content scans and source/manifest/PDF validation;
+    # no archive, neighboring filename or raw recovery artifact is admitted.
+    recovery_documents = {RECOVERY_REFERENCE, RECOVERY_REFERENCE[:-3] + ".pdf"}
+    if PRIVATE_NAME.search(path.name) and relative not in recovery_documents:
         issues.append(f"{relative}: sensitive filename in publication set")
     if path.suffix.lower() == ".pdf":
         return issues + generated_pdf_issues(root, relative), None
@@ -636,6 +644,97 @@ def access_control_issues(guide: str, https: str, tailscale: str) -> list[str]:
     return issues
 
 
+def monitoring_recovery_issues(guide: str, logs: str, recovery: str) -> list[str]:
+    """Check Phase 4's instruction/security contract without executing lab code."""
+    issues = []
+    phase = guide.partition("## Phase 4: Monitoring, Automation and Recovery\n")[2].partition("## Phase 5:")[0]
+    expected = ["A. Collect five security events", "B. Investigate one denied-access event",
+                "C. Run the capacity-summary automation", "D. Back up APP1 and restore it in isolation"]
+    procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+    if [title for title, _ in procedures] != expected:
+        issues.append("guide Phase 4: require exactly four monitoring/automation/recovery procedures")
+    for title, section in procedures:
+        if re.findall(r"^\*\*(WHERE|STEPS|CHECK|RECORD)\*\*$", section, re.M) != ["WHERE", "STEPS", "CHECK", "RECORD"]:
+            issues.append(f"guide Phase 4 {title}: missing ordered sample labels")
+        actions = [int(n) for n in re.findall(r"^(\d+)\. ", section, re.M)]
+        # Recovery deliberately has nine actions to retain critical dependencies.
+        maximum = 9 if title.startswith("D. ") else 7
+        if not 3 <= len(actions) <= maximum or actions != list(range(1, len(actions) + 1)):
+            issues.append(f"guide Phase 4 {title}: missing sequential bounded actions")
+        if "Deliverable 03 >" not in section or "failure" not in section.lower() and "On failure" not in section:
+            issues.append(f"guide Phase 4 {title}: missing exact recording or recovery context")
+    events = re.findall(r"^\| (E\d{2}) ([^|]+)\|", phase, re.M)
+    if [(event, label.strip()) for event, label in events] != [
+            ("E01", "Directory authentication success"), ("E02", "Directory authentication failure"),
+            ("E03", "Application access allowed"), ("E04", "Application access denied"),
+            ("E05", "Firewall access denied")]:
+        issues.append("guide Phase 4: preserve five distinct security event categories")
+    visible = re.sub(r'<a id="[a-z][a-z0-9-]*"></a>', '', phase)
+    for meaning in ("physical OPNsense", "three workload VMs", "J approval", "explicit L", "E/H/I",
+                    "known-listening", "lockout", "source/observer UTC", "second observations",
+                    "one working allowed control", "incorrect credentials", "broken DNS", "stopped service", "network failure",
+                    "WIN1/ad.lab.test", "outside Git", "WIN1-capacity.json", "successfully a second time",
+                    "invalid-target", "invalid-output-path", "both safe rejections", "before/after",
+                    "BLOCKED", "NOT TESTED", "private isolation plan", "encrypted", "separate recovery key",
+                    "unused temporary ID", "manifest", "Keep the original off", "every restored NIC",
+                    "automatic startup", "stop and disable copied Tailscale", "before temporary changes",
+                    "no new bridge/VLAN/NIC/port mapping or firewall bypass", "ava /reports/", "ava /maintenance/",
+                    "actual elapsed time", "lock/detach", "stored separately", "B01-B10", "AD/CA/host/physical-firewall",
+                    "Before Phase 5", "Engineering results and owner acceptance are separate"):
+        if meaning.lower() not in phase.lower():
+            issues.append("guide Phase 4: missing operational safeguard: " + meaning)
+    if re.search(r"^```|\bvmbr\d+\b|\bVLAN\s+\d+|\b(?:\d{1,3}\.){3}\d{1,3}\b", visible, re.M):
+        issues.append("guide Phase 4: detailed commands/private topology belong outside the concise guide")
+    if re.search(r"\b(?:T9[A-F]?(?:\.[1-7])?|procurement|PLANNED|IN PROGRESS)\b", visible):
+        issues.append("guide Phase 4: internal task or execution-status language")
+    if not logs or not recovery:
+        return issues + ["guide Phase 4: both technical references are required"]
+    for name, reference in ((MONITORING_REFERENCE, logs), (RECOVERY_REFERENCE, recovery)):
+        if "reference/" + name.rsplit("/", 1)[1] + "#" not in phase:
+            issues.append("guide Phase 4: direct technical-reference heading links are required")
+        for match in re.finditer(r"^```[^\n]*\n.*?^```", reference, re.M | re.S):
+            context = reference[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
+            if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
+                issues.append("Phase 4 reference: command block needs a risk/target context")
+    scripts = [body for _, body in re.findall(r"^```([^\n]*)\n(.*?)^```", logs, re.M | re.S)
+               if body.startswith("param([Parameter(Mandatory)]")]
+    if len(scripts) != 1 or hashlib.sha256(scripts[0].encode()).hexdigest() != "a0520fd9c143f407b53e395faeef7399b17525cbd16139b05d33bd24bfcce7ce":
+        issues.append("monitoring reference: complete WIN1 capacity script must remain identical to approved baseline")
+    for meaning in ("Audit Kerberos Authentication Service", "Domain Controllers", "4768", "4771", "one deliberately wrong-password attempt",
+                    "lockout margin", "cached", "Live View", "floating/group/automatic", "States", "event-time",
+                    "/var/log/apache2/labapp-access.log", "/var/log/apache2/labapp-error.log", "tail -n 40",
+                    "/etc/logrotate.d/apache2", "source UTC minus observer UTC", "retention", "raw", "private originals",
+                    "E01", "E02", "E03", "E04", "E05", "who", "working allowed control", "second observation",
+                    "incorrect credentials", "broken DNS", "stopped service", "network failure", "401", "403",
+                    "junctions/symlinks/reparse points", "not a canonical-path", "execution-policy bypass", "No remote execution",
+                    "second time successfully", "Get-Item", "WIN1-INVALID-TEST", "unchanged hash/mtime", "A01", "A07",
+                    "FWT-07", "FWT-08", "reference-only extraction", "deferred Phase 5 dependency", "FWR/FWT-01/02/06",
+                    "TCP CONNECTED", "NO TCP CONNECTION", "MOCK_PROTECTED", "LAB_ADMIN_IP", "tcp dport 8443",
+                    "never a real protected address", "Keep the vendor TCP-443-only grant unchanged"):
+        if meaning.lower() not in logs.lower():
+            issues.append("monitoring reference: missing event/automation/deferred-tool safeguard: " + meaning)
+    for meaning in ("Operational procedure: BLOCKED pending private design", "owner-selected encrypted storage backend",
+                    "WIN1 -> physical HP OPNsense -> restored APP1", "not a verified physical connection recipe",
+                    "No fixed bridge, VLAN, NIC or port mapping", "is_mountpoint", "findmnt --mountpoint", "lsblk", "storage.cfg",
+                    "compression", "recovery-key access", "recovery key separately", "off-compute", "both** AD and application",
+                    "LabMaintainers", "revoked state", "/srv/labapp", "/etc/apache2", "/etc/labapp", "app.key", "app.crt", "lab-ca.crt",
+                    "older manifests", "new unused path", "separate protected storage", "before backup", "included disk",
+                    "original APP1", "sole archive", "Keep **Start after restore** and **Live restore** off", "Start at boot: No",
+                    "unused temporary", "every NIC", "original remains stopped", "disable --now tailscaled", "is-active tailscaled",
+                    "is-enabled tailscaled", "sha256sum -c", "before** temporary", "physical HP firewall on the routed test path",
+                    "Do not connect them directly on a shared bridge", "LAB_RESTORE_CLIENT_IP", "LAB_RESTORE_APP_IP",
+                    "TCP 443", "earlier tailscale0 drop", "unrelated tables", "default denies", "IPv6", "independent observer clock",
+                    "immediately before confirming Restore", "only when", "HTTP 200", "HTTP 403", "HTTP 401", "separate observations",
+                    "Disconnect every restored NIC first", "before original startup", "unmount, lock and detach", "B01-B03", "B04-B07",
+                    "B06", "B07", "B08", "B09", "B10", "NOT TESTED", "no enterprise", "AD/CA/host/physical-firewall",
+                    "Version-specific", "24.04", "no disk-format"):
+        if meaning.lower() not in recovery.lower():
+            issues.append("recovery reference: missing backup/isolation/evidence safeguard: " + meaning)
+    if re.search(r"\bvmbr\d+\b|disconnect OPNsense.{0,30}NIC|OPNsense.s vmbr|\bVLAN\s+\d+", phase + recovery, re.I):
+        issues.append("Phase 4 recovery: obsolete virtual-firewall or invented topology instruction")
+    return issues
+
+
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
@@ -644,6 +743,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     issues.extend(prepared_infrastructure_issues(guide, texts.get(PREPARED_REFERENCE, "")))
     issues.extend(identity_endpoint_issues(guide, texts.get(WINDOWS_REFERENCE, ""), texts.get(LINUX_REFERENCE, "")))
     issues.extend(access_control_issues(guide, texts.get(HTTPS_REFERENCE, ""), texts.get(TAILSCALE_REFERENCE, "")))
+    issues.extend(monitoring_recovery_issues(guide, texts.get(MONITORING_REFERENCE, ""), texts.get(RECOVERY_REFERENCE, "")))
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
     if titles != ASSIGNMENT_HEADINGS:
@@ -717,12 +817,12 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        if number in {"1", "2", "3"}:
+        if number in {"1", "2", "3", "4"}:
             if f"**Before Phase {int(number) + 1}:**" not in section:
                 issues.append(f"phase {number} missing field: checkpoint and recovery")
         elif not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
             issues.append(f"phase {number} missing field: checkpoint and recovery")
-        for field in (() if number in {"1", "2", "3"} else ("**Outcome:**", "Approvals:", "Test")):
+        for field in (() if number in {"1", "2", "3", "4"} else ("**Outcome:**", "Approvals:", "Test")):
             if field not in section:
                 issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
@@ -740,8 +840,8 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
     procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
-    if [int(n) for n, _ in procedures] != list(range(20, 28)):
-        issues.append("guide: preserve downstream numbered procedures 20-27 in order")
+    if [int(n) for n, _ in procedures] != list(range(24, 28)):
+        issues.append("guide: preserve downstream numbered procedures 24-27 in order")
     for number, body in procedures:
         for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
             if field not in body:

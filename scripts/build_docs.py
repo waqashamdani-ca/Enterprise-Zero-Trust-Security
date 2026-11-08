@@ -63,7 +63,10 @@ LINUX_REFERENCE = "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md
 HTTPS_REFERENCE = "docs/lab-guides/reference/04-HTTPS-and-Application-Roles.md"
 TAILSCALE_REFERENCE = "docs/lab-guides/reference/05-Tailscale-Policy.md"
 ACCESS_REFERENCES = {HTTPS_REFERENCE, TAILSCALE_REFERENCE}
-TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES
+MONITORING_REFERENCE = "docs/lab-guides/reference/06-Logs-Automation-and-Test-Tools.md"
+RECOVERY_REFERENCE = "docs/lab-guides/reference/07-Backup-and-Recovery.md"
+OPERATIONS_REFERENCES = {MONITORING_REFERENCE, RECOVERY_REFERENCE}
+TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES | OPERATIONS_REFERENCES
 ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
@@ -607,7 +610,7 @@ class Builder:
                         style.spaceAfter = 4
                     paragraph = Paragraph(prefix + inline(first["children"], self.source, self.sources), style)
                     following = self.blocks(children, depth + 1)
-                    if (self.source == GUIDE and ordered) or self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES:
+                    if (self.source == GUIDE and ordered) or self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES | OPERATIONS_REFERENCES:
                         story.append(KeepTogether([paragraph, *following]))
                     else:
                         story.append(paragraph)
@@ -652,7 +655,7 @@ class Builder:
 
 
 class PreparedInfrastructureBuilder(Builder):
-    """Accepted sample style for introduction, Phases 1-3 and their references."""
+    """Accepted sample style for introduction, Phases 1-4 and their references."""
 
     def __init__(self, source: str, sources: set[str]):
         super().__init__(source, sources)
@@ -660,6 +663,7 @@ class PreparedInfrastructureBuilder(Builder):
         self.prepared = True
         self.identity_phase = False
         self.access_phase = False
+        self.monitoring_phase = False
         self.style = ParagraphStyle("prepared-body", fontName="Vera", fontSize=10.5, leading=13.8,
                                     spaceAfter=5, allowWidows=0, allowOrphans=0,
                                     textColor=colors.HexColor("#28333e"))
@@ -675,7 +679,7 @@ class PreparedInfrastructureBuilder(Builder):
         style = ParagraphStyle("prepared-heading", parent=self.style, fontName="Vera-Bold",
                                fontSize=size, leading=size * 1.23, spaceBefore=8 if level > 1 else 0,
                                spaceAfter=6, keepWithNext=1, textColor=colors.HexColor("#16364f"))
-        if self.source == GUIDE and self.access_phase and level == 3:
+        if self.source == GUIDE and (self.access_phase or self.monitoring_phase) and level == 3:
             style.spaceBefore, style.spaceAfter = 6, 4
         paragraph = Paragraph(inline(token["children"], self.source, self.sources), style)
         paragraph._anchor, paragraph._level = anchor_for(title, self.anchors), level
@@ -693,27 +697,30 @@ class PreparedInfrastructureBuilder(Builder):
         panel = Table([[Paragraph(label, label_style),
                         Paragraph(inline(token["children"], self.source, self.sources), body_style)]],
                       colWidths=[65, CONTENT_WIDTH - 65], hAlign="LEFT",
-                      spaceBefore=3 if self.identity_phase or self.access_phase else 5,
-                      spaceAfter=4 if self.identity_phase or self.access_phase else 6)
+                      spaceBefore=3 if self.identity_phase or self.access_phase or self.monitoring_phase else 5,
+                      spaceAfter=4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6)
         panel.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f3f5")),
             ("LINEBEFORE", (0, 0), (0, -1), 1.4, colors.HexColor("#16364f")),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase else 6),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase else 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6),
             ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
         ]))
         return panel
 
     def table(self, token: dict) -> list:
-        if self.source == GUIDE and self.access_phase:
+        if self.source == GUIDE and (self.access_phase or self.monitoring_phase):
             headers = [plain(cell["children"]) for cell in token["children"][0]["children"]]
-            if headers == ["Case", "Account", "Page", "Expected HTTP result"]:
+            widths = ([44, 62, 142, 256] if headers == ["Case", "Account", "Page", "Expected HTTP result"]
+                      else [180, 324] if self.monitoring_phase and headers == ["Event", "Action and matching source"]
+                      else None)
+            if widths:
                 rows = [token["children"][0]["children"]] + [row["children"] for row in token["children"][1]["children"]]
                 cells = [[Paragraph(("<b>" if n == 0 else "") + inline(cell["children"], self.source, self.sources)
                                     + ("</b>" if n == 0 else ""), self.cell_style) for cell in row]
                          for n, row in enumerate(rows)]
-                table = Table(cells, colWidths=[44, 62, 142, 256], hAlign="LEFT", spaceAfter=5)
+                table = Table(cells, colWidths=widths, hAlign="LEFT", spaceAfter=5)
                 table.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#eef1f4")),
                     ("LINEBELOW", (0, 0), (-1, 0), .7, colors.HexColor("#849aa9")),
@@ -753,8 +760,12 @@ class PreparedInfrastructureBuilder(Builder):
             self.access_phase = True
             self.identity_phase = False
         if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 4:") for t in tokens):
-            self.prepared = False
             self.access_phase = False
+            self.identity_phase = False
+            self.monitoring_phase = True
+        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 5:") for t in tokens):
+            self.prepared = False
+            self.monitoring_phase = False
             self.style, self.cell_style = self.legacy_style, self.legacy_cell
         if not self.prepared:
             return super().blocks(tokens, depth)
@@ -775,9 +786,10 @@ class PreparedInfrastructureBuilder(Builder):
                             and tokens[n]["attrs"]["level"] <= 3), len(tokens))
                 # The phase checkpoint follows the procedure's RECORD panel;
                 # it is not part of the procedure that must remain intact.
-                if self.source == GUIDE and plain(token["children"]).startswith("E. "):
+                if self.source == GUIDE and (plain(token["children"]).startswith("E. ")
+                                            or self.monitoring_phase and plain(token["children"]).startswith("D. ")):
                     end = next((n for n in range(i + 1, end) if tokens[n]["type"] == "paragraph"
-                                and plain(tokens[n]["children"]).startswith(("Before Phase 3:", "Before Phase 4:"))), end)
+                                and plain(tokens[n]["children"]).startswith(("Before Phase 3:", "Before Phase 4:", "Before Phase 5:"))), end)
                 parts = self.blocks(tokens[i:end], depth, keep_procedures=False)
                 # Ordered actions already have their own KeepTogether. Flatten
                 # them before wrapping the whole short procedure: nested
@@ -805,9 +817,9 @@ class PreparedInfrastructureBuilder(Builder):
                     i += 2
                     continue
                 if label in {"WHERE", "STEPS"}:
-                    if self.source == GUIDE and self.access_phase and label == "WHERE":
+                    if self.source == GUIDE and (self.access_phase or self.monitoring_phase) and label == "WHERE":
                         if i + 1 >= len(tokens) or tokens[i + 1]["type"] != "paragraph":
-                            raise ValueError("Phase 3 WHERE must introduce a target paragraph")
+                            raise ValueError("Compact WHERE must introduce a target paragraph")
                         location = '<b><font color="#16364f">WHERE</font></b>  ' + inline(tokens[i + 1]["children"], self.source, self.sources)
                         story.append(Paragraph(location, self.style))
                         i += 2
@@ -818,7 +830,7 @@ class PreparedInfrastructureBuilder(Builder):
                     story.append(Paragraph(label, style))
                     i += 1
                     continue
-                if self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES:
+                if self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES | OPERATIONS_REFERENCES:
                     context = []
                     if story and hasattr(story[-1], "_anchor"):
                         context.append(story.pop())

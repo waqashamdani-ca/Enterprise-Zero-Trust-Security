@@ -364,181 +364,120 @@ Only approved APP1 HTTPS works; unauthorized/wrong-port and both revoked context
 
 ## Phase 4: Monitoring, Automation and Recovery
 
-**Outcome:** five explainable events, one denied-access investigation, one safely repeated capacity script and one isolated APP1 restore. Approvals: J and the explicit L automation/recovery portions. Tests: FWT-07/FWT-08/FWT-09; requirements: FWR-07/FWR-08/FWR-09. Use existing local logs; no collector, security-monitoring product or extra permanent VM is needed.
+Explain five security events, repeat one useful local operation and demonstrate APP1 recovery. Coverage: FWR-07/08/09 and FWT-07/FWT-08/FWT-09. Use existing logs and the three workload VMs; HP runs physical OPNsense.
 
-### Step 20 - Open the logs and produce five benign events
+**Before you start:** J approval covers logs/events; explicit L portions cover automation and recovery. Existing D/H/I/K scopes must cover any mock check; E/H/I cover any final permission changes. Keep raw evidence private. Recovery is **BLOCKED** until the [encrypted backend and private isolation plan](reference/07-Backup-and-Recovery.md#required-private-recovery-plan) are approved; no safe port/bridge mapping is supplied here.
 
-**Purpose and location:** under J approval, view DC1 Security, OPNsense firewall and Apache access/error logs. These are three sources; Apache access/error files are one application source. Record source/observer UTC (Coordinated Universal Time), time differences, restricted access and rotation in **03 / Security Events** before comparing events.
+<a id="step-20---open-the-logs-and-produce-five-benign-events"></a>
 
-1. On DC1 open **Event Viewer > Windows Logs > Security > Filter Current Log**. Select the relevant time range and event IDs **4768,4771**, after confirming Step 11's Kerberos success/failure auditing. These directory events are generated on the domain controller; a WIN1 interactive logon event is not automatically a DC1 event. Microsoft documents [4768 ticket requests](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4768) and [4771 pre-authentication failures](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4771).
-2. In OPNsense open **Firewall > Log Files > Live View**, filter the named lab interface/source/destination/service and confirm the intended deny rule is logged. Check current states if a repeated request produces no new rule match.
-3. On APP1 read only the needed log interval using the following commands. Restrict exports to the approved log reader and keep originals private. Review **/etc/logrotate.d/apache2** and Windows log maximum-size/retention properties against the measured disk budget; change only approved values, without clearing logs.
+### A. Collect five security events
 
-**READ-ONLY - APP1 console, sudo/root or approved log-reader access.** Show the last 40 application records from the selected Ubuntu site paths. No replacements; output may contain private addresses/usernames:
+**WHERE**
 
-```sh
-sudo tail -n 40 /var/log/apache2/labapp-access.log
-sudo tail -n 40 /var/log/apache2/labapp-error.log
-```
+DC1 **Event Viewer**; physical HP **OPNsense** web interface; APP1 Proxmox **Console**; WIN1 sign-in/browser.
 
-**Check:** a request appears with the expected path/status/user/time and a denied request has its corresponding authorization context. If files are missing, inspect the active site's ErrorLog/CustomLog and Apache permissions; do not assume an empty view means no event occurred.
+**STEPS**
 
-4. Produce the following categories once within the approved action/rate. Reuse an existing recorded app case or deny when its evidence meets the requirement; do not generate duplicate traffic just to fill a sheet.
+1. Verify DC1's [Kerberos success/failure auditing](reference/06-Logs-Automation-and-Test-Tools.md#dc1-security-log-and-auditing), approved log-reader rights and selected account's lockout margin.
+2. Open **Windows Logs > Security**, **Firewall > Log Files > Live View**, and APP1's [Apache logs](reference/06-Logs-Automation-and-Test-Tools.md#apache-logs-and-bounded-reads). Check access, retention/rotation and source clocks.
+3. Reuse current matching evidence or perform each [approved benign action](reference/06-Logs-Automation-and-Test-Tools.md#five-benign-event-procedures) once. No additional traffic merely to fill a worksheet.
 
-| Event | Approved action | Source and expected observation |
-| --- | --- | --- |
-| E01 directory success | On connected WIN1, sign out/in as an existing standard lab user with valid credentials | DC1 Security: successful Kerberos request attributable to that online logon |
-| E02 directory failure | Verify the selected synthetic account is not near lockout; make one deliberately wrong-password logon attempt, then stop | DC1 Security: the relevant failure, often 4771; no repeated guesses |
-| E03 app allow | Request ava /reports/ with valid app credentials | Apache: authenticated allowed request, normally 200 |
-| E04 app denial | Request ava /maintenance/ with valid app credentials | Apache: authenticated role denial, normally 403 |
-| E05 firewall denial | Make Step 24's one approved request to a known listening lab-only mock through the intended deny | OPNsense: matching blocked flow/rule; a disconnected listener is insufficient |
+| Event | Action and matching source |
+| --- | --- |
+| E01 Directory authentication success | Valid online WIN1 logon; DC1 Security success |
+| E02 Directory authentication failure | One wrong-password attempt, then stop; DC1 Security failure |
+| E03 Application access allowed | ava opens /reports/ with valid app credentials; Apache allow |
+| E04 Application access denied | ava opens /maintenance/ with valid app credentials; Apache role denial |
+| E05 Firewall access denied | One approved request to a known-listening lab target; matching OPNsense block |
 
-5. For each category record actual source/action, source UTC, observer UTC, time difference, concise event summary and private evidence reference in **03 / Security Events**. If using only two sources, obtain the approved selection that still makes all five categories observable. Do not count five identical web requests as five categories.
+4. Locate each event by identity, resource, source/destination, service and time. Compare the actual [firewall rule](reference/06-Logs-Automation-and-Test-Tools.md#opnsense-live-view-and-effective-policy) or app group; a failed connection alone proves no control.
+5. [Compare source/observer UTC](reference/06-Logs-Automation-and-Test-Tools.md#source-and-observer-time-comparison), record their difference and link each private original. Five distinct categories are required.
 
-**READ-ONLY - APP1 local Linux console, approved log-reader; elevate only if journal access requires it.** Optional service troubleshooting shows system-journal entries since local midnight, without a pager; no placeholders:
+**CHECK**
 
-```sh
-journalctl --since today --no-pager
-```
+Five attributable records agree with actions and policy. On failure inspect auditing, time filters, logging and listener state; never repeat password guesses, clear logs or disable lockout.
 
-**Check:** match its timezone/service messages to the action; Apache requests remain in the separate files above. If permission/time filters hide entries, resolve the view before generating another event. [systemd's journal reference](https://www.freedesktop.org/software/systemd/man/latest/journalctl.html) explains these filters.
+**RECORD**
 
-**If it fails:** check auditing, actual online rather than cached logon, time range/timezone, site log path, rule logging and rotation. Do not repeat failed passwords or disable lockout to manufacture a record. Preserve the missing-evidence result as NOT TESTED until resolved.
+**Deliverable 03 > Security Events**, E01-E05; **Evidence Index**; **Test Cases**, FWT-07.01-.07/.09. Include actuals, private evidence, versions, operator/date and second observations.
 
-### Step 21 - Explain one denied-access event
+<a id="step-21---explain-one-denied-access-event"></a>
 
-**Purpose and location:** in **03 / Denied Access Investigation**, explain an observed denial using the existing event, effective policy and a working allowed control. This is one investigation, not a new attack exercise.
+### B. Investigate one denied-access event
 
-1. Choose E04 or E05 and refer to its **Security Events** ID. Record who requested what, the machine/client context, time and actual visible outcome.
-2. Check the intended control: for E04 compare authenticated app username, resource and group membership; for E05 compare source/destination/service and the exact OPNsense rule. Record the observed reason rather than guessing from the word denied.
-3. Link a known working allowed control to the same service: for example eli's approved maintenance access before revocation, or the administrator's allowed mock connection. Confirm the target was listening when the denied request occurred.
-4. Compare the log's time/status/rule with the browser/request observation and effective file/policy. Explain why a bad password, broken DNS or stopped service is not the intended authorization/segmentation result.
-5. Record conclusion, second observation, evidence ID and any defect reference. Add an actual problem to **04 / Issue Log** if correction is needed; preserve the original failure and later retest.
+**WHERE**
 
-**Check:** another reader can follow request, intended policy, observed deny and supporting control without seeing credentials or raw logs. Link FWT-07 in **03 / Test Cases**; do not claim broader detection or enterprise log-retention performance.
+Deliverable 03; WIN1 request view; APP1 or physical HP policy/log view.
 
-**If it fails:** keep the conclusion unverified and obtain the missing source/policy observation. Do not change an allow into a deny expectation after seeing the result.
+**STEPS**
 
-### Step 22 - Run the one capacity-summary automation
+1. Choose E04 or E05. Record who requested which resource/service, client context, source/destination, actual time and outcome.
+2. [Compare the matching log and effective rule/group](reference/06-Logs-Automation-and-Test-Tools.md#denied-access-investigation); identify the intended enforcing control.
+3. Link one working allowed control to that listening service and a second observation. Distinguish correct policy denial from incorrect credentials, broken DNS, stopped service or network failure.
+4. Record conclusion, limitations and evidence references. Preserve failures and link any correction/retest in **Deliverable 04 > Issue Log**.
 
-**Purpose and location:** under L automation approval, use local Windows PowerShell on **WIN1** as a standard user with access to the approved private output directory. The operation reads local disk capacity and replaces one JSON summary; it does not alter accounts, networking or system configuration.
+**CHECK**
 
-1. Review the exact script below, its target allowlist and output location before saving it privately. Use an existing reviewed directory outside every Git checkout; inspect its permissions and ensure neither directory nor output is a junction/symlink pointing elsewhere. The path check below is not a substitute for this review.
-2. Save the script in the approved private script file. Leave the WIN1/ad.lab.test checks unchanged in the real operation. Use the existing PowerShell policy/signing path; do not add an execution-policy bypass.
+The request, intended policy and observed decision agree. If evidence is missing, leave the conclusion unverified; do not infer enforcement from a timeout or change the expectation.
 
-**CONFIGURATION CHANGE - WIN1, local Windows PowerShell, standard user with approved write permission.** This proposed script queries local fixed disks and writes only WIN1-capacity.json. OutputDirectory is the one required runtime path, not a credential:
+**RECORD**
 
-```powershell
-param([Parameter(Mandatory)][string]$OutputDirectory)
-$system = Get-CimInstance -ClassName Win32_ComputerSystem
-if ($system.Name -ne 'WIN1' -or $system.Domain -ne 'ad.lab.test') {
-    throw 'Target is outside the approved lab operation.'
-}
-$directory = Get-Item -LiteralPath $OutputDirectory -ErrorAction Stop
-if (-not $directory.PSIsContainer) { throw 'Output must be a directory.' }
-$cursor = $directory
-while ($null -ne $cursor) {
-    if (Test-Path -LiteralPath (Join-Path $cursor.FullName '.git')) {
-        throw 'Keep the capacity record outside Git.'
-    }
-    $cursor = $cursor.Parent
-}
-$capacity = Get-CimInstance -ClassName Win32_LogicalDisk -Filter 'DriveType=3' |
-    Select-Object DeviceID, Size, FreeSpace
-$capacity | ConvertTo-Json |
-    Set-Content -LiteralPath (Join-Path $directory.FullName 'WIN1-capacity.json') -Encoding utf8
-```
+**Deliverable 03 > Denied Access Investigation**; link the event, **Evidence Index** and **Test Cases**, FWT-07.08/.09.
 
-**Check before running:** expected target/domain and one private replacement file match the approval. If a path/target is uncertain, stop without running it.
+<a id="step-22---run-the-one-capacity-summary-automation"></a>
 
-3. Set **$LabCapacityScriptPath** and **$LabCapacityOutputDirectory** privately to the reviewed script file and output directory. Invoke it as follows; the call changes only the named summary.
+### C. Run the capacity-summary automation
 
-**CONFIGURATION CHANGE - WIN1, same standard-user PowerShell and approved paths.** Run the reviewed local operation. Both variables must be assigned to approved absolute paths first; never use a remote target:
+**WHERE**
 
-```powershell
-& $LabCapacityScriptPath -OutputDirectory $LabCapacityOutputDirectory
-```
+WIN1 local **Windows PowerShell**, standard user; an approved existing private directory outside Git.
 
-**Check:** WIN1-capacity.json contains **DeviceID**, **Size** and **FreeSpace**, in bytes. Compare each drive with **File Explorer > This PC > drive Properties**. Use the displayed byte counts or convert consistently; GiB means 1,073,741,824 bytes. A successful script exit alone is insufficient.
+**STEPS**
 
-4. Run the same reviewed script a second time. Compare files changed and the current disk/settings views: only the intended summary is replaced; free space can change naturally. Record the observation in **03 / Automation Verification**, A01-A07, and reference FWT-08 in **Test Cases**.
-5. For safe invalid-target testing, make a disposable private copy of the script and change only its expected hostname literal to an intentionally nonexistent lab name. Run that copy on WIN1 with the same reviewed output directory; expect the target error **before any output write**. Verify the existing summary is unchanged. Do not rename WIN1, change its domain or contact another computer. Preserve the reviewed real script unchanged.
-6. For invalid-path testing, use the real script with an approved known nonexistent directory or an existing ordinary file as OutputDirectory. Expect the Get-Item/directory error and no new/replaced summary. Inspect the intended output separately after each rejection; remove the disposable test copy only under approved cleanup.
+1. Review and save the [complete capacity script](reference/06-Logs-Automation-and-Test-Tools.md#complete-win1-capacity-script) privately. Preserve its WIN1/ad.lab.test target and path guards; use existing policy/signing, without bypass.
+2. Inspect output-directory permissions, reparse points and the existing summary. Capture before-state; only **WIN1-capacity.json** may be replaced.
+3. [Run once](reference/06-Logs-Automation-and-Test-Tools.md#successful-and-repeated-execution). Compare DeviceID/Size/FreeSpace with **File Explorer > This PC > drive Properties**, using consistent byte units.
+4. Run successfully a second time. Compare before/after files and settings; other files, accounts, network and system settings must remain unchanged.
+5. Run the [safe invalid-target check](reference/06-Logs-Automation-and-Test-Tools.md#invalid-target-rejection) using only a disposable private copy with its expected hostname changed; retain the real script and verify no summary write.
+6. Run the real script's [invalid-output-path check](reference/06-Logs-Automation-and-Test-Tools.md#invalid-output-path-rejection). Verify rejection and unchanged summary independently after each negative check.
 
-**If it fails:** stop and compare target/domain, write rights, literal path, units and script error. Do not elevate or widen paths to force success. Remove only the intended output if recovery permits; preserve failure evidence and the original script.
+**CHECK**
 
-### Step 23 - Back up APP1 and restore it in isolation
+One local fixed-disk query, two successful runs, both safe rejections and separate OS/state observations. On failure stop; correct only approved paths/rights. Do not elevate or widen writes to force success.
 
-**Purpose and location:** under L recovery approval, use Proxmox Backup/Restore and an already approved encrypted external storage target. Restore one temporary APP1 copy while preserving the original and the only backup. A snapshot or ordinary Proxmox archive alone is not encrypted off-compute backup.
+**RECORD**
 
-**Before starting:** the encryption/mount/transport backend is still an owner decision. L approval must identify the exact external device, its existing encryption, recovery-key custody, supported mount/unmount steps, storage capacity, unused temporary VM ID, cleanup and rollback. No disk formatting or new encryption product/server is prescribed here. If this prerequisite is missing, FWT-09 is NOT TESTED.
+**Deliverable 03 > Automation Verification**, A01-A07; **Test Cases**, FWT-08.01-.07; **Evidence Index**. Keep the script/output and failure evidence outside Git.
 
-Before choosing the final backup state, decide under the existing E/H/I approval scope whether the lab should remain revoked or return to its normal analyst/engineer/remote workflows. For normal handover, restore eli to **both** AD/application LabMaintainers, and separately re-enroll/re-authorize only the exact approved remote client with the narrow grant. Record the changes, new device/address if applicable and affected permit/deny retests before backing up. If restoration is not approved, retain the revoked state and report the unavailable workflow as a limitation; do not claim normal engineer/remote acceptance.
+<a id="step-23---back-up-app1-and-restore-it-in-isolation"></a>
 
-1. On APP1 record the private backup manifest: synthetic pages under **/srv/labapp**, the active Apache configuration, **/etc/labapp** including hashed users/groups, server key/leaf and public root, and required guest networking/firewall/time settings. In the conditional Ubuntu profile use the commands below before shutdown. Do not copy keys/password hashes or the private manifest into public evidence.
+### D. Back up APP1 and restore it in isolation
 
-**CONFIGURATION CHANGE to one private manifest, otherwise READ-ONLY - original APP1 console, root shell, L approval.** Inspect the named manifest path before creation; preserve any older record. The selected profile must have all listed paths. Hash declared files without printing their content:
+**WHERE**
 
-```sh
-sudo -i
-umask 077
-LabManifestPath=/root/APP1-manifest.sha256
-find /srv/labapp /etc/apache2 /etc/labapp /etc/netplan /etc/nftables.conf /etc/systemd/timesyncd.conf.d -type f -exec sha256sum -- {} + > "$LabManifestPath"
-```
+Dell **Proxmox**; original/restored APP1 **Console**; WIN1 browser; physical HP **OPNsense**; approved encrypted external storage.
 
-**Check:** no path/read errors, every declared file has a manifest entry and no file content was printed. Copy this private original manifest through the approved media path to separate protected custody before backup; it is the comparison reference, not a public artifact. If a path differs/missing, correct the approved scope/profile instead of silently excluding it.
+**STEPS**
 
-2. At the Proxmox console verify the approved external encrypted volume is actually mounted and unlocked using its approved backend procedure. Inspect the exact device/mount and available space; an empty directory on the host's own disk is not the backup target. Verify the separate recovery key can unlock the volume under the approved check. Keep that key separate from the stored backup.
-3. In **Datacenter > Storage**, select the reviewed existing backup storage. For the conditional new **Directory** entry use **Add > Directory**, **ID: lab-backup** only if that unused ID is approved, **Directory: the exact mounted encrypted external path**, **Content: VZDump backup file**, and the intended node only. Require a mounted target with the guard below; do not allow fallback writes to the host directory. The [directory-storage manual](https://github.com/proxmox/pve-docs/blob/master/pve-storage-dir.adoc) explains the backend; encryption comes from the approved underlying volume, not a Backup now checkbox.
+1. Clear the [private recovery prerequisites](reference/07-Backup-and-Recovery.md#required-private-recovery-plan): exact encrypted backend, separate recovery key, unused temporary ID, space, cleanup and existing isolated path through physical HP. Missing design means **BLOCKED / NOT TESTED**; do not begin the drill.
+2. Decide the [final application/remote authorization state](reference/07-Backup-and-Recovery.md#final-authorization-state) under E/H/I scope before backup. Record approved changes/retests; retain revoked state if restoration is unapproved.
+3. Create and separately protect the [APP1 file manifest](reference/07-Backup-and-Recovery.md#app1-manifest-and-private-custody). [Verify external encryption/mount/storage and mountpoint guard](reference/07-Backup-and-Recovery.md#external-mount-and-backup-storage); a host directory or snapshot is insufficient.
+4. Cleanly shut down original APP1; confirm **Stopped**. [Back it up once](reference/07-Backup-and-Recovery.md#backup-archive-and-original-off-sequence), inspect archive identity/time/disk coverage and protect the sole archive. Keep the original off throughout restore testing.
+5. Start a separate observer clock immediately before confirming [Restore to the unused temporary ID](reference/07-Backup-and-Recovery.md#restore-a-disconnected-copy). Keep start/live restore off; before console boot disconnect every restored NIC and disable automatic startup. Never overwrite original APP1 or the sole backup.
+6. At the disconnected copy's console, [stop and disable copied Tailscale](reference/07-Backup-and-Recovery.md#copied-tailscale-and-integrity-check). Verify inactive/disabled state and all manifest hashes/content before temporary changes; preserve mismatches.
+7. Verify the [approved physical-firewall isolation checklist](reference/07-Backup-and-Recovery.md#physical-firewall-isolated-test-path) before attaching any restored NIC. Keep home/production and duplicate identities disconnected. Use only named temporary client/firewall changes; no new bridge/VLAN/NIC/port mapping or firewall bypass.
+8. Through that isolated WIN1 path, [test trusted HTTPS](reference/07-Backup-and-Recovery.md#https-role-checks-and-recovery-time): ava /reports/ allows; ava /maintenance/ denies with valid credentials. Compare Apache/group evidence. Stop the observer clock only after integrity and usable application checks; record actual elapsed time.
+9. [Disconnect and shut down the copy, then clean up](reference/07-Backup-and-Recovery.md#cleanup-rollback-and-off-compute-custody). Restore saved client/rule settings before original startup; verify original HTTPS/roles/approved remote state. Safely lock/detach the encrypted backup into separate custody, with its recovery key stored separately.
 
-**CONFIGURATION CHANGE followed by READ-ONLY - Proxmox console, root, approved lab-backup Directory entry only.** Set LabBackupMountPath privately to that entry's exact external mount path first. The option marks storage offline when its mount is absent; it does not mount, format or encrypt a device. Verify syntax against the [selected pvesm reference](https://github.com/proxmox/pve-docs/blob/master/generated/pvesm.1-synopsis.adoc):
+**CHECK**
 
-```sh
-pvesm set lab-backup --is_mountpoint 1
-findmnt --mountpoint "$LabBackupMountPath"
-lsblk -o NAME,TYPE,FSTYPE,MOUNTPOINTS
-pvesm status
-```
+Backup/restore output, separate clock, file integrity and HTTPS allow/deny agree. On failure leave the copy disconnected, preserve original/sole backup and follow approved recovery; never reconnect broadly or invent a recovery time/PASS.
 
-**Check:** the exact path is a mounted external device, **lab-backup** is active with sufficient space and its storage configuration shows the guard. Compare the device/encryption chain and unlock/recovery result to the approved backend record; a filesystem label or active storage alone does not prove encryption. Missing/wrong mount or unverified encryption means stop before backup.
+**RECORD**
 
-4. Cleanly shut down APP1 through its guest console and confirm **Stopped**. Keep it off for the drill. Select **APP1 > Backup > Backup now**, the verified encrypted external storage, **Mode: Stop**, and the approved compression. Review the selected VM/storage, then start. In the task log confirm successful completion and inspect archive identity, date, size and included disk(s). Record backup time/age and manifest in **03 / Backup & Restore**, B01-B03.
-5. In the storage's **Backups** view select that exact APP1 archive > **Restore**. Enter the approved unused temporary ID and reviewed guest-disk storage. Keep **Start after restore/live restore** off; review the original ID is not selected. Start the independent observer clock **immediately before confirming Restore**. Restore without overwriting the original or sole archive. [Proxmox's backup/restore manual](https://github.com/proxmox/pve-docs/blob/master/vzdump.adoc) governs selected-version details.
-6. Before starting the copy, open its **Hardware > Network Device > Edit > Advanced > Disconnect** for every NIC. Set **Options > Start at boot: No**. Confirm original APP1 is still off. Start only the copy via **Console** and keep it disconnected.
+**Deliverable 03 > Backup & Restore**, B01-B10; **Test Cases**, FWT-09.01-.10; **Evidence Index**. Record backup age/time, final state, failures and AD/CA/host/physical-firewall recovery exclusions; issues in **04 > Issue Log**.
 
-**CONFIGURATION CHANGE - restored APP1 copy's console only, sudo/root, L approval.** Stop and disable the copied overlay service before any client attachment. Do not run this on the original APP1. Conditional Ubuntu/systemd profile; no placeholders:
-
-```sh
-sudo systemctl disable --now tailscaled
-sudo systemctl is-active tailscaled
-```
-
-**Check:** the copied service is inactive; the second command normally exits nonzero for inactive. Inspect the copy's NIC-disconnected state independently in Proxmox. If service identity/state is unclear, leave the copy disconnected and stop the drill.
-
-Before changing the copy's firewall for testing, transfer the separately retained private original manifest to its approved comparison path and check restored integrity:
-
-**READ-ONLY - restored APP1 copy console, root for protected files.** Set LabOriginalManifestPath privately to the approved original manifest file, then compare all declared files. No file is modified:
-
-```sh
-sha256sum -c "$LabOriginalManifestPath"
-```
-
-**Check:** every declared file reports **OK** before temporary test changes. If a file is missing/mismatched, preserve that result and investigate the archive/scope; do not rewrite the manifest to match the restore.
-
-7. Use the approved existing Restricted bridge for the temporary recovery test **only after disconnecting every other path**: original APP1 stays off; disconnect OPNsense's vmbr20 NIC; attach the one existing WIN1 test NIC to vmbr20 with a temporary unused Restricted address, no gateway, and a private hosts entry for app.ad.lab.test. Preserve WIN1's previous adapter/hosts/bridge settings first. Confirm no physical port, host address or other route exists on vmbr20. Do not create a fourth permanent zone or attach the copy to Management/home.
-8. While still disconnected, save the restored copy's original firewall file. On that **copy only**, use Step 12's scoped replacement transaction to add **ip saddr LAB_RESTORE_CLIENT_IP tcp dport 443 counter accept**, substituting the approved temporary WIN1 address. Put it after the existing physical-source HTTPS permit and before the input chain's closing brace; retain the earlier tailscale0 drop and final drop policy. Record this intentional post-integrity-check difference.
-9. Attach only the copy's single NIC to isolated vmbr20 and enable its link. Confirm no live duplicate or Tailscale service. Reuse WIN1's approved lab root trust and map app.ad.lab.test privately to the restored address. Restore/remove the temporary permit during cleanup; do not broaden the source subnet.
-10. Stop the independent observer clock when the declared integrity/service checks establish usable application recovery. Open HTTPS and test **ava /reports/** allow and **ava /maintenance/** authenticated deny, which hold in both approved eli membership states. Include this functional verification in actual elapsed time. Syntax checks alone do not establish recovery. Record time, integrity and behavior in **03 / Backup & Restore**, B04-B10, and FWT-09 in **Test Cases**.
-11. Shut down/disconnect the copy after review. Under approved cleanup restore WIN1's saved NIC/address/hosts settings and the firewall NIC attachment, verify the copy cannot start/connect automatically, then resume original APP1 only after the isolation check. Verify original HTTPS/roles and overlay state through their approved path. Keep the sole backup safe; any copy deletion needs the exact cleanup scope.
-12. Safely unmount/lock and detach the external encrypted backup through the approved backend procedure and store it away from the compute host. Record readable recovery custody, backup age, measured recovery and exclusions. This drill does not test AD, CA or Proxmox disaster recovery and promises no enterprise recovery-time target.
-
-**Check:** a real backup/restore task, independent clock, manifest comparison and restored HTTPS/role behavior agree. The final off-compute copy is encrypted, with separate recovery access. No original disk, original APP1, sole backup or duplicate overlay identity was overwritten/connected.
-
-**If it fails:** keep original and backup safe, leave the copy disconnected, record the failure and inspect encryption access, archive/disk coverage, storage space, network/firewall and service state. Do not reconnect broadly, retry against the original ID or erase the only archive.
-
-### Phase 4 checkpoint and recovery
-
-FWT-07 requires five categories plus one explained denial; FWT-08 requires actual output, safe repeat and target/path rejection; FWT-09 requires an actual isolated restore with data/HTTPS/role evidence. Record only observed results. Recovery preserves source logs and backups, changes only approved settings/output, and leaves the recovery copy disconnected until exact cleanup is approved.
+**Before Phase 5:** All FWT-07/08/09 mandatory subchecks and second observations remain required. Missing or blocked evidence stays **NOT TESTED**. Retain private source logs, output and backup; recover only approved changes. Engineering results and owner acceptance are separate.
 
 ## Phase 5: Validation and Final Submission
 
