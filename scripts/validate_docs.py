@@ -32,6 +32,8 @@ REQUIRED_FILES = (
     "docs/lab-guides/reference/01-Prepared-Infrastructure.md",
     "docs/lab-guides/reference/02-Windows-Directory-and-Policy.md",
     "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md",
+    "docs/lab-guides/reference/04-HTTPS-and-Application-Roles.md",
+    "docs/lab-guides/reference/05-Tailscale-Policy.md",
     "docs/architecture/ARCHITECTURE.md", "docs/security/SECURITY-REQUIREMENTS.md",
     "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
     "docs/governance/DECISIONS.md", "docs/governance/RISKS.md", "docs/final-report/FINAL-REPORT.md",
@@ -53,6 +55,8 @@ GUIDE_TRANSITION = "docs/governance/HISTORICAL-REQUIREMENT-TRANSITION.md"
 PREPARED_REFERENCE = "docs/lab-guides/reference/01-Prepared-Infrastructure.md"
 WINDOWS_REFERENCE = "docs/lab-guides/reference/02-Windows-Directory-and-Policy.md"
 LINUX_REFERENCE = "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md"
+HTTPS_REFERENCE = "docs/lab-guides/reference/04-HTTPS-and-Application-Roles.md"
+TAILSCALE_REFERENCE = "docs/lab-guides/reference/05-Tailscale-Policy.md"
 PHASE_TITLES = (
     "Prepared Infrastructure", "Identity and Endpoint Security", "Zero Trust Access Controls",
     "Monitoring, Automation and Recovery", "Validation and Final Submission",
@@ -540,6 +544,98 @@ def identity_endpoint_issues(guide: str, windows: str, linux: str) -> list[str]:
     return issues
 
 
+def access_control_issues(guide: str, https: str, tailscale: str) -> list[str]:
+    """Inspect Phase 3 controls and conditional profiles without lab execution."""
+    issues = []
+    phase = guide.partition("## Phase 3: Zero Trust Access Controls\n")[2].partition("## Phase 4:")[0]
+    expected = ["A. Create and verify HTTPS certificates", "B. Configure the Apache application and accounts",
+                "C. Test the six application access cases", "D. Revoke an application permission",
+                "E. Configure, test and revoke Tailscale access"]
+    procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+    if [title for title, _ in procedures] != expected:
+        issues.append("guide Phase 3: require exactly five access-control procedures")
+    for title, section in procedures:
+        if re.findall(r"^\*\*(WHERE|STEPS|CHECK|RECORD)\*\*$", section, re.M) != ["WHERE", "STEPS", "CHECK", "RECORD"]:
+            issues.append(f"guide Phase 3 {title}: missing ordered sample labels")
+        actions = [int(n) for n in re.findall(r"^(\d+)\. ", section, re.M)]
+        if not 3 <= len(actions) <= 7 or actions != list(range(1, len(actions) + 1)):
+            issues.append(f"guide Phase 3 {title}: require 3-7 sequential actions")
+        if "**RECORD**\n\n**Deliverable " not in section or "On failure" not in section:
+            issues.append(f"guide Phase 3 {title}: missing recording or recovery context")
+    cases = re.findall(r"^\| (C\d{2}) \| (ava|eli|uma) \| (/\w+/) \| (ALLOW / 200|DENY / authenticated 403) \|$", phase, re.M)
+    expected_cases = [(f"C{i:02d}", user, page, result) for i, (user, page, result) in enumerate((
+        ("ava", "/reports/", "ALLOW / 200"), ("ava", "/maintenance/", "DENY / authenticated 403"),
+        ("eli", "/reports/", "ALLOW / 200"), ("eli", "/maintenance/", "ALLOW / 200"),
+        ("uma", "/reports/", "DENY / authenticated 403"), ("uma", "/maintenance/", "DENY / authenticated 403")), 1)]
+    if cases != expected_cases:
+        issues.append("guide Phase 3: preserve all six exact application account/path/status decisions")
+    for meaning in ("Approvals: G", "H for Apache", "I for remote", "E also covers", "FWR-03/05/06",
+                    "FWT-03/FWT-05/FWT-06", "365-day", "90-day", "encrypted CA key", "serverAuth",
+                    "remaining validity", "untrusted rejection", "No home/production trust changes",
+                    "separate test accounts", "manually assigned roles", "single sign-on or automatic synchronization",
+                    "LabReaders: ava eli", "LabMaintainers: eli", "no fourth app administrator", "TCP 443 only",
+                    "fresh browser context per user", "valid application credentials", "actual server request",
+                    "Apache logs", "401", "FWT-03.01-.03", ".10-.13", "separate observer clock",
+                    "AD membership does not update Apache", "reader permission stays", "Restore permissions only",
+                    "revocation-time SLA", "independently isolated", "explicit deny-all", "additive grant/ACL",
+                    "MFA", "subnet routes", "Tailscale SSH", "Funnel", "Serve", "public sharing",
+                    "FF-03", "FF-06", "no DC1, WIN1, Proxmox or OPNsense", "working positive controls",
+                    "closed port or broken DNS is insufficient", "Phase 5 mock dependency", "remove the client grant",
+                    "exact device authorization", "existing browser and a fresh context", "observed denial time",
+                    "cache/connection-state treatment", "OPNsense alone cannot prove", "second observations", "NOT TESTED"):
+        if meaning not in phase:
+            issues.append("guide Phase 3: missing access-control safeguard: " + meaning)
+    if "```" in phase:
+        issues.append("guide Phase 3: detailed commands belong in the linked technical references")
+    for name, content in ((HTTPS_REFERENCE, https), (TAILSCALE_REFERENCE, tailscale)):
+        if not content:
+            issues.append("guide Phase 3: technical reference is required: " + name)
+        links = re.findall(re.escape(name.split("docs/lab-guides/")[1]) + r"#([a-z0-9-]+)", phase)
+        if not links or any(anchor not in heading_anchors(content) for anchor in links):
+            issues.append("guide Phase 3: technical-reference navigation must reach exact headings")
+        for match in re.finditer(r"^```[^\n]*\n.*?^```", content, re.M | re.S):
+            context = content[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
+            if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
+                issues.append("Phase 3 reference: command block needs a risk/target context")
+    required = {
+        "HTTPS": (https, ("rsa:3072", "-days 365", "rsa:2048 -noenc", "-days 90", "umask 077",
+                          "-purpose sslserver", "-verify_hostname app.ad.lab.test", "subjectAltName=DNS:app.ad.lab.test",
+                          "basicConstraints=critical,CA:FALSE", "extendedKeyUsage=serverAuth", "remaining validity",
+                          "-B -c /etc/labapp/users ava", "-c creates or overwrites", "root-only, mode 0600",
+                          "mode **0640**", "AuthzSendForbiddenOnFailure On", "AuthMerging Off",
+                          "Syntax OK", "sudo ss -lntp", "no single sign-on or automatic AD synchronization",
+                          "There is no revocation-time SLA", "no CRL/OCSP", "LabReaders: ava eli")),
+        "Tailscale": (tailscale, ("before Internet connectivity", "MFA and recovery", "before enrollment",
+                                 "--accept-routes=false --accept-dns=false --ssh=false", "not grant every device",
+                                 "Windows route/DNS defaults", "no direct physical/zone route", "hosts",
+                                 "before established traffic", "forward chain drops", "both IPv4/IPv6",
+                                 "unauthorized **uma**", "distinct", "known-listening", "working positive control",
+                                 "Remove", "Keep APP1 intact", "fresh connection/context", "separate observer clock",
+                                 "do not blindly restore", "NOT TESTED")),
+    }
+    for name, (content, meanings) in required.items():
+        for meaning in meanings:
+            if meaning not in content:
+                issues.append(f"{name} reference: missing access-control safeguard: " + meaning)
+    groups = re.findall(r"^```text\n(LabReaders:[^`]+)```", https, re.M)
+    if groups != ["LabReaders: ava eli\nLabMaintainers: eli\n"]:
+        issues.append("HTTPS reference: preserve exact manual application group mapping")
+    apache = "\n".join(re.findall(r"^```apache\n(.*?)^```", https, re.M | re.S))
+    for path, role in (("/srv/labapp/reports", "LabReaders"), ("/srv/labapp/maintenance", "LabMaintainers")):
+        if not re.search(r'<Directory "' + re.escape(path) + r'">\s*Require group ' + role + r'\s*</Directory>', apache):
+            issues.append("HTTPS reference: exact per-page group authorization is required")
+    if "Require valid-user" in apache or "Require all denied" not in apache or "Listen 80" in apache:
+        issues.append("HTTPS reference: deny-by-default HTTPS must not become a generic user allow")
+    try:
+        policies = [json.loads(block) for block in re.findall(r"^```json\n(.*?)^```", tailscale, re.M | re.S)]
+    except ValueError:
+        policies = []
+    if policies != [{"acls": [], "grants": [], "ssh": []},
+                    {"acls": [], "grants": [{"src": ["LAB_REMOTE_OVERLAY_IP"], "dst": ["LAB_APP_OVERLAY_IP"], "ip": ["tcp:443"]}], "ssh": []}]:
+        issues.append("Tailscale reference: require explicit deny-all then the single exact client/APP1 tcp:443 grant")
+    return issues
+
+
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
@@ -547,6 +643,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
     issues.extend(prepared_infrastructure_issues(guide, texts.get(PREPARED_REFERENCE, "")))
     issues.extend(identity_endpoint_issues(guide, texts.get(WINDOWS_REFERENCE, ""), texts.get(LINUX_REFERENCE, "")))
+    issues.extend(access_control_issues(guide, texts.get(HTTPS_REFERENCE, ""), texts.get(TAILSCALE_REFERENCE, "")))
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
     if titles != ASSIGNMENT_HEADINGS:
@@ -620,12 +717,12 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        if number in {"1", "2"}:
+        if number in {"1", "2", "3"}:
             if f"**Before Phase {int(number) + 1}:**" not in section:
                 issues.append(f"phase {number} missing field: checkpoint and recovery")
         elif not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
             issues.append(f"phase {number} missing field: checkpoint and recovery")
-        for field in (() if number in {"1", "2"} else ("**Outcome:**", "Approvals:", "Test")):
+        for field in (() if number in {"1", "2", "3"} else ("**Outcome:**", "Approvals:", "Test")):
             if field not in section:
                 issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
@@ -643,8 +740,8 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
     procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
-    if [int(n) for n, _ in procedures] != list(range(13, 28)):
-        issues.append("guide: preserve downstream numbered procedures 13-27 in order")
+    if [int(n) for n, _ in procedures] != list(range(20, 28)):
+        issues.append("guide: preserve downstream numbered procedures 20-27 in order")
     for number, body in procedures:
         for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
             if field not in body:

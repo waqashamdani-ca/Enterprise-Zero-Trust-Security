@@ -341,7 +341,8 @@ class AssignmentContractTests(unittest.TestCase):
             "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
             "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
             "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml",
-            validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE, validator.WINDOWS_REFERENCE, validator.LINUX_REFERENCE)}
+            validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE, validator.WINDOWS_REFERENCE, validator.LINUX_REFERENCE,
+            validator.HTTPS_REFERENCE, validator.TAILSCALE_REFERENCE)}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
         self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
         self.plan = "docs/testing/TEST-PLAN.md"
@@ -379,7 +380,7 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
 
     def test_guide_procedures_require_actions_context_and_failure_recovery(self):
-        self.assert_rejected(self.guide, "### Step 13 -", "### Step 0 -", "numbered procedures")
+        self.assert_rejected(self.guide, "### Step 20 -", "### Step 0 -", "numbered procedures")
         self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
         self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
 
@@ -455,6 +456,63 @@ class AssignmentContractTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assert_rejected(self.guide, "### A. Verify or create the three workload VMs\n",
                                      "### A. Verify or create the three workload VMs\n\n" + phrase + "\n", "obsolete mapping")
+
+    def test_phase3_structure_six_cases_and_reference_links_are_required(self):
+        for before, after, finding in (
+            ("### C. Test the six application access cases", "### F. Cases", "exactly five access"),
+            ("#leaf-signing-and-verification)", "#absent)", "technical-reference navigation"),
+            ("**Before Phase 4:**", "**Later:**", "checkpoint and recovery"),
+            ("7. Force new server requests", "9. Force new server requests", "sequential actions"),
+            ("| C02 | ava | /maintenance/ | DENY / authenticated 403 |", "| C02 | ava | /maintenance/ | ALLOW / 200 |", "six exact"),
+            ("| C06 | uma | /maintenance/ | DENY / authenticated 403 |", "| C06 | eli | /reports/ | DENY / authenticated 403 |", "six exact"),
+        ):
+            with self.subTest(before=before):
+                self.assert_rejected(self.guide, before, after, finding)
+
+    def test_phase3_certificate_roles_and_revocation_safeguards_are_required(self):
+        for name, phrases in (
+            (self.guide, ("encrypted CA key", "serverAuth", "remaining validity", "fresh browser context per user",
+                          "actual server request", "separate observer clock", "reader permission stays",
+                          "AD membership does not update Apache", "Restore permissions only", "revocation-time SLA")),
+            (validator.HTTPS_REFERENCE, ("rsa:3072", "-days 365", "rsa:2048 -noenc", "-days 90", "umask 077",
+                                         "-purpose sslserver", "subjectAltName=DNS:app.ad.lab.test", "-c creates or overwrites",
+                                         "AuthzSendForbiddenOnFailure On", "AuthMerging Off", "no CRL/OCSP")),
+        ):
+            for phrase in phrases:
+                with self.subTest(name=name, phrase=phrase):
+                    texts = dict(self.texts)
+                    self.assertIn(phrase, texts[name])
+                    texts[name] = texts[name].replace(phrase, "omitted")
+                    self.assertTrue(any("access-control safeguard" in item for item in validator.completeness_issues(texts)))
+        self.assert_rejected(validator.HTTPS_REFERENCE, "Require group LabReaders", "Require valid-user", "group authorization")
+        self.assert_rejected(validator.HTTPS_REFERENCE, "LabMaintainers: eli", "LabMaintainers: ava eli", "group mapping")
+
+    def test_phase3_tailscale_policy_cannot_gain_additive_or_wildcard_access(self):
+        for before, after in (
+            ('"acls": []', '"acls": [{"action":"accept","src":["*"],"dst":["*:*"]}]'),
+            ('"LAB_REMOTE_OVERLAY_IP"', '"*"'),
+            ('"LAB_APP_OVERLAY_IP"', '"*"'),
+            ('"tcp:443"', '"tcp:*"'),
+            ('"ssh": []', '"ssh": [{"action":"accept"}]'),
+        ):
+            with self.subTest(before=before):
+                self.assert_rejected(validator.TAILSCALE_REFERENCE, before, after, "single exact client/APP1")
+
+    def test_phase3_remote_controls_and_second_observations_cannot_be_removed(self):
+        for name, phrases in (
+            (self.guide, ("independently isolated", "explicit deny-all", "additive grant/ACL", "MFA", "Funnel", "Serve",
+                          "no DC1, WIN1, Proxmox or OPNsense", "working positive controls", "Phase 5 mock dependency",
+                          "exact device authorization", "existing browser and a fresh context", "cache/connection-state treatment")),
+            (validator.TAILSCALE_REFERENCE, ("before Internet connectivity", "before enrollment", "--accept-routes=false --accept-dns=false --ssh=false",
+                                             "no direct physical/zone route", "before established traffic", "forward chain drops",
+                                             "unauthorized **uma**", "fresh connection/context", "do not blindly restore")),
+        ):
+            for phrase in phrases:
+                with self.subTest(name=name, phrase=phrase):
+                    texts = dict(self.texts)
+                    self.assertIn(phrase, texts[name])
+                    texts[name] = texts[name].replace(phrase, "omitted")
+                    self.assertTrue(any("access-control safeguard" in item for item in validator.completeness_issues(texts)))
 
     def test_identity_and_linux_safeguards_cannot_be_removed(self):
         for name, phrases in (
