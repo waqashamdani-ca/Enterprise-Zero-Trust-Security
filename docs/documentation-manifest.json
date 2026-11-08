@@ -81,18 +81,18 @@
       "uri_links": 10
     },
     {
-      "bookmarks": 15,
+      "bookmarks": 19,
       "internal_links": 0,
       "pages": 4,
       "pdf": "docs/assignments/PROJECT-ASSIGNMENT.pdf",
-      "pdf_sha256": "c06a4671fb3e2d0b15607fac19498b7f713edd75fc6c7251b256c240379f96c8",
+      "pdf_sha256": "ec585181db70379eabe8988e85ba0347e9536d62f8f8f88c338a086499e5c6df",
       "renderer_sha256": "513684d996d63bff750cad65e104be6c459755348745852ad4d22fd9c238c2a0",
       "searchable": true,
       "source": "docs/assignments/PROJECT-ASSIGNMENT.md",
-      "source_sha256": "14eae399c1160738629f07f080da3748d665d8acd13b5f8c45e10678e9012b1e",
-      "source_tokens": 445,
+      "source_sha256": "e4e7cd5588d1fb1efafb7f8f37dfd97091719a619bbf827781cf086d88c6f904",
+      "source_tokens": 514,
       "text_token_coverage": 1.0,
-      "uri_links": 7
+      "uri_links": 8
     },
     {
       "bookmarks": 4,

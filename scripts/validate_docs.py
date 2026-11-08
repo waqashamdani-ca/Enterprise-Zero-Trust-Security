@@ -102,12 +102,14 @@ COMPANION_REPORTS = {"docs/reports/T6A-Report.md": ("T6A", 6),
 T9_UMBRELLA_REPORT = "docs/reports/T9-Report.md"
 ADDENDUM_NAME = re.compile(r"docs/reports/T([1-9][0-9]*)-Addendum-([0-9]{3})-[A-Za-z0-9-]+\.md")
 ASSIGNMENT_HEADINGS = (
-    "Project Overview", "Learning Objectives", "What You Will Build", "Project Requirements",
-    "Required Deliverables", "Four-Week Implementation Plan", "Evaluation Criteria", "References",
+    "Project Overview", "Learning Objectives", "Lab Environment", "Project Activities",
+    "Required Deliverables", "Evaluation Rubric", "Completion Criteria",
 )
 ASSIGNMENT_COMPATIBILITY_ANCHORS = {
     "project-objectives", "project-scope", "technologies-and-resources",
     "expected-deliverables", "implementation-approach", "success-criteria",
+    "what-you-will-build", "project-requirements", "four-week-implementation-plan",
+    "evaluation-criteria", "references",
 }
 DELIVERABLE_FILENAMES = (
     "01-Lab-Environment-and-Architecture.xlsx",
@@ -394,10 +396,9 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     assignment = texts.get("docs/assignments/PROJECT-ASSIGNMENT.md", "")
     guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
-    titles = {match[2] for match in HEADING.finditer(strip_fences(assignment)[0])}
-    for title in ASSIGNMENT_HEADINGS:
-        if title not in titles:
-            issues.append(f"assignment missing required section: {title}")
+    titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
+    if titles != ASSIGNMENT_HEADINGS:
+        issues.append("assignment must contain the seven required sections exactly once in order")
     required_ids = [f"FWR-{number:02d}" for number in range(1, 11)]
     assignment_ids = re.findall(r"^\|\s*(FWR-\d{2})\s*\|", assignment, re.M)
     if assignment_ids != required_ids:
@@ -406,7 +407,7 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         row = re.search(rf"^\|\s*FWR-{number:02d}\s*\|[^\n]+$", assignment, re.M)
         if not row or re.findall(r"FWT-\d{2}", row[0]) != [f"FWT-{number:02d}"]:
             issues.append(f"FWR-{number:02d}: wrong primary test mapping")
-    rubric = assignment.partition("## Evaluation Criteria")[2].split("\n## ", 1)[0]
+    rubric = assignment.partition("## Evaluation Rubric")[2].split("\n## ", 1)[0]
     weights = [(title.strip(), int(score)) for title, score in
                re.findall(r"^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|", rubric, re.M)]
     if weights != list(RUBRIC_WEIGHTS) or sum(score for _, score in weights) != 100:
@@ -433,16 +434,32 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     aliases = set(re.findall(r'^<a id="([a-z][a-z0-9-]*)"></a>\s*$', assignment, re.M))
     if aliases != ASSIGNMENT_COMPATIBILITY_ANCHORS:
         issues.append("assignment: preserve compatibility anchors for existing links")
-    if re.search(r"\b(?:T6A?|T7|A-L)\b", assignment):
+    if re.search(r"\b(?:T[0-9]+[A-F]?|Codex|A-L)\b", assignment):
         issues.append("assignment: internal task/stage jargon must stay in the guide/report")
     for meaning in ("separate test accounts", "manually assigned roles", "removing an application role", "single sign-on"):
         if meaning not in assignment.lower():
             issues.append("assignment: preserve separate application identity/revocation/SSO limits")
-    for meaning in ("existing and ordered hardware", "backup and recovery", "owner approval", "original windows disk", "not assumed delivered, installed or validated"):
-        if meaning not in assignment.lower():
+    environment = assignment.partition("## Lab Environment")[2].split("\n## ", 1)[0].lower()
+    for meaning in ("prepared environment", "proxmox and physical opnsense", "three security boundaries",
+                    "restricted management", "sufficient resources", "host reserves", "temporary restore",
+                    "home/production isolation", "required network flows and denials", "console recovery",
+                    "backup and recovery", "original windows disk", "data and services",
+                    "owner approval covering changes, validation and rollback"):
+        if meaning not in environment:
             issues.append("assignment: preserve concise hardware readiness/data/safety controls")
-    if any(part in assignment for part in ORDERED_HARDWARE):
-        issues.append("assignment: detailed procurement belongs in the guide")
+    for meaning in ("keep uplinks disconnected", "independent isolation", "lab-owned mock targets",
+                    "never probe them", "separate lab identities", "credential reuse",
+                    "corporate microsoft 365", "pe-dap", "customer data", "hosting integration"):
+        if meaning not in assignment.lower():
+            issues.append("assignment: preserve isolation and protected-network safeguards")
+    for component in ("Dell Precision 5820 with Proxmox VE", "HP desktop with physical OPNsense",
+                      "TP-Link TL-SG108E", "GL.iNet Beryl AX", "exactly three workload",
+                      "6 vCPU / 16 GiB RAM / 160 GiB virtual disks"):
+        if component not in assignment:
+            issues.append("assignment: preserve approved physical firewall and three-workload architecture")
+    if re.search(r"\b(?:four[- ](?:VMs?|virtual machines)|virtual OPNsense|PLANNED|NOT TESTED|UAT PENDING|"
+                 r"[Oo]rdered|[Dd]elivered|[Pp]rocurement)\b", assignment):
+        issues.append("assignment: obsolete topology, procurement or execution status belongs outside the assignment")
     guide_files = guide.partition("## Required lab deliverables")[2].split("\n## ", 1)[0]
     if tuple(re.findall(r"^\|\s*`([^`]+)`\s*\|", guide_files, re.M)) != DELIVERABLE_FILENAMES:
         issues.append("guide must match the five approved filenames")
