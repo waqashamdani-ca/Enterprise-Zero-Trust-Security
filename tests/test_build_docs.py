@@ -495,11 +495,59 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertEqual(*manifests)
 
     def test_t9c4_preserves_excluded_sources_history_report_and_moved_commands(self):
+        # Retain the complete predecessor contract against its merged publication.
+        published = "052fa098dd1768c82bac850470accf306bc3f0cd"
+        def published_bytes(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
         base = "eb82f2ff5edee9f3af45d44b17a4182a35c29028"
         report = "docs/reports/T9-Report.md"
         allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf", docs.MANIFEST, report,
                    "scripts/build_docs.py", "scripts/validate_docs.py", "tests/test_build_docs.py", "tests/test_validate_docs.py"}
         added = {name for source in docs.ACCESS_REFERENCES for name in (source, source[:-3] + ".pdf")}
+        def old(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", published]).decode().splitlines()
+        self.assertEqual(set(current), set(files) | added, "Only four new reference editions are authorized")
+        for name in files:
+            if name not in allowed:
+                self.assertEqual(published_bytes(name), old(name), name)
+        def parts(value):
+            prefix, rest = value.split(b"## Phase 3: Zero Trust Access Controls\n", 1)
+            phase, suffix = rest.split(b"## Phase 4: Monitoring, Automation and Recovery\n", 1)
+            return prefix, phase, suffix
+        prefix, original, suffix = parts(old(docs.GUIDE))
+        actual = parts(published_bytes(docs.GUIDE))
+        self.assertEqual(actual[0], prefix, "Introduction and Phases 1-2 must remain byte-identical")
+        self.assertEqual(actual[2], suffix, "Phases 4-5 and appendices must remain byte-identical")
+        fences = r"^```([^\n]*)\n(.*?)^```"
+        original = re.findall(fences, original.decode(), re.M | re.S)
+        moved = [block for name in docs.ACCESS_REFERENCES
+                 for block in re.findall(fences, published_bytes(name).decode(), re.M | re.S)]
+        self.assertEqual(len(original), 17)
+        for block in original:
+            self.assertIn(block, moved, "Every original command/configuration must be moved intact")
+        def outside_t9c4(value):
+            value = re.sub(rb"^\| T9C\.4 - Phase 3 \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9C\.4 - Phase 3\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
+        new_report = published_bytes(report)
+        self.assertEqual(outside_t9c4(new_report), outside_t9c4(old(report)))
+        self.assertIn(b"Report state: DRAFT\n", new_report)
+        self.assertIn(b"| Umbrella status | IN PROGRESS |", new_report)
+        manifests = [json.loads(old(docs.MANIFEST)), json.loads(published_bytes(docs.MANIFEST))]
+        for manifest in manifests:
+            manifest["documents"] = [entry for entry in manifest["documents"]
+                                     if entry["source"] not in {docs.GUIDE} | docs.ACCESS_REFERENCES]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_t9c5_preserves_excluded_sources_history_report_and_all_commands(self):
+        base = "052fa098dd1768c82bac850470accf306bc3f0cd"
+        report = "docs/reports/T9-Report.md"
+        allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf", docs.MANIFEST, report,
+                   "scripts/build_docs.py", "scripts/validate_docs.py", "tests/test_build_docs.py", "tests/test_validate_docs.py"}
+        added = {name for source in docs.OPERATIONS_REFERENCES for name in (source, source[:-3] + ".pdf")}
         def old(name):
             return subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
@@ -509,34 +557,65 @@ class PdfArtifactTests(unittest.TestCase):
             if name not in allowed:
                 self.assertEqual((ROOT / name).read_bytes(), old(name), name)
         def parts(value):
-            prefix, rest = value.split(b"## Phase 3: Zero Trust Access Controls\n", 1)
-            phase, suffix = rest.split(b"## Phase 4: Monitoring, Automation and Recovery\n", 1)
+            prefix, rest = value.split(b"## Phase 4: Monitoring, Automation and Recovery\n", 1)
+            phase, suffix = rest.split(b"## Phase 5: Validation and Final Submission\n", 1)
             return prefix, phase, suffix
-        prefix, original, suffix = parts(old(docs.GUIDE))
+        before, original, after = parts(old(docs.GUIDE))
         actual = parts((ROOT / docs.GUIDE).read_bytes())
-        self.assertEqual(actual[0], prefix, "Introduction and Phases 1-2 must remain byte-identical")
-        self.assertEqual(actual[2], suffix, "Phases 4-5 and appendices must remain byte-identical")
+        self.assertEqual(actual[0], before, "Introduction and Phases 1-3 must remain byte-identical")
+        self.assertEqual(actual[2], after, "Phase 5 and appendices must remain byte-identical")
         fences = r"^```([^\n]*)\n(.*?)^```"
-        original = re.findall(fences, original.decode(), re.M | re.S)
-        moved = [block for name in docs.ACCESS_REFERENCES
+        original_blocks = re.findall(fences, original.decode(), re.M | re.S)
+        moved = [block for name in docs.OPERATIONS_REFERENCES
                  for block in re.findall(fences, (ROOT / name).read_text(encoding="utf-8"), re.M | re.S)]
-        self.assertEqual(len(original), 17)
-        for block in original:
-            self.assertIn(block, moved, "Every original command/configuration must be moved intact")
-        def outside_t9c4(value):
-            value = re.sub(rb"^\| T9C\.4 - Phase 3 \|[^\n]*\n", b"", value, flags=re.M)
-            return re.sub(rb"^#### T9C\.4 - Phase 3\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
+        self.assertEqual(len(original_blocks), 8)
+        for block in original_blocks:
+            self.assertIn(block, moved, "Preserve all Phase 4 commands, especially the complete automation")
+        old_mock = after.decode().split("### Step 24 - Prepare the permitted and denied network checks\n", 1)[1].split("### Step 25 -", 1)[0].strip()
+        # Correct only the obsolete resource-count phrase in the new reference;
+        # retain every other instruction/command and keep Phase 5 byte-frozen.
+        self.assertEqual(old_mock.count("add no permanent fifth VM or fourth zone."), 1)
+        expected_mock = old_mock.replace("add no permanent fifth VM or fourth zone.", "add no permanent VM or zone.")
+        self.assertIn(expected_mock, (ROOT / docs.MONITORING_REFERENCE).read_text(encoding="utf-8"),
+                      "Deferred mock extraction allows only the no-extra-resource wording correction")
+        def outside_t9c5(value):
+            value = re.sub(rb"^\| T9C\.5 - Phase 4 \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9C\.5 - Phase 4\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
         new_report = (ROOT / report).read_bytes()
-        self.assertEqual(outside_t9c4(new_report), outside_t9c4(old(report)))
+        self.assertEqual(outside_t9c5(new_report), outside_t9c5(old(report)))
         self.assertIn(b"Report state: DRAFT\n", new_report)
         self.assertIn(b"| Umbrella status | IN PROGRESS |", new_report)
         manifests = [json.loads(old(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
         for manifest in manifests:
             manifest["documents"] = [entry for entry in manifest["documents"]
-                                     if entry["source"] not in {docs.GUIDE} | docs.ACCESS_REFERENCES]
+                                     if entry["source"] not in {docs.GUIDE} | docs.OPERATIONS_REFERENCES]
             for entry in manifest["documents"]:
                 entry.pop("renderer_sha256")
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_phase4_pdf_has_compact_complete_procedures_and_intact_reference_commands(self):
+        source = (ROOT / docs.GUIDE).read_bytes()
+        reader = docs.PdfReader(io.BytesIO(docs.render_pdf(docs.GUIDE, source, set(docs.discover_sources()))))
+        pages = [re.sub(r"\s+", "", page.extract_text()) for page in reader.pages]
+        start = reader.get_destination_page_number(reader.named_destinations["phase-4-monitoring-automation-and-recovery"])
+        end = reader.get_destination_page_number(reader.named_destinations["phase-5-validation-and-final-submission"])
+        self.assertIn(end - start, (3, 4))
+        for title, details in (
+            ("A. Collect five security events", ("E01", "E02", "E03", "E04", "E05", "FWT-07.01-.07/.09")),
+            ("B. Investigate one denied-access event", ("one working allowed control", "Denied Access Investigation", "FWT-07.08/.09")),
+            ("C. Run the capacity-summary automation", ("WIN1-capacity.json", "invalid-target", "invalid-output-path", "FWT-08.01-.07")),
+            ("D. Back up APP1 and restore it in isolation", ("Start a separate observer clock", "stop and disable copied Tailscale", "B01-B10", "FWT-09.01-.10")),
+        ):
+            page = next(page for page in pages[start:end] if re.sub(r"\s+", "", title) in page)
+            for expected in ("WHERE", "STEPS", "CHECK", "RECORD", *details):
+                self.assertIn(re.sub(r"\s+", "", expected), page, title)
+        for reference in docs.OPERATIONS_REFERENCES:
+            data = (ROOT / reference).read_bytes()
+            ref_reader = docs.PdfReader(io.BytesIO(docs.render_pdf(reference, data, set(docs.discover_sources()))))
+            ref_pages = [re.sub(r"\s+", "", p.extract_text()) for p in ref_reader.pages]
+            for language, code in re.findall(r"^```([^\n]*)\n(.*?)^```", data.decode(), re.M | re.S):
+                self.assertTrue(any(re.sub(r"\s+", "", docs.normalize(code)) in page for page in ref_pages),
+                                "Reference command must remain intact on one page: " + reference)
 
     def test_phase3_pdf_keeps_procedures_cases_and_checkpoint_intact_in_four_pages(self):
         content = (ROOT / docs.GUIDE).read_bytes()
