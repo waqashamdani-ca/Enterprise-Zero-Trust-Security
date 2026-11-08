@@ -338,20 +338,24 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_t9b_preserves_every_excluded_file_and_other_t9_sections(self):
         base = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
+        # T9B is published. Retain every assertion against that immutable
+        # snapshot; the separately authorized T9C.1 boundary is checked below.
+        published = "cb344c8be49e1c6a57489c5031f825df6b7ad1ea"
         allowed = {docs.ASSIGNMENT, docs.ASSIGNMENT[:-3] + ".pdf", docs.MANIFEST,
                    "scripts/validate_docs.py", "tests/test_validate_docs.py", "tests/test_build_docs.py",
                    "scripts/validate_office_templates.py", "tests/test_office_templates.py",
                    "docs/reports/T9-Report.md"}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", published]).decode().splitlines()
         self.assertEqual(set(current), set(files), "T9B introduces no additional public files")
         for name in files:
             if name not in allowed:
                 old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
-                self.assertEqual((ROOT / name).read_bytes(), old, name)
+                actual = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+                self.assertEqual(actual, old, name)
         report = "docs/reports/T9-Report.md"
         old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + report])
-        new = (ROOT / report).read_bytes()
+        new = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + report])
         for value in (old, new):
             self.assertEqual(value.count(b"### T9B - Assignment Refinement\n"), 1)
             self.assertEqual(value.count(b"### T9C - Lab Guide Simplification\n"), 1)
@@ -361,10 +365,35 @@ class PdfArtifactTests(unittest.TestCase):
             return before, after
         self.assertEqual(outside_t9b(new), outside_t9b(old))
         old_manifest = json.loads(subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.MANIFEST]))
-        new_manifest = json.loads((ROOT / docs.MANIFEST).read_bytes())
+        new_manifest = json.loads(subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + docs.MANIFEST]))
         for manifest in (old_manifest, new_manifest):
             manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.ASSIGNMENT]
         self.assertEqual(new_manifest, old_manifest)
+
+    def test_t9c1_preserves_every_excluded_file_and_other_report_sections(self):
+        base = "cb344c8be49e1c6a57489c5031f825df6b7ad1ea"
+        report = "docs/reports/T9-Report.md"
+        allowed = {report, "tests/test_build_docs.py"}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files), "T9C.1 introduces no public sample or other file")
+        for name in files:
+            if name not in allowed:
+                old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+                self.assertEqual((ROOT / name).read_bytes(), old, name)
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + report])
+        new = (ROOT / report).read_bytes()
+        start = b"### T9C - Lab Guide Simplification\n"
+        end = b"### T9D - Security and Testing Alignment\n"
+        def outside_t9c(value):
+            self.assertEqual(value.count(start), 1)
+            self.assertEqual(value.count(end), 1)
+            before, rest = value.split(start, 1)
+            _, after = rest.split(end, 1)
+            return before, after
+        self.assertEqual(outside_t9c(new), outside_t9c(old))
+        self.assertIn(b"Report state: DRAFT\n", new)
+        self.assertIn(b"| Umbrella status | IN PROGRESS |", new)
 
     def test_assignment_resources_match_architecture_and_unchanged_contracts(self):
         content = (ROOT / docs.ASSIGNMENT).read_text(encoding="utf-8")
