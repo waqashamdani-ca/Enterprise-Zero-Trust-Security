@@ -227,322 +227,140 @@ Configuration/state agree; forwarding is off. On failure restore saved files at 
 
 ## Phase 3: Zero Trust Access Controls
 
-**Outcome:** one HTTPS application with two protected pages, six role decisions, application revocation and Tailscale access to that application only. Approvals: G certificate/trust, H application, I remote access. Tests: FWT-03/FWT-05/FWT-06; requirements: FWR-03/FWR-05/FWR-06.
+Let approved users reach the right HTTPS page, then prove that removed permissions stop working. Coverage: FWR-03/05/06 and FWT-03/FWT-05/FWT-06.
 
-HTTPS encrypts the browser connection and checks the server's identity. A certificate authority (CA) signs the application's public certificate. The CA's private key must remain encrypted and offline; only its public certificate is trusted by approved lab clients. A valid certificate secures the connection but does not give a user permission to read a page.
+**Before you start:** Approvals: G for certificates/trust, H for Apache, I for remote access; E also covers AD revocation. Have private versions/network/identity records, saved configurations and console recovery. External access needs independently isolated, approved egress. Use the linked references; missing scope means stop.
 
-### Step 13 - Create the offline CA and APP1 request
+<a id="step-13---create-the-offline-ca-and-app1-request"></a>
+<a id="step-14---sign-the-certificate-and-prepare-browser-trust"></a>
 
-**Purpose and location:** under G approval, use the existing approved offline signing workstation for the CA and APP1's console for its server key. Do not create a CA VM or install certificate services.
+### A. Create and verify HTTPS certificates
 
-1. On the offline signer, open a terminal in a new approved owner-only directory outside every Git checkout. Use a POSIX-compatible shell and OpenSSL 3.x matching [the req reference](https://docs.openssl.org/3.5/man1/openssl-req/). Inspect the directory first: the following output paths must not already contain keys, certificates or serial state.
+**WHERE**
 
-**CONFIGURATION CHANGE - offline signer, signing-file owner; root not required.** Set private path variables in the already approved current directory and restrict new-file permissions. There are no secret values in these assignments:
+Approved existing offline signing workstation: terminal; APP1 Proxmox **Console**; WIN1 lab browser.
 
-```sh
-umask 077
-LabCaKeyPath="$PWD/lab-ca.key"
-LabCaCertPath="$PWD/lab-ca.crt"
-LabAppCsrPath="$PWD/app.csr"
-LabAppCertPath="$PWD/app.crt"
-LabLeafExtensionsPath="$PWD/app-extensions.cnf"
-LabSerialPath="$PWD/lab-ca.srl"
-```
+**STEPS**
 
-**Check:** these six paths resolve inside the approved private signing directory; outputs are new and source transfers will be reviewed. If any path exists unexpectedly, stop rather than replace it.
+1. On the offline signer, create the [encrypted CA key and 365-day public root](reference/04-HTTPS-and-Application-Roles.md#offline-ca-and-private-key-custody) in a new private directory. Keep the key offline and passphrase in recovery custody; add no CA VM/service.
+2. On APP1 create its [private server key and certificate signing request](reference/04-HTTPS-and-Application-Roles.md#app1-key-and-certificate-request). Transfer only the request to the signer.
+3. On the signer, [sign one 90-day leaf](reference/04-HTTPS-and-Application-Roles.md#leaf-signing-and-verification) for **app.ad.lab.test**. Verify subject alternative name (SAN), serverAuth, chain/constraints, dates and remaining validity; leave domain time unchanged.
+4. [Transfer public certificates](reference/04-HTTPS-and-Application-Roles.md#public-certificate-transfer-and-browser-trust) to APP1; keep its key root-only. After B starts HTTPS, record WIN1's untrusted rejection, then import only the fingerprint-checked public root into its approved lab store and retry. Never bypass warnings.
 
-**CONFIGURATION CHANGE - same offline signer/file owner.** Create one 3072-bit encrypted CA key and a 365-day public root certificate. Keep the prompted passphrase in approved recovery custody; never supply it on the command line:
+**CHECK**
 
-```sh
-openssl req -x509 -newkey rsa:3072 -sha256 -days 365 -keyout "$LabCaKeyPath" -out "$LabCaCertPath" -subj "/CN=HL-CYB-001 Lab CA" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign"
-```
+Correct chain/name/dates; untrusted rejection then normal trusted HTTPS. No home/production trust changes. On failure stop and use [certificate recovery](reference/04-HTTPS-and-Application-Roles.md#recovery-and-version-notes).
 
-**Check:** the key and public certificate are created without an error. Inspect the public properties and encrypted-key readability without printing the key:
+**RECORD**
 
-**READ-ONLY - offline signer, signing-file owner; no root.** These show public CA constraints/fingerprint and check the encrypted key through its passphrase prompt. No replacement values beyond the defined paths:
+**Deliverable 02 > HTTPS Certificate Configuration**; **03 > Test Cases**, FWT-05: public properties, custody/scope, browser evidence. **02 > Implementation Results and Limitations**: certificate-revocation services excluded.
 
-```sh
-openssl x509 -in "$LabCaCertPath" -noout -fingerprint -sha256 -ext basicConstraints,keyUsage
-openssl pkey -in "$LabCaKeyPath" -noout -check
-```
+<a id="step-15---create-the-two-pages-and-separate-app-accounts"></a>
+<a id="step-16---enable-https-and-run-the-six-application-cases"></a>
 
-**Check:** CA:TRUE, certificate-signing usage, a recorded SHA-256 fingerprint and successful key check after the passphrase prompt. Store only public properties in **02 / HTTPS Certificate Configuration**. Failed key/passphrase verification blocks signing; preserve files and resolve custody without regenerating over them.
+### B. Configure the Apache application and accounts
 
-2. On APP1, prepare **/etc/labapp** as a restricted directory for the application. In the conditional Ubuntu profile Apache workers use **www-data**; verify the selected package account first. Run these commands only for a new approved lab directory, not over existing owner content.
+**WHERE**
 
-**CONFIGURATION CHANGE - APP1 console, sudo/root, G/H approved scope.** Create the private configuration directory and define new key/request paths in that root shell. The public/private filenames stay inside the lab layout:
+APP1 Proxmox **Console**, approved sudo administrator and root editor; WIN1 browser.
 
-```sh
-sudo install -d -o root -g www-data -m 0750 /etc/labapp
-sudo -i
-umask 077
-LabAppKeyPath=/etc/labapp/app.key
-LabAppCsrPath=/etc/labapp/app.csr
-```
+**STEPS**
 
-**Check:** the directory's owner/group/mode match the approved Apache account and the two files do not already exist. If the service account differs, correct the reviewed profile first.
+1. Save settings. Use approved Apache 2.4/password-utility packages/media; [create synthetic pages](reference/04-HTTPS-and-Application-Roles.md#synthetic-pages-and-application-accounts) at **/reports/** and **/maintenance/**.
+2. Create/verify separate test accounts **ava**, **eli**, **uma**, with distinct application passwords. Create the password file once; never overwrite it to add a user.
+3. Set manually assigned roles in **/etc/labapp/groups**: **LabReaders: ava eli**; **LabMaintainers: eli**; uma neither. AD provides Windows logon: no application single sign-on or automatic synchronization, no fourth app administrator.
+4. Apply [HTTPS/group configuration](reference/04-HTTPS-and-Application-Roles.md#apache-https-and-group-authorization); require each page's group. Disable HTTP/reviewed default sites; syntax-check before restarting.
+5. Verify Apache active, **TCP 443 only**, protected key/password/group files, no extra service. Complete A's trust sequence; preserve FF-03 firewall/host restrictions.
 
-**CONFIGURATION CHANGE - APP1, that root shell, new approved paths.** Create its 2048-bit service key and certificate signing request (CSR). The request is public signing input; it is not yet a certificate:
+**CHECK**
 
-```sh
-openssl req -new -newkey rsa:2048 -noenc -keyout "$LabAppKeyPath" -out "$LabAppCsrPath" -subj "/CN=app.ad.lab.test"
-```
+HTTPS/group checks work. On failure inspect DNS/TLS/files and [restore saved settings](reference/04-HTTPS-and-Application-Roles.md#recovery-and-version-notes). Never use a generic authenticated-user allow.
 
-**Check:** request subject is app.ad.lab.test and the server key is root-owned/private. The **-noenc** option intentionally leaves this service key unencrypted so the service can start; strict permissions and encrypted backup protect it. Inspect the CSR with **openssl req -in "$LabAppCsrPath" -noout -subject -verify** in the same root shell: expect the matching subject and successful request signature. On error, stop before transfer and preserve the current files.
+**RECORD**
 
-3. Transfer only **app.csr** to the signer's LabAppCsrPath through the approved private media path. Keep the APP1 key on APP1 and the CA key on the offline signer. Compare the request name before signing; never publish either private key or its passphrase.
+**Deliverable 02 > Application Accounts and Permissions**; **03 > Test Cases**, FWT-03.10/FWT-05: versions, effective files, roles and evidence. Exclude passwords/hashes.
 
-**If it fails:** preserve existing keys/request and stop before signing or trust changes. Resolve file identity, permissions, passphrase custody or the selected OpenSSL syntax; never overwrite a key to hide the error.
+### C. Test the six application access cases
 
-### Step 14 - Sign the certificate and prepare browser trust
+**WHERE**
 
-**Purpose and location:** on the offline signer, issue one application certificate for app.ad.lab.test; later import only the public root on approved lab clients.
+WIN1 **Browser > Developer tools > Network**; APP1 console: Apache logs.
 
-1. Use the approved editor to save the following as LabLeafExtensionsPath. Extensions describe what the certificate is allowed to identify: **SAN** is its subject alternative name, and **serverAuth** means a web-server certificate.
+**STEPS**
 
-**CONFIGURATION CHANGE - offline signer, signing-file owner; no root.** Exact configuration-file content, not shell commands:
+1. Use a fresh browser context per user and valid application credentials. Close all private windows between users.
+2. Disable cache; reload each exact path. Confirm the actual server request/status using the [evidence method](reference/04-HTTPS-and-Application-Roles.md#certificate-browser-test-and-six-case-evidence).
+3. Compare all six requests with Apache logs/effective groups; keep eli's working maintenance context for D.
 
-```ini
-basicConstraints=critical,CA:FALSE
-keyUsage=critical,digitalSignature,keyEncipherment
-extendedKeyUsage=serverAuth
-subjectAltName=DNS:app.ad.lab.test
-```
-
-**Check:** the leaf is not a CA, permits server authentication and names exactly app.ad.lab.test. A different hostname needs review before signing.
-
-**CONFIGURATION CHANGE followed by READ-ONLY - offline signer, signing-file owner.** Sign the reviewed CSR for 90 days, maintaining private LabSerialPath; then verify the chain/name and show dates/SAN. Variables are those defined in Step 13. [OpenSSL x509](https://docs.openssl.org/3.5/man1/openssl-x509/) and [verify](https://docs.openssl.org/3.5/man1/openssl-verify/) document the options:
-
-```sh
-openssl x509 -req -in "$LabAppCsrPath" -CA "$LabCaCertPath" -CAkey "$LabCaKeyPath" -CAcreateserial -CAserial "$LabSerialPath" -days 90 -sha256 -extfile "$LabLeafExtensionsPath" -out "$LabAppCertPath"
-openssl verify -CAfile "$LabCaCertPath" -verify_hostname app.ad.lab.test "$LabAppCertPath"
-openssl x509 -in "$LabAppCertPath" -noout -dates -ext subjectAltName
-```
-
-**Check:** verification returns **OK**, the DNS SAN matches, and current time lies within the displayed validity. In the same certificate view inspect CA:FALSE, serverAuth and key usage; calculate/record remaining validity from the displayed end date and actual clock. Do not change domain time to test expiry. Failure blocks service use; do not bypass it with browser warnings.
-
-2. Return **app.crt** and the public **lab-ca.crt** to APP1 through reviewed media. Place them at **/etc/labapp/app.crt** and **/etc/labapp/lab-ca.crt** with root ownership and approved public-certificate read access. Keep **/etc/labapp/app.key** root-only, mode 0600. Inspect owners/modes with the file-properties view or root **stat**; never display key content.
-3. Prepare the public root and signer fingerprint for WIN1, but **test the untrusted browser first after Step 16 starts HTTPS**. A private/incognito window does not remove machine-wide CA trust. Use this before/after sequence on the existing WIN1 client rather than adding a VM.
-4. After the untrusted rejection is recorded, on the approved WIN1 lab client open **Manage computer certificates > Trusted Root Certification Authorities > Certificates > All Tasks > Import** as administrator. Import only the public lab-ca.crt, comparing its fingerprint with the offline signer's record. Computer-wide trust must be explicitly approved; never add it to a home/production store. [Microsoft describes the root store](https://learn.microsoft.com/en-us/windows-hardware/drivers/install/trusted-root-certification-authorities-certificate-store).
-
-**Check:** record the one CA/one leaf, public properties, trust scope, normal trusted handshake and untrusted-client failure in **02 / HTTPS Certificate Configuration** and **03 / Test Cases**, FWT-05. Certificate-revocation services are excluded; state that limitation. Account/device revocation remains required.
-
-**If it fails:** inspect SAN, chain, dates, private DNS and the selected trust store. Remove only an incorrectly imported lab root under G recovery approval; never trust an unexpected certificate to finish a test.
-
-### Step 15 - Create the two pages and separate app accounts
-
-**Purpose and location:** on APP1 under H approval, build two static pages. The application has **separate test accounts**, distinct passwords and **manually assigned roles**. AD handles Windows logon; these Apache accounts handle the web pages. There is no single sign-on or automatic AD synchronization.
-
-1. Use the approved package/update path to make the selected Apache 2.4 package and password utility available. In the Ubuntu profile, the proposed package command below installs the existing approved application tools only. Use approved local media when offline; do not connect to the Internet merely to complete installation.
-
-**CONFIGURATION CHANGE - APP1 console, sudo/root, H approval and approved package source.** For the selected Ubuntu profile, install Apache and its password utility; no placeholders:
-
-```sh
-sudo apt install apache2 apache2-utils
-sudo install -d -o root -g root -m 0755 /srv/labapp/reports /srv/labapp/maintenance
-```
-
-**Check:** the package manager reports success and the two root-owned directories exist. If packages are unavailable or signatures fail, stop and resolve the approved media path; do not disable verification or add a repository ad hoc.
-
-2. In the approved root editor, save a small **index.html** in each directory. For **/reports/index.html**, enter a title such as **Purple Eye - Synthetic Report** and a sentence identifying fictional data. For **/maintenance/index.html**, use **Purple Eye - Synthetic Maintenance Instructions** with harmless fictional instructions. Do not insert real business information. Pages should be root-owned, readable by Apache and unwritable by ordinary app users.
-3. Check **/etc/labapp/users** does not exist before the first password command. **-c creates or overwrites the whole file**; use it once only. Prompt for distinct app passwords, never AD passwords. [Apache documents htpasswd's overwrite and hashing behavior](https://httpd.apache.org/docs/2.4/programs/htpasswd.html).
-
-**CONFIGURATION CHANGE - APP1 console, sudo/root; the first line is DESTRUCTIVE / HIGH-RISK if users already exists.** Create three bcrypt-hashed application accounts interactively, then restrict the file to administrator and Apache reads. The usernames are fixed synthetic names:
-
-```sh
-sudo htpasswd -B -c /etc/labapp/users ava
-sudo htpasswd -B /etc/labapp/users eli
-sudo htpasswd -B /etc/labapp/users uma
-sudo chown root:www-data /etc/labapp/users
-sudo chmod 0640 /etc/labapp/users
-```
-
-**Check:** all three writes succeed; inspect account names/count without copying hashes into evidence. If a write fails, preserve the old file and resolve the cause. Do not rerun **-c** to add the next person.
-
-4. Save the group file below at **/etc/labapp/groups** using the approved root editor. Set owner/group **root:www-data**, mode **0640**. LabAdmins is infrastructure-only and does not become a fourth application account or role.
-
-**CONFIGURATION CHANGE - APP1 root editor, /etc/labapp/groups.** File content only; memberships mirror the approved AD roles manually:
-
-```text
-LabReaders: ava eli
-LabMaintainers: eli
-```
-
-**Check:** ava/eli can be readers, only eli a maintainer, and uma has neither role. Record the mapping/custody in **02 / Application Accounts and Permissions**, without passwords or hashes. A directory-group change alone will not update this file.
-
-**If it fails:** correct the specific spelling/membership/permissions from the saved version. Do not replace group authorization with **Require valid-user**, which would allow every authenticated account.
-
-### Step 16 - Enable HTTPS and run the six application cases
-
-**Purpose and location:** in APP1's Apache configuration, expose only the two HTTPS paths, with each path checking its own group. Use the conditional [Ubuntu package layout](https://ubuntu.com/server/docs/how-to/web-services/install-apache2/); different selected paths need review first.
-
-1. Save the current Apache configuration privately. In **/etc/apache2/ports.conf**, retain **Listen 443** once for the TLS module and remove the plain **Listen 80** line under H approval. Do not create a duplicate 443 listener. Disable only confirmed default site links, not unknown owner configuration.
-2. Save the following as **/etc/apache2/sites-available/labapp.conf** in the root editor. Verify all referenced files exist and that Apache's privileged startup can read the server key.
-
-**CONFIGURATION CHANGE - APP1 root editor, Apache 2.4 site configuration.** Exact file content; no shell commands. TLS (Transport Layer Security) protects HTTPS, while group checks decide page access:
-
-```apache
-<VirtualHost *:443>
-    ServerName app.ad.lab.test
-    DocumentRoot "/srv/labapp"
-    SSLEngine on
-    SSLCertificateFile "/etc/labapp/app.crt"
-    SSLCertificateKeyFile "/etc/labapp/app.key"
-    SSLProtocol -all +TLSv1.2 +TLSv1.3
-    ErrorLog ${APACHE_LOG_DIR}/labapp-error.log
-    CustomLog ${APACHE_LOG_DIR}/labapp-access.log combined
-    <Directory "/srv/labapp">
-        Options -Indexes
-        AllowOverride None
-        AuthType Basic
-        AuthName "HL-CYB-001"
-        AuthBasicProvider file
-        AuthUserFile "/etc/labapp/users"
-        AuthGroupFile "/etc/labapp/groups"
-        AuthzSendForbiddenOnFailure On
-        Require all denied
-    </Directory>
-    <Directory "/srv/labapp/reports">
-        Require group LabReaders
-    </Directory>
-    <Directory "/srv/labapp/maintenance">
-        Require group LabMaintainers
-    </Directory>
-</VirtualHost>
-```
-
-**Check:** certificate/key paths match the issued files, directory listing is off, and each child requires its intended group. [Apache's default AuthMerging Off](https://httpd.apache.org/docs/2.4/mod/mod_authz_core.html) lets the child requirement replace the parent denial; inspect other inherited/global settings. [mod_ssl](https://httpd.apache.org/docs/2.4/mod/mod_ssl.html) defines the TLS directives. Do not log Authorization headers, passwords or tokens.
-
-**CONFIGURATION CHANGE - APP1 console, sudo/root, selected Ubuntu profile.** Enable required modules/site and disable only the reviewed default sites. If a named default site is absent, inspect existing sites rather than disabling everything. No placeholders:
-
-```sh
-sudo a2enmod ssl auth_basic authn_file authz_groupfile
-sudo a2dissite 000-default default-ssl
-sudo a2ensite labapp
-sudo apachectl configtest
-```
-
-**Check:** the [configuration check](https://httpd.apache.org/docs/2.4/programs/apachectl.html) reports **Syntax OK**. An error or unexplained warning blocks the reload; inspect the reported filename/line and restore the saved site if needed. Syntax success does not prove running HTTPS.
-
-**CONFIGURATION CHANGE followed by READ-ONLY - APP1 console, sudo/root.** After Syntax OK, restart to apply the reviewed listener change and inspect service/listener state. No placeholders:
-
-```sh
-sudo systemctl restart apache2
-sudo systemctl status apache2 --no-pager
-sudo ss -lntp
-```
-
-**Check:** apache2 is active, TCP 443 listens and plain HTTP/extra application listeners do not. If it fails, inspect the service error and saved configuration; do not expose another port to make it work.
-
-3. On WIN1, confirm app.ad.lab.test resolves correctly, then open **https://app.ad.lab.test/reports/** before importing the root. Expect an untrusted-issuer rejection; do not click through. Record this FWT-05 subcheck, then perform the approved public-root import in Step 14 and open the same name again. Expect normal HTTPS without a warning.
-4. Use a separate clean browser context for each synthetic app account. Close all private windows between users so Basic authentication credentials do not carry into another case. Enter valid **application** credentials through the browser prompt, not AD passwords.
-
-| Case | App account | Page | Expected result |
+| Case | Account | Page | Expected HTTP result |
 | --- | --- | --- | --- |
-| C01 | ava | /reports/ | Allow: synthetic report, normally HTTP 200 |
-| C02 | ava | /maintenance/ | Deny: normally HTTP 403 |
-| C03 | eli | /reports/ | Allow: synthetic report, normally HTTP 200 |
-| C04 | eli | /maintenance/ | Allow: instructions, normally HTTP 200 |
-| C05 | uma | /reports/ | Deny: normally HTTP 403 |
-| C06 | uma | /maintenance/ | Deny: normally HTTP 403 |
+| C01 | ava | /reports/ | ALLOW / 200 |
+| C02 | ava | /maintenance/ | DENY / authenticated 403 |
+| C03 | eli | /reports/ | ALLOW / 200 |
+| C04 | eli | /maintenance/ | ALLOW / 200 |
+| C05 | uma | /reports/ | DENY / authenticated 403 |
+| C06 | uma | /maintenance/ | DENY / authenticated 403 |
 
-5. In the browser developer tools **Network** tab, reload the exact page and inspect the request status. Compare it with Apache's access/error logs and the group file. A wrong password/401 does not demonstrate authenticated role denial. Record the six outcomes once in **03 / Test Cases**, FWT-03.04-.09, and link them from **02 / Six Application Access Tests**. Keep a successful eli maintenance browser open for Step 17.
+**CHECK**
 
-**If it fails:** check DNS/host rules first for connection failure; check chain/name/dates for HTTPS failure; check the authenticated user, exact group spelling and inherited authorization for a wrong decision. Restore the saved site, syntax-check and restart only under H recovery scope. Preserve failure evidence before fixing it.
+A failed login/401 or unreachable service is not role denial. On failure preserve evidence; inspect account/group/inherited rules.
 
-### Step 17 - Remove an application permission and prove it is gone
+**RECORD**
 
-**Purpose and location:** on APP1 and DC1 under H/E scope, remove eli's maintenance role. This demonstrates revocation: access that worked before the change must be denied afterward.
+**Deliverable 03 > Test Cases**, FWT-03.04-.09; link from **02 > Six Application Access Tests**. FWT-03.01-.03 and mapping/revocation .10-.13 remain mandatory.
 
-1. Record the change time using the separate observer clock. Preserve the approved private group-file backup. In APP1 **/etc/labapp/groups**, change the maintenance line to **LabMaintainers:** with no member. Leave **LabReaders: ava eli** unchanged; save with the same restricted ownership/mode.
-2. On DC1 **AD Users and Computers > LabMaintainers > Properties > Members**, remove **eli**. Record both changes. Apache reads its own group file; Windows logon/token refresh does not revoke an application role.
-3. In the already authenticated eli browser, reload **/maintenance/** with cache disabled in the developer Network panel; ensure a fresh request went to the server. Then use a fresh browser context and valid eli app credentials for another maintenance request. Both must deny, normally 403. Reading an already downloaded page from cache is not a new authorization decision.
-4. Compare both requests with the changed app group file and correlated Apache denial records. Record actual elapsed time, request times and any cache/session treatment in **03 / Test Cases**, FWT-03.10-.13. Summarize in **02 / Access Revocation**. Do not claim a timing target that the assignment does not set.
+<a id="step-17---remove-an-application-permission-and-prove-it-is-gone"></a>
 
-**Check:** the formerly allowed maintenance access is now denied in both contexts. Restore eli's membership only if the approved test/recovery scope explicitly permits it, and record the restoration; do not silently change expected outcomes for later tests.
+### D. Revoke an application permission
 
-**If it fails:** verify the edited file is the effective AuthGroupFile, the browser made a server request, inherited configuration is unchanged and no broad rule grants access. Keep the failure; do not delete the account or disable the whole site merely to produce a denial.
+**WHERE**
 
-### Step 18 - Enroll lab-only Tailscale with a narrow policy
+APP1 root editor; DC1 **AD Users and Computers**; WIN1 browser.
 
-**Purpose and location:** under I approval, use the separate lab Tailscale admin console, APP1 and one existing approved lab client. Tailscale forms an encrypted overlay network; its policy must permit only APP1 HTTPS. AD membership and app passwords do not grant overlay access.
+**STEPS**
 
-1. Confirm **independently isolated** approved egress **before Internet connectivity**, lawful provider terms, separate lab identities/tailnet, supported MFA and recovery. A second NIC, Beryl AX/home-LAN connection or NAT is not proof of that boundary. If this dependency is missing, stop remote work and mark FWT-06 NOT TESTED.
-2. In the lab admin console **Access controls/policy editor**, save the existing policy privately and replace permissive defaults with the explicit deny-all below **before enrollment**. A blank/omitted policy can retain permissive defaults. Review all grants, ACLs (access-control lists), SSH rules and tag owners; permissions are additive.
+1. Confirm eli's maintenance access; save groups and change time against a separate observer clock.
+2. In **/etc/labapp/groups**, remove eli from **LabMaintainers**, keeping **LabReaders: ava eli** and [ownership/mode](reference/04-HTTPS-and-Application-Roles.md#application-permission-revocation).
+3. Under E approval remove eli on DC1: approved **LabMaintainers > Properties > Members**. Record both changes; AD membership does not update Apache.
+4. Disable cache; force a **/maintenance/** server request in eli's existing authenticated browser, then a fresh context with valid app credentials. Compare both with Apache logs/effective groups; check reader access.
 
-**DESTRUCTIVE / HIGH-RISK - separate lab Tailscale policy editor, authorized tailnet administrator, I approval.** Policy-file content, not commands. This explicit initial policy grants no network or SSH access:
+**CHECK**
 
-```json
-{
-  "acls": [],
-  "grants": [],
-  "ssh": []
-}
-```
+Both maintenance requests return authenticated 403; reader permission stays. On failure inspect files/cache/inheritance. Restore permissions only with recorded explicit test/recovery approval.
 
-**Check:** the vendor editor validates/saves it and there are no other allows. [Tailscale's deny-all examples](https://tailscale.com/docs/reference/examples/acls#deny-all) explain the explicit empty list. On validation failure retain the last reviewed safe policy and stop enrollment.
+**RECORD**
 
-3. Use the approved verified selected-version packages from the [official Linux installation instructions](https://tailscale.com/docs/install/linux) and Windows client installer. Do not pipe an unreviewed online script into a root shell. Installation/enrollment belongs to I approval and the approved egress path, not this documentation task.
+**Deliverable 03 > Test Cases**, FWT-03.10-.13; **02 > Access Revocation**. Record changes, request/denial times, observed elapsed time and cache/state treatment; no revocation-time SLA.
 
-**DESTRUCTIVE / HIGH-RISK - APP1 console, sudo/root, I approval.** Start the reviewed installed client and authenticate interactively into the separate lab tailnet. No key/token arguments; keep the displayed authentication URL private:
+<a id="step-18---enroll-lab-only-tailscale-with-a-narrow-policy"></a>
+<a id="step-19---test-and-revoke-remote-access"></a>
 
-```sh
-sudo tailscale up --accept-routes=false --accept-dns=false --ssh=false
-```
+### E. Configure, test and revoke Tailscale access
 
-**Check:** complete sign-in with the approved lab identity, compare the **Machines/Devices** entry to APP1, and keep subnet advertisements/exit-node/Funnel/Serve/sharing off. On mismatch stop and remove the unapproved lab enrollment through the authorized recovery plan; never sign in with a production identity.
+**WHERE**
 
-4. On the existing approved Windows remote client, use the Tailscale tray/menu **Log in** flow with its approved lab identity. Review its client preferences: no exit node, accepted subnet routes or corporate DNS configuration. Compare its Machines entry with the private device record. The remote client must have no direct physical/zone route to APP1 that could falsely make an overlay test pass.
-5. Copy the two exact overlay IPv4 addresses into the private stage I record. In the editor replace the initial policy with the following conditional example, replacing both placeholders with those exact addresses. This scopes the enrolled client device as well as APP1; it does not grant every device of a user or an entire subnet.
+Separate lab **Tailscale admin console > Access controls / Machines**; APP1 console; one approved existing Windows remote client.
 
-**CONFIGURATION CHANGE - separate lab Tailscale policy editor, authorized administrator.** Replace LAB_REMOTE_OVERLAY_IP and LAB_APP_OVERLAY_IP privately; literal symbols are not a valid final policy. No wildcard source/destination or extra grant:
+**STEPS**
 
-```json
-{
-  "acls": [],
-  "grants": [
-    {
-      "src": ["LAB_REMOTE_OVERLAY_IP"],
-      "dst": ["LAB_APP_OVERLAY_IP"],
-      "ip": ["tcp:443"]
-    }
-  ],
-  "ssh": []
-}
-```
+1. Verify [independent isolation, identities, MFA and recovery](reference/05-Tailscale-Policy.md#independent-isolation-and-identity-prerequisites) before external egress. The client must have no direct zone route to APP1. Missing prerequisites leave FWT-06 **NOT TESTED**.
+2. Save the lab policy; apply the [explicit deny-all baseline](reference/05-Tailscale-Policy.md#explicit-deny-all-baseline) before enrollment. Inspect every additive grant/ACL, SSH rule and tag owner; a blank policy is insufficient.
+3. [Enroll APP1 and the existing client](reference/05-Tailscale-Policy.md#device-enrollment) with separate approved lab identities. Inspect device records. Keep subnet routes, exit node, Tailscale SSH, Funnel, Serve and public sharing off; use no home/production identity or trust.
+4. Apply the [exact client-to-APP1 TCP 443 grant](reference/05-Tailscale-Policy.md#exact-https-only-grant); review enrolled addresses privately. [Map app.ad.lab.test to APP1's overlay address](reference/05-Tailscale-Policy.md#overlay-name-mapping-and-host-enforcement), approve only lab-root trust, and verify independent APP1 host rules/forwarding. FF-06 adds no DC1, WIN1, Proxmox or OPNsense access.
+5. [Test approved HTTPS, unauthorized identity and wrong listening port/resource](reference/05-Tailscale-Policy.md#allowed-and-denied-remote-tests). Use working positive controls and vendor/device/host/Apache evidence. A closed port or broken DNS is insufficient. The [Phase 5 mock dependency](#step-24---prepare-the-permitted-and-denied-network-checks) needs separate scope; do not broaden grants.
+6. Restore the approved context through its authorized sequence; confirm working HTTPS. Record time, then [remove the client grant and exact device authorization](reference/05-Tailscale-Policy.md#client-and-grant-revocation), keeping APP1 intact.
+7. Force new server requests in the existing browser and a fresh context. Both must fail; compare policy/device/log state, observed denial time and cache/connection-state treatment. Re-enrollment or permission restoration needs approval.
 
-**Check:** the editor validates the exact [grant syntax](https://tailscale.com/docs/reference/syntax/grants). Tie both addresses to approved device/identity records and inspect absence of additive paths; an address change requires review, never broadening to a range. No Proxmox, OPNsense, DC1, RDP or SSH resource is granted.
+**CHECK**
 
-6. On the approved Windows remote client only, use the elevated approved text editor to add the private mapping **LAB_APP_OVERLAY_IP app.ad.lab.test** in **C:\Windows\System32\drivers\etc\hosts**, replacing the address privately. Preserve the original file, avoid duplicate mappings and keep local WIN1 using DC1's zone record. Verify the browser uses the overlay address; do not publish this file.
-7. On APP1 compare the active nftables **lab_host** input/forward chains with Tailscale's effective rules. [Tailscale manages its own netfilter rules](https://tailscale.com/docs/reference/netfilter-modes), so an OPNsense permit/deny is insufficient. Keep the Step 12 independent drop table active and test it; do not select off/nodivert or add forwarding as a shortcut.
+Only approved APP1 HTTPS works; unauthorized/wrong-port and both revoked contexts deny. OPNsense alone cannot prove overlay enforcement. On failure stop remote access and use [deny-all/device recovery](reference/05-Tailscale-Policy.md#recovery-and-version-notes).
 
-**READ-ONLY - APP1 or the approved client, local terminal; standard operator where supported.** Show current overlay state, with no replacements. [The CLI reference](https://tailscale.com/docs/reference/tailscale-cli) documents this inspection:
+**RECORD**
 
-```sh
-tailscale status
-```
+**Deliverable 03 > Test Cases**, every FWT-06 subcheck; **02 > Tailscale Remote Access / Access Revocation**. Include evidence, actual elapsed time and final device/policy state; keep identities/addresses/raw logs private.
 
-**Check:** only the approved lab enrollment is involved; compare device state to the admin console and actual access checks. Output contains private addresses/identity data and stays private. Status alone is not proof of authorization.
+**Before Phase 4:** Compare all mandatory FWT-03/FWT-05/FWT-06 subchecks with second observations; missing work stays **NOT TESTED**. Log failures in **04 > Issue Log**. Recover saved app/policy files, lab-only trust and exact remote authorization within approval; preserve key custody and failed evidence.
 
-**If it fails:** retain deny-all access and stop enrollment/use until exact lab identity, device, name mapping, egress and effective host policy agree. Recover only through the approved device/grant removal and saved private settings; do not broaden a rule to make status look connected.
-
-### Step 19 - Test and revoke remote access
-
-**Purpose and location:** from the approved remote client under the frozen I/K test scope, prove that only the named application works and that removing authorization stops it. Reuse existing lab people/client; add no permanent device, user or VM.
-
-1. On the approved remote client, trust only the public lab root under its separate approved trust scope. Open **https://app.ad.lab.test/reports/** with valid ava app credentials. Expect normal HTTPS and the report; confirm APP1's access log shows the overlay source, not a local zone bypass.
-2. For the wrong-port test use Step 24's approved known listening APP1 mock port, with a successful administrator control first. Confirm the remote request is denied and inspect the vendor/host decision. A closed port does not prove a policy deny. Confirm no route/grant reaches other resources; do not send packets to home/production.
-3. For the unauthorized-identity check, reuse the same approved lab client under the existing **uma** lab-only provider context if I approval covers that enrollment. Remove/sign out the approved enrollment first, enroll the unauthorized context and inspect its distinct device state/address. It must receive no allow. Record the deny and policy evidence; restore the approved context only through the approved sequence. A different browser app username alone does not change Tailscale identity.
-4. With the approved remote context restored and HTTPS working again, record a change time. Remove its grant and, in **Machines/Devices > exact client menu > Remove**, revoke that specific lab device's authorization. Keep APP1 intact. [Vendor removal guidance](https://tailscale.com/docs/features/access-control/device-management/how-to/remove) explains current behavior.
-5. Retry an existing browser context with forced network reload and a fresh new request. Both must fail to reach APP1. Compare policy/device state and APP1/host observations; record the exact changes, cache/state treatment and actual time to denial. Re-enrollment requires approval and invalidates any assumption that the previous address remains authorized.
-
-**Check:** **03 / Test Cases**, FWT-06, contains permitted HTTPS, unauthorized identity, wrong listening-port/resource and existing/new revoked-request outcomes. Summarize in **02 / Tailscale Remote Access** and **Access Revocation**. These are separate from the six app-role cases.
-
-**If it fails:** stop remote access, remove the grant/device under I recovery scope and inspect additive rules, actual source address, client bypass routes, host-chain counters and device state. Never broaden grants, advertise a subnet or add a second remote provider. Restore private name mapping/trust/egress only as authorized.
-
-### Phase 3 checkpoint and recovery
-
-Match the six decisions and app revocation to the effective group file/logs (FWT-03), chain/name/dates and trusted/untrusted browser behavior (FWT-05), and remote vendor/host policy to permit/deny/revoke observations (FWT-06). Keep manual identity mapping and certificate-revocation limits explicit. Recovery uses saved app/policy files, lab-only trust removal and exact remote deauthorization; preserve failed evidence and key custody.
 
 ## Phase 4: Monitoring, Automation and Recovery
 
