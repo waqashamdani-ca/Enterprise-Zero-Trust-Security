@@ -341,7 +341,7 @@ class AssignmentContractTests(unittest.TestCase):
             "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
             "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
             "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml",
-            validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE)}
+            validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE, validator.WINDOWS_REFERENCE, validator.LINUX_REFERENCE)}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
         self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
         self.plan = "docs/testing/TEST-PLAN.md"
@@ -379,7 +379,7 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
 
     def test_guide_procedures_require_actions_context_and_failure_recovery(self):
-        self.assert_rejected(self.guide, "### Step 7 -", "### Step 0 -", "numbered procedures")
+        self.assert_rejected(self.guide, "### Step 13 -", "### Step 0 -", "numbered procedures")
         self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
         self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
 
@@ -412,7 +412,7 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(self.guide, "## How to use the guide",
                              "## How to use the guide\n\nT6 stop.", "internal task jargon")
         self.assert_rejected(self.guide, "available as blank templates", "complete and validated lab", "template availability")
-        self.assert_rejected(self.guide, "**READ-ONLY - WIN1, Windows PowerShell", "**INSPECTION - WIN1, Windows PowerShell",
+        self.assert_rejected(validator.WINDOWS_REFERENCE, "**READ-ONLY - WIN1, Windows PowerShell", "**INSPECTION - WIN1, Windows PowerShell",
                              "risk/target context")
 
     def test_prepared_labels_action_bounds_and_reference_are_required(self):
@@ -431,6 +431,7 @@ class AssignmentContractTests(unittest.TestCase):
                        "second observations", "GUI inspection alone does not prove", "Never probe home or production"):
             with self.subTest(phrase=phrase):
                 self.assert_rejected(self.guide, phrase, "omitted", "safeguard")
+
         for number in range(1, 9):
             with self.subTest(flow=number):
                 self.assert_rejected(validator.PREPARED_REFERENCE, f"| FF-{number:02d} |", "| removed |", "eight FF")
@@ -440,6 +441,37 @@ class AssignmentContractTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assert_rejected(validator.PREPARED_REFERENCE, phrase, "omitted", "technical safeguard")
 
+    def test_phase2_structure_links_and_actionable_recovery_are_required(self):
+        for old, new, finding in (
+            ("### D. Apply Windows security policies", "### F. Windows", "exactly five"),
+            ("#directory-verification)", "#absent)", "technical-reference navigation"),
+            ("**Before Phase 3:**", "**Later:**", "checkpoint and recovery"),
+            ("7. Sign in on WIN1", "9. Sign in on WIN1", "sequential actions"),
+            ("standard-user denial/admin control", "administrator control only", "safeguard"),
+        ):
+            with self.subTest(old=old):
+                self.assert_rejected(self.guide, old, new, finding)
+        for phrase in ("four baseline VMs", "vmbr20", "VLAN 99", "192.0.2.1", "Ordered equipment", "Start T9C.4"):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(self.guide, "### A. Verify or create the three workload VMs\n",
+                                     "### A. Verify or create the three workload VMs\n\n" + phrase + "\n", "obsolete mapping")
+
+    def test_identity_and_linux_safeguards_cannot_be_removed(self):
+        for name, phrases in (
+            (validator.WINDOWS_REFERENCE, ("SYSVOL,NETLOGON", "Get-ADForest", "DSRM", "**DC audit GPO** to the **Domain Controllers** OU",
+                                           "49152-65535", "Access Denied", "overlapping default rules", "approved functional levels")),
+            (validator.LINUX_REFERENCE, ("netplan try --timeout 120", "FallbackNTP=", "dhcp6: false", "accept-ra: false",
+                                         "hook forward priority 10; policy drop", "before established traffic",
+                                         "delete table inet lab_host", "ExecStart/ExecStop", "approved reboot")),
+        ):
+            for phrase in phrases:
+                with self.subTest(name=name, phrase=phrase):
+                    texts = dict(self.texts)
+                    self.assertIn(phrase, texts[name])
+                    texts[name] = texts[name].replace(phrase, "omitted")
+                    self.assertTrue(any("identity/endpoint safeguard" in item for item in validator.completeness_issues(texts)))
+        self.assert_rejected(validator.LINUX_REFERENCE, "sudo nft -c -f /etc/nftables.conf",
+                             "sudo nft flush ruleset", "blanket firewall flush")
     def test_prepared_procedures_reject_invented_mapping_installation_and_status(self):
         for phrase in ("Install OPNsense", "Ordered equipment arrives soon", "Start T9C.3", "virtual firewall"):
             with self.subTest(phrase=phrase):

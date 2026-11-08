@@ -58,6 +58,9 @@ REPORT_PREFIXES = ("docs/reports/", "reports/")
 ASSIGNMENT = "docs/assignments/PROJECT-ASSIGNMENT.md"
 GUIDE = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
 PREPARED_REFERENCE = "docs/lab-guides/reference/01-Prepared-Infrastructure.md"
+WINDOWS_REFERENCE = "docs/lab-guides/reference/02-Windows-Directory-and-Policy.md"
+LINUX_REFERENCE = "docs/lab-guides/reference/03-Linux-Network-and-Host-Policy.md"
+TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE}
 ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
@@ -532,7 +535,7 @@ class Builder:
                         style = ParagraphStyle("points", parent=style, alignment=TA_RIGHT)
                     values.append(Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), style))
             cells.append(values)
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in {ASSIGNMENT, GUIDE, ARCHITECTURE, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in TECHNICAL_REFERENCES | {ASSIGNMENT, GUIDE, ARCHITECTURE, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
@@ -601,7 +604,7 @@ class Builder:
                         style.spaceAfter = 4
                     paragraph = Paragraph(prefix + inline(first["children"], self.source, self.sources), style)
                     following = self.blocks(children, depth + 1)
-                    if self.source == GUIDE and ordered:
+                    if (self.source == GUIDE and ordered) or self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE}:
                         story.append(KeepTogether([paragraph, *following]))
                     else:
                         story.append(paragraph)
@@ -646,12 +649,13 @@ class Builder:
 
 
 class PreparedInfrastructureBuilder(Builder):
-    """Accepted sample style, limited to the new introduction/Phase 1/reference."""
+    """Accepted sample style for introduction, Phases 1-2 and their references."""
 
     def __init__(self, source: str, sources: set[str]):
         super().__init__(source, sources)
         self.legacy_style, self.legacy_cell = self.style, self.cell_style
         self.prepared = True
+        self.identity_phase = False
         self.style = ParagraphStyle("prepared-body", fontName="Vera", fontSize=10.5, leading=13.8,
                                     spaceAfter=5, allowWidows=0, allowOrphans=0,
                                     textColor=colors.HexColor("#28333e"))
@@ -682,20 +686,24 @@ class PreparedInfrastructureBuilder(Builder):
         body_style = ParagraphStyle("prepared-result", parent=self.style, spaceAfter=0)
         panel = Table([[Paragraph(label, label_style),
                         Paragraph(inline(token["children"], self.source, self.sources), body_style)]],
-                      colWidths=[65, CONTENT_WIDTH - 65], hAlign="LEFT", spaceBefore=5, spaceAfter=6)
+                      colWidths=[65, CONTENT_WIDTH - 65], hAlign="LEFT",
+                      spaceBefore=3 if self.identity_phase else 5, spaceAfter=4 if self.identity_phase else 6)
         panel.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f3f5")),
             ("LINEBEFORE", (0, 0), (0, -1), 1.4, colors.HexColor("#16364f")),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 6), ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 4 if self.identity_phase else 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if self.identity_phase else 6),
             ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
         ]))
         return panel
 
     def table(self, token: dict) -> list:
-        if not self.prepared or self.source != PREPARED_REFERENCE:
+        if not self.prepared or self.source not in TECHNICAL_REFERENCES:
             return super().table(token)
         head = token["children"][0]["children"]
+        if len(head) != 2:
+            return super().table(token)
         rows = [head] + [row["children"] for row in token["children"][1]["children"]]
         widths = [CONTENT_WIDTH * .28, CONTENT_WIDTH * .72]
         cells = [[Paragraph(("<b>" if n == 0 else "") + inline(cell["children"], self.source, self.sources)
@@ -716,6 +724,8 @@ class PreparedInfrastructureBuilder(Builder):
 
     def blocks(self, tokens: list[dict], depth: int = 0, keep_procedures: bool = True) -> list:
         if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 2:") for t in tokens):
+            self.identity_phase = True
+        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 3:") for t in tokens):
             self.prepared = False
             self.style, self.cell_style = self.legacy_style, self.legacy_cell
         if not self.prepared:
@@ -732,9 +742,14 @@ class PreparedInfrastructureBuilder(Builder):
                 i = end
                 continue
             if (keep_procedures and token["type"] == "heading" and token["attrs"]["level"] == 3
-                    and re.match(r"[ABC]\. Verify ", plain(token["children"]))):
+                    and re.match(r"[A-E]\. ", plain(token["children"]))):
                 end = next((n for n in range(i + 1, len(tokens)) if tokens[n]["type"] == "heading"
                             and tokens[n]["attrs"]["level"] <= 3), len(tokens))
+                # The phase checkpoint follows the procedure's RECORD panel;
+                # it is not part of the procedure that must remain intact.
+                if self.source == GUIDE and plain(token["children"]).startswith("E. "):
+                    end = next((n for n in range(i + 1, end) if tokens[n]["type"] == "paragraph"
+                                and plain(tokens[n]["children"]).startswith("Before Phase 3:")), end)
                 parts = self.blocks(tokens[i:end], depth, keep_procedures=False)
                 # Ordered actions already have their own KeepTogether. Flatten
                 # them before wrapping the whole short procedure: nested
@@ -746,7 +761,7 @@ class PreparedInfrastructureBuilder(Builder):
                 continue
             if token["type"] == "paragraph":
                 label = plain(token["children"]).strip()
-                if (self.source == PREPARED_REFERENCE and i + 1 < len(tokens)
+                if (self.source in TECHNICAL_REFERENCES and i + 1 < len(tokens)
                         and tokens[i + 1]["type"] == "block_code"):
                     context = []
                     if story and hasattr(story[-1], "_anchor"):
@@ -766,6 +781,14 @@ class PreparedInfrastructureBuilder(Builder):
                                            fontSize=9.5, leading=12, spaceBefore=5, spaceAfter=3,
                                            keepWithNext=1, textColor=colors.HexColor("#16364f"))
                     story.append(Paragraph(label, style))
+                    i += 1
+                    continue
+                if self.source in {WINDOWS_REFERENCE, LINUX_REFERENCE}:
+                    context = []
+                    if story and hasattr(story[-1], "_anchor"):
+                        context.append(story.pop())
+                        context[0].keepWithNext = 0
+                    story.append(KeepTogether([*context, *super().blocks([token], depth)]))
                     i += 1
                     continue
             story.extend(super().blocks([token], depth))
@@ -803,11 +826,11 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     if not tokens or tokens[0]["type"] != "heading":
         raise ValueError(f"Document must start with a title: {source}")
     title = plain(tokens[0]["children"])
-    builder = (PreparedInfrastructureBuilder(source, sources) if source in {GUIDE, PREPARED_REFERENCE}
+    builder = (PreparedInfrastructureBuilder(source, sources) if source in {GUIDE} | TECHNICAL_REFERENCES
                else Builder(source, sources))
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    if source in {ASSIGNMENT, GUIDE, ARCHITECTURE, PREPARED_REFERENCE}:
+    if source in {ASSIGNMENT, GUIDE, ARCHITECTURE} | TECHNICAL_REFERENCES:
         story.append(builder.heading(tokens[0]))
     elif formal:
         cover_status = ""
@@ -838,7 +861,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         if source == ARCHITECTURE:
             story.append(PageBreak())
         tokens = [tokens[0], *tokens[first_section:]]
-    if source not in {ASSIGNMENT, GUIDE, ARCHITECTURE, PREPARED_REFERENCE} and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
+    if source not in {ASSIGNMENT, GUIDE, ARCHITECTURE} | TECHNICAL_REFERENCES and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
         story.append(Paragraph("Contents", ParagraphStyle("contents-title", parent=builder.style, fontName="Vera-Bold", fontSize=17, leading=22, spaceAfter=14)))
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
