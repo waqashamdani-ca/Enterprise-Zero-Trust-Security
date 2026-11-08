@@ -29,6 +29,7 @@ REQUIRED_FILES = (
     "README.md", "AGENTS.md", ".gitignore", ".gitattributes",
     ".github/workflows/documentation.yml",
     "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
+    "docs/lab-guides/reference/01-Prepared-Infrastructure.md",
     "docs/architecture/ARCHITECTURE.md", "docs/security/SECURITY-REQUIREMENTS.md",
     "docs/testing/TEST-PLAN.md", "docs/testing/ACCEPTANCE-CRITERIA.md",
     "docs/governance/DECISIONS.md", "docs/governance/RISKS.md", "docs/final-report/FINAL-REPORT.md",
@@ -47,8 +48,9 @@ REQUIRED_DIRS = (
     "docs/testing", "docs/governance", "docs/final-report", "docs/guides",
 )
 GUIDE_TRANSITION = "docs/governance/HISTORICAL-REQUIREMENT-TRANSITION.md"
+PREPARED_REFERENCE = "docs/lab-guides/reference/01-Prepared-Infrastructure.md"
 PHASE_TITLES = (
-    "Infrastructure and Network", "Identity and Endpoint Security", "Zero Trust Access Controls",
+    "Prepared Infrastructure", "Identity and Endpoint Security", "Zero Trust Access Controls",
     "Monitoring, Automation and Recovery", "Validation and Final Submission",
 )
 RUBRIC_WEIGHTS = (
@@ -390,11 +392,76 @@ def structure_issues(root: Path, paths: list[str]) -> list[str]:
     return issues
 
 
+def prepared_infrastructure_issues(guide: str, reference: str) -> list[str]:
+    """Inspect the accepted compact procedures and their retained security detail."""
+    issues = []
+    intro, _, body = guide.partition("## Phase 1: Prepared Infrastructure\n")
+    phase = body.partition("## Phase 2: Identity and Endpoint Security")[0]
+    visible = re.sub(r'<a id="[a-z][a-z0-9-]*"></a>', '', intro + phase)
+    if len(intro.split()) > 210 or len(phase.split()) > 850:
+        issues.append("guide: introduction/Phase 1 exceed the compact writing budget")
+    expected = ["A. Verify the lab equipment and VM resources", "B. Verify network zones and management access",
+                "C. Verify isolation and required network access"]
+    procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+    if [title for title, _ in procedures] != expected:
+        issues.append("guide Phase 1: preserve exactly three prepared-infrastructure procedures")
+    for title, section in procedures:
+        if re.findall(r"^\*\*(WHERE|STEPS|CHECK|RECORD)\*\*$", section, re.M) != ["WHERE", "STEPS", "CHECK", "RECORD"]:
+            issues.append(f"guide Phase 1 {title}: missing ordered sample labels")
+        actions = [int(n) for n in re.findall(r"^(\d+)\. ", section, re.M)]
+        if not 3 <= len(actions) <= 7 or actions != list(range(1, len(actions) + 1)):
+            issues.append(f"guide Phase 1 {title}: require 3-7 sequential actions")
+        if "Deliverable 01 >" not in section:
+            issues.append(f"guide Phase 1 {title}: missing recording destination")
+    for meaning in ("Dell Precision 5820", "HP desktop with physical OPNsense", "TP-Link TL-SG108E",
+                    "GL.iNet Beryl AX", "Exactly three workload VMs", "DC1", "WIN1", "APP1",
+                    "Management", "Corporate", "Restricted", "6 vCPU / 16 GiB RAM / 160 GiB",
+                    "read-only stage A approval", "B (host), C (network) or D (firewall) approval",
+                    "private network map", "backup/recovery", "original Windows disk", "second observations",
+                    "FWR-01/FWR-02", "FWT-01/FWT-02", "Before Phase 2", "NOT TESTED",
+                    "GUI inspection alone does not prove", "Never probe home or production"):
+        if meaning not in phase:
+            issues.append("guide Phase 1: missing prepared-design, approval, safety or evidence safeguard: " + meaning)
+    for anchor in ("physical-map-and-proxmox-bridges", "management-access", "default-deny-and-allowed-flows",
+                   "isolation-and-routing", "approved-active-checks", "console-recovery-and-rollback"):
+        if "reference/01-Prepared-Infrastructure.md#" + anchor not in phase:
+            issues.append("guide Phase 1: missing technical-reference navigation: " + anchor)
+    if re.search(r"\b(?:virtual OPNsense|virtual firewall|four (?:baseline )?VMs|Install Proxmox|Install OPNsense|"
+                 r"Ordered|Delivered|procurement|PLANNED|T9[A-F]?(?:\.[1-7])?)\b", visible, re.I):
+        issues.append("guide introduction/Phase 1: obsolete installation, status or internal task language")
+    if re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b|\bVLAN\s+\d+|\bvmbr\d+|^```", visible, re.M):
+        issues.append("guide Phase 1: invented private mapping or executable block")
+    if not reference:
+        return issues + ["guide Phase 1: prepared technical reference is required"]
+    if re.findall(r"^\| (FF-\d{2}) \|", reference, re.M) != [f"FF-{n:02d}" for n in range(1, 9)]:
+        issues.append("prepared reference: preserve all eight FF restrictions in order")
+    for meaning in ("stage A approval", "separate B, C and D approval", "PVID", "tagged/untagged",
+                    "Workload bridges carry no Proxmox host IP", "sole inter-zone router", "one zone NIC",
+                    "same-zone", "local_network", "management` IPSet", "anti-lockout", "floating/group/automatic",
+                    "existing states", "NAT", "firewall-originated", "IPv4 and IPv6", "router advertisements",
+                    "DHCPv6", "automatic/default routes", "independently isolated", "lab-owned mock",
+                    "Never send test traffic to home or production", "second observation", "working allowed control",
+                    "wrong password or stopped listener is insufficient", "System > Configuration > Backups",
+                    "restore", "console", "original Windows disk", "supported second factor", "LabEditPath"):
+        if meaning not in reference:
+            issues.append("prepared reference: missing mandatory technical safeguard: " + meaning)
+    for meaning in ("hardware revision", "selected software builds", "private mapping", "01 >", "03 >", "04 >",
+                    "12 GiB host RAM", "80 GiB free storage", "320 GiB", "NOT TESTED", "owner UAT"):
+        if meaning not in reference:
+            issues.append("prepared reference: missing version, capacity or evidence detail: " + meaning)
+    for match in re.finditer(r"^```[^\n]*\n.*?^```", reference, re.M | re.S):
+        context = reference[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
+        if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
+            issues.append("prepared reference: command block needs a risk/target context")
+    return issues
+
+
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
     assignment = texts.get("docs/assignments/PROJECT-ASSIGNMENT.md", "")
     guide = texts.get("docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md", "")
+    issues.extend(prepared_infrastructure_issues(guide, texts.get(PREPARED_REFERENCE, "")))
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
     if titles != ASSIGNMENT_HEADINGS:
@@ -468,9 +535,12 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        if not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
+        if number == "1":
+            if "**Before Phase 2:**" not in section:
+                issues.append("phase 1 missing field: checkpoint and recovery")
+        elif not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
             issues.append(f"phase {number} missing field: checkpoint and recovery")
-        for field in ("**Outcome:**", "Approvals:", "Test"):
+        for field in (() if number == "1" else ("**Outcome:**", "Approvals:", "Test")):
             if field not in section:
                 issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
@@ -488,8 +558,8 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
     procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
-    if [int(n) for n, _ in procedures] != list(range(1, 28)):
-        issues.append("guide: preserve the 27 numbered procedures in order")
+    if [int(n) for n, _ in procedures] != list(range(7, 28)):
+        issues.append("guide: preserve downstream numbered procedures 7-27 in order")
     for number, body in procedures:
         for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
             if field not in body:
@@ -507,13 +577,6 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         issues.append("appendix historical requirement transition must preserve all R01-R16 IDs")
     if set(re.findall(r"\bT\d{2}\b", transition)) != {f"T{i:02d}" for i in range(21)}:
         issues.append("appendix historical test transition must preserve all T00-T20 IDs")
-    for label, content in (("guide", guide),):
-        for status in ("Existing", "Ordered", "Delivered", "Installed", "Validated"):
-            if not re.search(rf"\b{status}\b", content, re.I):
-                issues.append(f"{label}: missing hardware status {status}")
-        for part in ORDERED_HARDWARE:
-            if part not in content:
-                issues.append(f"{label}: missing confirmed ordered hardware item")
     test_ids = re.findall(r"^### (FWT-\d{2})\b", plan, re.M)
     if test_ids != [f"FWT-{number:02d}" for number in range(1, 11)]:
         issues.append("test plan must declare FWT-01 through FWT-10 exactly once in order")

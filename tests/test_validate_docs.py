@@ -341,7 +341,7 @@ class AssignmentContractTests(unittest.TestCase):
             "docs/assignments/PROJECT-ASSIGNMENT.md", "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md",
             "docs/testing/TEST-PLAN.md", "docs/security/SECURITY-REQUIREMENTS.md",
             "docs/testing/ACCEPTANCE-CRITERIA.md", ".github/workflows/documentation.yml",
-            validator.GUIDE_TRANSITION)}
+            validator.GUIDE_TRANSITION, validator.PREPARED_REFERENCE)}
         self.assignment = "docs/assignments/PROJECT-ASSIGNMENT.md"
         self.guide = "docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md"
         self.plan = "docs/testing/TEST-PLAN.md"
@@ -372,14 +372,14 @@ class AssignmentContractTests(unittest.TestCase):
     def test_wrong_phase_or_missing_recovery_field_is_rejected(self):
         self.assert_rejected(self.guide, "## Phase 3: Zero Trust Access Controls",
                              "## Phase 3: More systems", "five approved phases")
-        self.assert_rejected(self.guide, "### Phase 1 checkpoint and recovery", "### Other", "missing field")
+        self.assert_rejected(self.guide, "**Before Phase 2:**", "**Later:**", "missing field")
 
     def test_historical_mapping_gaps_are_rejected(self):
         self.assert_rejected(validator.GUIDE_TRANSITION, "| R02, R03, R04 |", "| R02, R04 |", "historical requirement transition")
         self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
 
     def test_guide_procedures_require_actions_context_and_failure_recovery(self):
-        self.assert_rejected(self.guide, "### Step 1 -", "### Step 0 -", "numbered procedures")
+        self.assert_rejected(self.guide, "### Step 7 -", "### Step 0 -", "numbered procedures")
         self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
         self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
 
@@ -399,8 +399,8 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected("docs/security/SECURITY-REQUIREMENTS.md",
                              "FWR-03; FWT-03", "FWR-03; FWT-04", "invalid security")
 
-    def test_ordered_status_and_released_template_status_are_required(self):
-        self.assert_rejected(self.guide, "Xeon W-2145", "Unspecified CPU", "ordered hardware")
+    def test_prepared_design_and_released_template_status_are_required(self):
+        self.assert_rejected(self.guide, "HP desktop with physical OPNsense", "firewall VM", "prepared-design")
         self.assert_rejected(self.assignment, "available as blank templates", "complete and validated lab", "template availability")
 
     def test_identity_limits_and_legacy_navigation_are_required(self):
@@ -409,11 +409,46 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(self.assignment, "## Learning Objectives", "## Learning Objectives\n\nStart T7 now.", "internal task")
 
     def test_guide_rejects_jargon_unavailable_template_claims_and_missing_context(self):
-        self.assert_rejected(self.guide, "## Before beginning the lab",
-                             "## Before beginning the lab\n\nT6 stop.", "internal task jargon")
+        self.assert_rejected(self.guide, "## How to use the guide",
+                             "## How to use the guide\n\nT6 stop.", "internal task jargon")
         self.assert_rejected(self.guide, "available as blank templates", "complete and validated lab", "template availability")
-        self.assert_rejected(self.guide, "**READ-ONLY - Windows candidate", "**INSPECTION - Windows candidate",
+        self.assert_rejected(self.guide, "**READ-ONLY - WIN1, Windows PowerShell", "**INSPECTION - WIN1, Windows PowerShell",
                              "risk/target context")
+
+    def test_prepared_labels_action_bounds_and_reference_are_required(self):
+        self.assert_rejected(self.guide, "**STEPS**", "**DO**", "ordered sample labels")
+        self.assert_rejected(self.guide, "### A. Verify", "### D. Verify", "exactly three")
+        self.assert_rejected(self.guide, "4. Compare the GUI inventory", "8. Compare the GUI inventory", "sequential actions")
+        self.assert_rejected(self.guide, "#management-access)", "#missing)", "technical-reference navigation")
+        texts = dict(self.texts)
+        texts.pop(validator.PREPARED_REFERENCE)
+        self.assertTrue(any("technical reference is required" in x for x in validator.completeness_issues(texts)))
+        self.assert_rejected(validator.PREPARED_REFERENCE, "**READ-ONLY - dedicated Windows",
+                             "**INSPECTION - dedicated Windows", "risk/target context")
+
+    def test_prepared_security_controls_and_each_flow_cannot_be_removed(self):
+        for phrase in ("read-only stage A approval", "B (host), C (network) or D (firewall) approval",
+                       "second observations", "GUI inspection alone does not prove", "Never probe home or production"):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(self.guide, phrase, "omitted", "safeguard")
+        for number in range(1, 9):
+            with self.subTest(flow=number):
+                self.assert_rejected(validator.PREPARED_REFERENCE, f"| FF-{number:02d} |", "| removed |", "eight FF")
+        for phrase in ("Workload bridges carry no Proxmox host IP", "anti-lockout", "IPv4 and IPv6",
+                       "DHCPv6", "working allowed control", "System > Configuration > Backups",
+                       "Never send test traffic to home or production", "wrong password or stopped listener is insufficient"):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(validator.PREPARED_REFERENCE, phrase, "omitted", "technical safeguard")
+
+    def test_prepared_procedures_reject_invented_mapping_installation_and_status(self):
+        for phrase in ("Install OPNsense", "Ordered equipment arrives soon", "Start T9C.3", "virtual firewall"):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(self.guide, "## Phase 1: Prepared Infrastructure\n",
+                                     "## Phase 1: Prepared Infrastructure\n\n" + phrase, "obsolete installation")
+        for phrase in ("VLAN 99", "vmbr99", "192.0.2.1"):
+            with self.subTest(phrase=phrase):
+                self.assert_rejected(self.guide, "## Phase 1: Prepared Infrastructure\n",
+                                     "## Phase 1: Prepared Infrastructure\n\n" + phrase, "private mapping")
 
     def test_guide_retains_approval_and_existing_phase_test_mappings(self):
         self.assert_rejected(self.guide, "each stage A-L", "optional stages", "safeguards")

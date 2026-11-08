@@ -1,212 +1,99 @@
-# Build the Four-Week Security Lab
+# Lab Implementation Guide
 
-**HL-CYB-001 | Implementation PLANNED | Operational controls NOT TESTED | Owner user acceptance testing (UAT) PENDING**
+<a id="before-beginning-the-lab"></a>
+<a id="how-to-use-this-manual"></a>
 
-Purple Eye is a fictional business. Its analyst needs reports, its engineer needs maintenance instructions, and a user without either role must be denied access. You will build a small, isolated lab that demonstrates those decisions, remote access and recovery after an application failure.
+## How to use the guide
 
-This manual takes you from preparation to the five completed Office submissions. It teaches the [approved assignment](../assignments/PROJECT-ASSIGNMENT.md), using one Proxmox host, four virtual machines and three network zones. The instructions describe future work; hardware receipt, installation and successful tests have not been established.
+The analyst reads reports. The engineer reads maintenance instructions. The unassigned user is denied. Follow the [assignment](../assignments/PROJECT-ASSIGNMENT.md) for required outcomes.
 
-## Before beginning the lab
+Follow the five phases in order: [infrastructure](#phase-1-prepared-infrastructure), [identity and endpoints](#phase-2-identity-and-endpoint-security), [access controls](#phase-3-zero-trust-access-controls), [monitoring and recovery](#phase-4-monitoring-automation-and-recovery), then [validation and submission](#phase-5-validation-and-final-submission). Read each procedure first. Obtain approval before each stage A-L, covering assets, changes, validation and rollback. Use the [architecture](../architecture/ARCHITECTURE.md) and [technical reference](reference/01-Prepared-Infrastructure.md) for detail.
 
-### How to use this manual
+Use private copies of the [five Office files](#required-lab-deliverables), numbered **01-05**. Record observations, dates and private evidence references in the named sections. Use synthetic users and separate lab passwords; keep raw evidence private. Leave unperformed checks **NOT TESTED**. If a result differs, stop the affected work, follow its recovery plan and log it in **Deliverable 04 > Issue Log**.
 
-Read a whole numbered procedure before changing anything. Check its approval and prerequisites, do the actions on the named machine, then compare the result with the check. If a check fails, use the recovery advice and record the issue before continuing. You do not need to repeat checks already supported by current evidence unless the configuration changes.
+<a id="phase-1-infrastructure-and-network"></a>
 
-The [architecture](../architecture/ARCHITECTURE.md) owns the layout and allowed connections; the [security requirements](../security/SECURITY-REQUIREMENTS.md) explain the boundaries. FWR means a project requirement; FWT means its matching test. The [Test Plan](../testing/TEST-PLAN.md) supplies the complete mandatory subchecks. The [glossary](../guides/GLOSSARY.md) explains less familiar terms.
+## Phase 1: Prepared Infrastructure
 
-Keep private working copies of the [five Office templates](#required-lab-deliverables) outside Git. In the procedures, **01**, **02**, **03**, **04** and **05** mean those exact files. Record each detail once in its owning worksheet or section, then refer to it elsewhere. Throughout the lab, use **04 / Issue Log** for real problems, their cause, approved correction, retest and lesson learned.
+Verify the Dell Precision 5820 with Proxmox, HP desktop with physical OPNsense, TP-Link TL-SG108E switch and GL.iNet Beryl AX upstream router.
 
-### Approvals and the four-week plan
+**Before you start:** Have read-only stage A approval, the private network map and backup/recovery record, and Dell/HP console access. Missing map, version or recovery details mean stop. Changes need separate B (host), C (network) or D (firewall) approval; this phase installs nothing.
 
-Before **each stage A-L**, obtain explicit owner approval identifying the scope, exact assets, permitted changes, validation, private evidence handling and rollback. Record the approval reference/date in the existing implementation/evidence records, without publishing private conversations. Approval of this manual or an earlier stage does not approve installation or the next stage.
+<a id="step-1---inspect-what-is-actually-available"></a>
+<a id="step-2---protect-windows-prove-recovery-and-approve-the-target"></a>
+<a id="step-3---install-proxmox-and-open-its-management-page"></a>
 
-| Phase | Separate stage approvals | Week |
-| --- | --- | --- |
-| 1: Infrastructure and Network | A readiness; B host installation; C bridges; D firewall | 1 |
-| 2: Identity and Endpoint Security | E directory; F Windows/Linux baseline | 2 |
-| 3: Zero Trust Access Controls | G certificate; H application; I remote access | 2-3 |
-| 4: Monitoring, Automation and Recovery | J events; specifically approved L automation/recovery | 3-4 |
-| 5: Validation and Final Submission | K tests; remaining L closeout | 4 |
+### A. Verify the lab equipment and VM resources
 
-Only the explicitly approved automation/recovery part of L may precede K. Plan 8-12 focused hours per week after readiness approval. Missing hardware, lawful activation, isolation or recovery moves the dates; it does not remove a prerequisite.
+**WHERE**
 
-### Choose versions and fill in private values first
+Dedicated lab administrator computer; Dell and HP consoles. Use private management addresses.
 
-Exact releases have not been approved or installed. Before each stage, record the selected release/build, media integrity, lawful terms and recovery method in **01 / Virtual Machines** or **02 / Implementation Overview**. The examples below describe a conditional profile, not an approved software decision:
+**STEPS**
 
-- Proxmox VE using its current Linux-bridge interface; OPNsense Community using its matching installer and rule screen. Match the selected release to its official manual before approval.
-- Windows Server 2025 with Desktop Experience and a supported, domain-capable Windows 11 edition. Check the actual CPU, Secure Boot, virtual Trusted Platform Module (TPM) and disk requirements; never bypass them to fit the plan.
-- Ubuntu Server 24.04 LTS with Netplan/systemd-networkd networking, nftables host firewall and Apache 2.4. Use these Linux examples only if that profile is selected. An existing different backend needs a reviewed equivalent before execution; do not stack firewall managers.
-- OpenSSL 3.x, Windows PowerShell 5.1 and the approved Tailscale client release. Verify installed help as well as the official references linked at the relevant steps.
+1. Sign in at both consoles. Compare device identities and cables with the private map. Confirm the original Windows disk, data and services remain protected and their recovery record is available.
+2. Open **Proxmox > Dell node > Summary**, then storage > **Summary**. Compare CPU, memory and usable storage with the [capacity budget and reserves](../architecture/ARCHITECTURE.md#initial-capacity-budget).
+3. Select **DC1**, **WIN1** and **APP1 > Hardware** in turn. Compare processors, memory and disk allocations with that budget. Physical OPNsense on HP is outside these guest totals.
+4. Compare the GUI inventory with device labels and the private physical/firmware record. Record a difference before continuing.
 
-Vendor instructions were checked on **2026-11-07**. None of the lab commands was executed for this manual. A changed menu, missing option or unsupported release needs a corrected instruction before you continue.
+**CHECK**
 
-Use the existing private address/topology record to approve the values below. The capitalized names are placeholders, not addresses to type literally. In configuration files, replace every such placeholder before checking syntax; shell variables must be assigned privately first.
+Exactly three workload VMs; allocations total 6 vCPU / 16 GiB RAM / 160 GiB disks. Measured capacity also covers host, free-space and temporary-restore reserves. Both consoles and recovery records are available.
 
-| Private value | Where it comes from |
-| --- | --- |
-| LAB_MGMT_CIDR, LAB_CORPORATE_CIDR, LAB_RESTRICTED_CIDR | Three nonoverlapping lab subnets; approved Network Zones record |
-| LAB_ADMIN_IP, LAB_PVE_IP, LAB_FW_MGMT_IP | Dedicated administrator station, host and firewall Management addresses |
-| LAB_FW_CORPORATE_IP, LAB_FW_RESTRICTED_IP | Firewall gateway address inside each workload subnet |
-| LAB_DC1_IP, LAB_WIN1_IP, LAB_APP1_IP | Reserved fixed guest addresses in their correct subnets |
-| LAB_PREFIX_LENGTH, LAB_NETMASK, LAB_NIC | Actual subnet prefix/mask and NIC matched by MAC address |
-| LAB_TIME_IP, LAB_TIME_PORT | Named lab-only time source and protocol approved for FF-02/FF-04 |
-| LAB_APP_OVERLAY_IP, LAB_REMOTE_OVERLAY_IP | Exact enrolled APP1 and remote-client Tailscale addresses, approved in stage I |
-| Private paths, backup target and unused restore ID | Reviewed storage/credential custody and stage L recovery plan |
+**RECORD**
 
-Passwords, actual addresses, device identifiers, logs, keys and backups remain private. Use synthetic lab identities and distinct passwords. No production trust, synchronization, corporate accounts/data or home-network tests are part of this lab.
+**Deliverable 01 > Hardware & Readiness**, **Virtual Machines** and **Resource Allocation**. Enter observations and evidence references.
 
-When a Linux step says to use the privileged editor, use an editor already present in the selected profile. For the conditional Ubuntu example with **nano**, set **LabEditPath** privately to that step's exact approved file after saving its recovery copy; then use the command below. Do not install a different editor just to match this example.
+<a id="step-4---create-the-three-network-bridges"></a>
+<a id="step-5---install-opnsense-and-identify-its-interfaces"></a>
 
-**CONFIGURATION CHANGE - named Linux lab target's console, sudo/root; only the file authorized by that step.** Open the existing approved editor on LabEditPath, an assigned absolute path, never a directory or unknown file:
+### B. Verify network zones and management access
 
-```sh
-sudo nano "$LabEditPath"
-```
+**WHERE**
 
-Edit only the specified fields/content, use **Ctrl+O**, **Enter** to save, and **Ctrl+X** to exit. Reopen/check the file and use its step's syntax check before applying. If the editor/path differs, stop and use the reviewed equivalent; do not save over an uncertain file. Files created without elevation may have wrong ownership, so check the specified owner/mode afterward.
+Administrator computer: Proxmox, HP OPNsense and switch web pages.
 
-### Stop safely
+**STEPS**
 
-**READ-ONLY** means inspect; **CONFIGURATION CHANGE** writes settings/files; **DESTRUCTIVE / HIGH-RISK** may erase data or change trust/connectivity. These labels describe proposed actions for the approved stage, never permission to run them now. Use the Markdown source when copying commands; PDF wrapping is visual.
+1. Open **OPNsense > Interfaces > Assignments**. Match Management, Corporate and Restricted to the HP ports and private map.
+2. Open **Proxmox > Dell node > System > Network**. Compare bridge ports, addresses and VLAN-aware settings with the [approved relationships](reference/01-Prepared-Infrastructure.md#physical-map-and-proxmox-bridges).
+3. Open each VM's **Hardware > Network Device**. Match bridge and VLAN tag to the map: DC1/WIN1 in Corporate; APP1 in Restricted, with one zone NIC each.
+4. Open the switch's **VLAN > 802.1Q VLAN** and **802.1Q PVID Setting** pages. Compare tagged/untagged membership and port defaults with the map; change nothing.
+5. Inspect the [management restrictions](reference/01-Prepared-Infrastructure.md#management-access): named administrator sources/services, effective host/device rules, supported multifactor authentication and console recovery.
 
-If the disk identity is uncertain, a backup cannot be recovered, a secret appears in proposed public evidence, or connectivity might reach home/production, stop the affected work. Use the approved console procedure to disconnect the lab's external uplink, preserve private evidence and obtain approval for the correction. Never probe a protected network to check a deny rule.
+**CHECK**
 
-## Phase 1: Infrastructure and Network
+Three zones reach HP; no switch/host route bypasses OPNsense. Workload bridges have no host address. Only the dedicated path reaches management; APP1's approved overlay is the sole extra interface.
 
-**Outcome:** one recoverable host, one virtual firewall and three separated zones. This phase begins with readiness, before any installer is opened. Approvals: A, then separate B, C and D. Tests: FWT-01/FWT-02; requirements: FWR-01/FWR-02.
+**RECORD**
 
-### Step 1 - Inspect what is actually available
+**Deliverable 01 > Network Zones** and **Allowed Network Flows**.
 
-**Purpose and location:** at the candidate computer and its Windows/firmware screens, establish what exists and what must be protected. Stage A is read-only; do not install inspection tools, open powered equipment or change firmware settings.
+<a id="step-6---enter-the-allowed-connections-and-check-isolation"></a>
 
-1. In **01 / Hardware & Readiness**, keep Existing, Ordered, Delivered, Installed and Validated separate. Existing equipment is owner-described, not verified: Dell Precision 5820 with W-2125, 80 GB RAM and 512 GB SSD, plus the available administrator/test computers, Google Wifi and thermal paste.
-2. Record these items as **Ordered** until receipt is confirmed: Xeon W-2145, Samsung 1 TB SSD, Sabrent PCIe adapter, Intel I350-T4 NIC, GL.iNet Beryl AX and TP-Link managed switch. The earlier estimates were November 7, 2026 for non-CPU items and November 12 for the CPU; an estimate is not delivery. Do not reorder them or assume they are installed.
-3. On Windows, open **Start > System Information**. Record CPU, installed RAM, BIOS mode/version and virtualization information privately. Open **Device Manager > Network adapters** for NIC models and **Disk Management** for disk sizes, partitions and volumes. Do not initialize an unfamiliar disk.
-4. Read the original Windows disk's model, capacity and serial from **Device Manager > Disk drives > Properties > Details**, firmware or the physical label when a separately approved powered-off inspection is possible. Record the drive letters and data/services it contains. A drive letter or disk number alone is not a durable identifier.
-5. Compare the planned CPU, cooler, firmware, storage adapter and PCIe slots with the exact [Dell 5820 service documentation](https://www.dell.com/support/product-details/en-us/product/precision-5820-workstation/docs). Record anything unconfirmed; do not call an ordered part compatible because its connector fits.
+### C. Verify isolation and required network access
 
-**READ-ONLY - Windows candidate, local PowerShell, normally standard user; approved elevation only if access is denied.** These queries show local CPU/RAM and adapters, without changing them. No placeholders; keep the output private. [Microsoft documents the inventory command](https://learn.microsoft.com/en-us/powershell/module/cimcmdlets/get-ciminstance) and [adapter query](https://learn.microsoft.com/en-us/powershell/module/nettcpip/get-netipconfiguration).
+**WHERE**
 
-```powershell
-Get-CimInstance -ClassName Win32_ComputerSystem
-Get-CimInstance -ClassName Win32_Processor
-Get-NetIPConfiguration -All
-```
+Administrator computer: read-only Windows, Beryl AX and firewall/host views.
 
-**Check:** the observed CPU/RAM and adapters agree with System Information, firmware and cable labels. Record the actual observation and evidence reference in **01 / Hardware & Readiness**. These commands do not verify disk safety or isolation.
+**STEPS**
 
-**If it fails:** record unreadable identifiers, missing parts or inconsistent capacity as a readiness blocker. Obtain the missing observation; do not guess or substitute a component.
+1. Open Windows **Settings > Network & internet > Advanced network settings**. Compare adapters with the isolation record; flag extra Wi-Fi, VPN or shared connections.
+2. In Beryl AX **INTERNET**, inspect **Ethernet**, **Repeater**, **Tethering** and **Cellular**. Keep upstream disconnected until independent isolation and egress are approved.
+3. Compare [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix) with effective firewall/host rules, states, NAT and listeners. Use the [flow checklist](reference/01-Prepared-Infrastructure.md#default-deny-and-allowed-flows); unlisted access stays denied.
+4. Complete the [IPv4/IPv6, route and trust checks](reference/01-Prepared-Infrastructure.md#isolation-and-routing). GUI inspection alone does not prove home/production isolation.
+5. For separately approved active validation, use [lab-owned mocks](reference/01-Prepared-Infrastructure.md#approved-active-checks). Record allowed and denied behavior plus policy/log evidence under FWT-01/FWT-02. Never probe home or production.
 
-### Step 2 - Protect Windows, prove recovery and approve the target
+**CHECK**
 
-**Purpose and location:** with the owner at the physical host and approved backup storage, make installation recoverable before anything is erased. This is still readiness; a recovery check that writes to a device needs its own exact approval.
+Map/flows match. FWR-01/FWR-02 need FWT-01/FWT-02 evidence and second observations. Unperformed active checks stay **NOT TESTED**.
 
-1. Inventory Windows files, applications and running services with the owner. Identify anything that cannot be interrupted. A service shutdown or migration needs separate authorization.
-2. Locate the current backup and its recovery key/password in the private store. Check the backup date and included volumes/files. Open representative backed-up files read-only from the separate copy; if using an image, verify its supported recovery media can see that image. An untested image needs an approved recovery rehearsal before disk installation.
-3. Confirm access to recovery media and the firmware boot menu. Record the console access, recovery method and owner-approved availability window in **01 / Hardware & Readiness**. A same-disk copy is not protection against installer erasure.
-4. Review the exact Proxmox target by model, capacity and serial. It must be the approved new/lab disk, never the preserved original Windows disk. Before stage B, agree a powered-off method to disconnect/protect the original disk and backup media, and how Windows will be returned to service if installation fails.
-5. Check **01 / Resource Allocation** against actual usable capacity: four guests need 20 GiB RAM and 176 GiB disk; reserve at least 12 GiB host RAM and 80 GiB free storage. The provisional storage total is 336 GiB, including host/media/temporary restore space and excluding filesystem overhead. Thin provisioning does not create physical space.
-6. Obtain separate stage B approval covering the exact disk, any hardware work, installation, permitted outage, validation and backup/recovery plan. Obtain C/D approval before their network/firewall changes.
+**RECORD**
 
-**Check:** private identifiers, recoverable backup, console, capacity and exact approval references are present and agree. No guide entry certifies that the original disk is safe without those observations.
+**Deliverable 01 > Allowed Network Flows** and **Deliverable 03 > Test Cases**.
 
-**If it fails:** leave the current Windows system unchanged. Missing backup, original-disk ambiguity, incompatible parts or insufficient measured capacity means no-go for installation.
-
-### Step 3 - Install Proxmox and open its management page
-
-**Purpose and location:** install the virtual-machine host at the physical console under B approval. Everything on the selected installation disk can be erased. Follow the matching [official installer instructions](https://github.com/proxmox/pve-docs/blob/master/pve-installation.adoc).
-
-1. Use the approved official ISO and its verified checksum. If preparing a USB installer, approve and identify that USB device too; writing the image erases it. Keep all media/backup disks distinguishable.
-2. Shut down using the approved service window. Have the original Windows disk and backup media disconnected/protected by the approved method. Connect only the isolated Management cable; leave external uplinks disconnected.
-3. Boot the verified installer and select **Install Proxmox VE (Graphical)**. At **Target Harddisk**, match the displayed model/capacity/serial with the private approved target immediately before selection. If serial identity is not visible, stop and resolve it at console; size alone is insufficient.
-4. Select only the approved disk/filesystem. Enter timezone/keyboard and a unique lab root password through the installer prompts. Enter the approved hostname, Management NIC, LAB_PVE_IP/prefix and lab-only DNS/gateway values. Do not enter a home gateway/resolver or invent one to satisfy a field; resolve an installer requirement in the approved offline design.
-5. Review the final summary against the private record before **Install**. After successful installation, remove the installer and verify a local boot. Keep the original Windows disk preserved; do not reconnect it to make the new host work.
-6. Give the dedicated administrator station its approved Management address using **Adapter Properties > Internet Protocol Version 4**. Inspect its other adapters, Wi-Fi, VPNs, sharing and routes under C approval; it must not bridge home/production into the lab.
-7. From that station, open **https://LAB_PVE_IP:8006**, replacing the symbol privately. Compare the host's initial certificate fingerprint through the trusted console path before accepting its initial management certificate. Never apply that exception to the later application certificate.
-8. Sign in, select the host in the left tree and inspect **Summary**, **Disks**, the storage object's **Summary**, and **Datacenter > Storage**. Record build, disk identity and usable capacity. Do not create a cluster.
-9. Under **Datacenter > Permissions > Users > Add**, create the approved named administrator in the local **Proxmox VE authentication server** realm, with a unique prompted password. This represents the same separate privileged person, not a new standard lab user or AD integration. Under **Permissions > Add > User Permission**, select that exact user, approved path/role and propagation. A host-wide **/** / **Administrator** grant is allowed only if B approval explicitly names it; otherwise enter the approved narrower ACL (permission) fields and verify the required host/VM/storage actions.
-10. Under **Permissions > Two Factor > Add**, register the approved supported factor for that user and keep recovery codes privately. Test a new named-admin login and recovery access before ending root setup; do not lock out the physical console. The [Proxmox user manual](https://github.com/proxmox/pve-docs/blob/master/pveum.adoc) explains local realms/permissions/MFA. Use no production directory, extra project role group or shared standard-user credential.
-
-**Check:** the host boots at console, the named administrator can use the isolated web page, the original Windows disk remains protected, and the observed capacity fits the ledger. Record in **01 / Hardware & Readiness**, **Virtual Machines** and **Resource Allocation** as applicable.
-
-**If it fails:** use the physical console and the saved installation/network values. Do not select another disk, erase storage or reconnect a home uplink. Reinstallation or hardware recovery needs explicit coverage in the recovery approval.
-
-### Step 4 - Create the three network bridges
-
-**Purpose and location:** in the Proxmox web interface under C approval, create the virtual switches connecting lab guests. A bridge connects attached interfaces; it does not provide safe isolation merely by having a different name.
-
-1. Keep the physical console available and save the current host network configuration privately. Select the host, then **System > Network**.
-2. Inspect **vmbr0**. It must contain only the approved physical Management port and LAB_PVE_IP/prefix. Check the physical cable at both ends. Do not attach it to Google Wifi, a home LAN or an unreviewed switch uplink.
-3. Select **Create > Linux Bridge**. Enter **Name: vmbr10** and **Comment: Corporate**. Leave **Bridge ports**, IPv4/IPv6 addresses and gateway fields empty; retain the approved basic bridge settings. Save.
-4. Create **vmbr20**, **Comment: Restricted**, with the same empty ports/address/gateway fields. Do not add VLANs, bonds, extra zone bridges or host routing.
-5. Review the pending changes, especially vmbr0's physical port and host address. Select **Apply Configuration** only after review; the [Proxmox network manual](https://github.com/proxmox/pve-docs/blob/master/pve-network.adoc) explains staged changes and version-specific application.
-6. At the Proxmox physical console, inspect the active network state below and compare it with the saved cable/bridge map. Record the private diagram, bridge/port/MAC mapping and absence of workload host addresses in **01 / Network Zones**.
-
-**READ-ONLY - Proxmox physical console, root for the console session.** Inspect addresses, bridge membership, both route families and forwarding switches. No placeholders; these commands do not change settings:
-
-```sh
-ip -br address
-bridge link
-ip route
-ip -6 route
-sysctl net.ipv4.ip_forward net.ipv6.conf.all.forwarding
-```
-
-**Check:** vmbr10/vmbr20 have no physical member or host IP, routes do not connect workload zones through the host, and both forwarding values are **0**. Inspect per-interface IPv6 settings/router advertisements too. Unexpected routes/forwarding stop dependent work; correct only through the approved saved-settings recovery plan, then inspect again.
-
-**Check:** there are exactly Management/vmbr0, Corporate/vmbr10 and Restricted/vmbr20. Only Management has a lab-only physical port and host address; administration still works and console recovery is available.
-
-**If it fails:** restore the saved host network settings at console through the approved recovery method. Do not add a second management path through a protected network.
-
-### Step 5 - Install OPNsense and identify its interfaces
-
-**Purpose and location:** under D approval, create the one virtual firewall in Proxmox, then use its console and web interface. The [OPNsense virtual-installation guide](https://docs.opnsense.org/manual/virtuals.html) covers guest settings; match the selected release.
-
-1. Upload the verified OPNsense DVD ISO to the approved storage's **ISO Images > Upload**. Choose **Create VM**: approved unused ID, name **OPNsense**, ISO, approved virtual controller/disk, **16 GiB disk**, **2 vCPU**, **4096 MiB RAM**. Use a release-supported virtual NIC on **vmbr0**. Leave automatic start off until reviewed.
-2. Select the VM > **Hardware > Add > Network Device** twice, adding vmbr10 and vmbr20. Record all three NIC MAC addresses and bridges in **01 / Virtual Machines**. Do not infer zone from vtnet numbering.
-3. Open **Console**, start the VM and follow the verified [installer](https://docs.opnsense.org/manual/install.html). Use the vendor's documented live-installer login, select the approved filesystem and only the VM's 16 GiB virtual disk, and set a private unique administrator password. Eject the ISO and reboot from disk.
-4. In the console menu select **Assign interfaces**. Do not create LAGGs or VLANs. For this offline baseline, leave **WAN** unassigned, assign the MAC on vmbr0 as **LAN/Management**, and assign Corporate and Restricted as optional interfaces. Follow labels rather than assuming menu numbers. Confirm the selected release supports this no-WAN assignment before applying it; never relabel an internal zone as Internet WAN to get past a prompt.
-5. Select **Set interface IP address**. Give Management LAB_FW_MGMT_IP/prefix, with no upstream gateway and no DHCP service. Use the same console method for the other interfaces or finish them in the GUI. Do not enable routed IPv6, router advertisements or DHCPv6. Do not disable Windows IPv6 stacks as a substitute.
-6. From the isolated admin station open **https://LAB_FW_MGMT_IP**, compare the initial management fingerprint through console and sign in. During the wizard preserve the offline interface/DNS plan, change any vendor defaults and leave WAN/egress absent. Do not accept a public resolver, automatic WAN DHCP or broad LAN permit without review.
-7. Open **Interfaces > Assignments**, match each device to its recorded MAC, then open each assigned interface. Enable it, name it **Management**, **Corporate** or **Restricted**, choose **Static IPv4**, and enter the approved address/prefix. Internal interfaces have no upstream gateway. Review private/bogon-block options for their internal role; inappropriate WAN defaults can block the lab's own private sources.
-8. Under **Interfaces > Settings**, follow the selected virtual release's guidance to disable hardware checksum/segmentation/large-receive offloading. Save/apply and keep console access available.
-
-**Check:** OPNsense shows one interface in each approved zone and no connected WAN. Compare GUI addresses/MACs with Proxmox Hardware and the private topology. Record observed values privately in **01 / Network Zones**.
-
-**If it fails:** use console to correct the specific MAC/address assignment. A factory reset is not the first recovery step; it removes reviewed policy. Do not add an uplink to solve an internal GUI problem.
-
-### Step 6 - Enter the allowed connections and check isolation
-
-**Purpose and location:** in OPNsense **Firewall > Aliases** and **Firewall > Rules**, implement the architecture's [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix). A port identifies a service; permits must name its lab source and destination.
-
-1. Create Host/Network aliases from the private record for the administrator, DC1, WIN1, APP1 and protected destinations. Protected aliases must cover reviewed IPv4, IPv6, overlay ranges and corporate public destinations, but remain private. Static filters do not replace independent physical isolation.
-2. On **Management**, add the named administrator's permits to the actual management services first: Proxmox HTTPS 8006 and OPNsense HTTPS on its configured port. Proxmox is reached on the same bridge, so restrict it at the host too. In Proxmox select the host > **Firewall > Add**: **Direction: in**, **Action: ACCEPT**, **Enable: checked**, **Interface: vmbr0**, **Source: LAB_ADMIN_IP/32**, **Destination: LAB_PVE_IP**, **Protocol: tcp**, **Destination port: 8006**. Replace the addresses privately. Add TCP 22 from that same exact admin source only if SSH is explicitly approved; console recovery needs no network SSH permit.
-3. With the physical console open, inspect inherited/default exceptions and the selected [Proxmox firewall backend](https://github.com/proxmox/pve-docs/blob/master/pve-firewall.adoc). In **Datacenter > Firewall > Alias**, inspect/override **local_network** to the single LAB_PVE_IP/32 for this approved one-host design, replacing it privately. Do not leave an automatically detected broad local subnet.
-4. Inspect any existing **management** IPSet. It grants several management ports automatically, so retain only sources/services explicitly covered by approval rather than adding a broad admin subnet.
-5. Set **Datacenter > Firewall > Options > Input Policy: DROP**, enable the host's **Firewall > Options > Firewall**, then **Datacenter > Firewall > Options > Firewall: Yes**, using the matched release's controls. Keep the explicit admin rule in place before activation; do not enable VM/forward filtering in this host-only change. Immediately test a new admin connection and console, then the Phase 5 WIN1 management denial. Save/export the host rules privately with the OPNsense backup.
-6. For each routed permit, select the interface where the request **enters** OPNsense, then **Add**. Enter **Action: Pass**, the named interface, incoming direction, protocol, exact source alias, exact destination alias and destination port. Keep source ports at their normal client range unless the service requires otherwise. Use a clear FF description, save and apply. For the protected-destination deny on each zone, use **Action: Block**, that zone's source and the private protected-destination alias, log it, and place it before any egress allow. Unlisted traffic remains denied.
-
-| Connection to enter | Source, destination and destination service |
-| --- | --- |
-| FF-03 on Corporate | WIN1 to APP1, TCP 443 only |
-| FF-04 on Restricted | APP1 to DC1, TCP/UDP 53; only the separately selected time service |
-| FF-05 on Management | Administrator to named guests, only explicitly approved management services; console remains an option |
-| FF-07 | Absent/disconnected until independent isolated egress and exact dependencies are approved |
-| FF-08 | Log and block unlisted access and reviewed protected destinations; no broad final allow |
-
-7. Handle FF-02 in the Windows host rules in Phase 2: WIN1 and DC1 share Corporate, so their packets do not pass through OPNsense. FF-06 is enforced at Tailscale and APP1 in Phase 3.
-8. Remove/narrow installer allow-all and anti-lockout behavior only after the exact management permit and console recovery work. Inspect floating/group/automatic rules, NAT, UPnP/NAT-PMP, IPv6, listeners and firewall-originated traffic. On the [current rule screen](https://docs.opnsense.org/manual/firewall.html), inspect effective order/quick behavior; old screenshots can differ. No inbound forwarding or Internet sharing is allowed.
-9. For changed paths, review **Firewall > Diagnostics > States** and remove only specifically approved stale states before retesting. Save a password-protected configuration using **System > Configuration > Backups**; verify file date, custody and recovery access privately.
-10. Once the required guests/listeners exist, run the bounded checks in Phase 5 for FWT-01/FWT-02. Open **Firewall > Log Files > Live View**, filter the lab source/service and match the intended deny rule. Use known listening **lab-owned mocks**; never test actual home/production destinations. Until those checks run, keep their verdicts NOT TESTED.
-
-**Check:** configuration inspection shows only the named permits, default deny and preserved console recovery. A permitted session and a denied request to a working lab listener must agree with host/policy logs or counters. Complete **01 / Allowed Network Flows**; record execution in **03 / Test Cases**, FWT-01 and FWT-02.
-
-**If it fails:** use console, disconnect any approved external uplink and inspect source interface, rule order, host rules, NAT and old states. Restore the saved host/firewall configuration if authorized. A timeout, disconnected target or missing password alone is not proof of policy denial.
-
-### Phase 1 checkpoint and recovery
-
-Readiness must be evidenced before B begins. Before directory work, confirm the host/firewall/three bridges, capacity and safe administration; complete the network behavioral checks when their Phase 2/3 services exist. Keep egress disconnected until its separate gate is satisfied. Restore saved settings only within B-D recovery scope; do not reinstall or alter the preserved Windows disk as routine troubleshooting.
+**Before Phase 2:** Resolve mismatches; carry pending checks forward. For unexpected connectivity, stop and use [console isolation/recovery](reference/01-Prepared-Infrastructure.md#console-recovery-and-rollback).
 
 ## Phase 2: Identity and Endpoint Security
 

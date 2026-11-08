@@ -372,17 +372,21 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_t9c1_preserves_every_excluded_file_and_other_report_sections(self):
         base = "cb344c8be49e1c6a57489c5031f825df6b7ad1ea"
+        # Keep the full published sample/refinement boundary immutable.
+        # The live T9C.2 boundary has its own stricter check below.
+        published = "f41a5f296a772faa76df3089cb86b4b12b044d13"
         report = "docs/reports/T9-Report.md"
         allowed = {report, "tests/test_build_docs.py"}
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", published]).decode().splitlines()
         self.assertEqual(set(current), set(files), "T9C.1 introduces no public sample or other file")
         for name in files:
             if name not in allowed:
                 old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
-                self.assertEqual((ROOT / name).read_bytes(), old, name)
+                actual = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+                self.assertEqual(actual, old, name)
         old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + report])
-        new = (ROOT / report).read_bytes()
+        new = subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + report])
         start = b"### T9C - Lab Guide Simplification\n"
         end = b"### T9D - Security and Testing Alignment\n"
         def outside_t9c(value):
@@ -394,6 +398,47 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertEqual(outside_t9c(new), outside_t9c(old))
         self.assertIn(b"Report state: DRAFT\n", new)
         self.assertIn(b"| Umbrella status | IN PROGRESS |", new)
+
+    def test_t9c2_preserves_excluded_files_downstream_and_other_report_bytes(self):
+        base = "f41a5f296a772faa76df3089cb86b4b12b044d13"
+        report = "docs/reports/T9-Report.md"
+        allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf", docs.MANIFEST, report,
+                   "scripts/build_docs.py", "scripts/validate_docs.py",
+                   "tests/test_build_docs.py", "tests/test_validate_docs.py"}
+        added = {docs.PREPARED_REFERENCE, docs.PREPARED_REFERENCE[:-3] + ".pdf"}
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files) | added)
+        for name in files:
+            if name not in allowed:
+                old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+                self.assertEqual((ROOT / name).read_bytes(), old, name)
+        old_guide = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.GUIDE])
+        marker = b"## Phase 2: Identity and Endpoint Security"
+        self.assertEqual((ROOT / docs.GUIDE).read_bytes().split(marker, 1)[1], old_guide.split(marker, 1)[1])
+        fences = r"^```([^\n]*)\n(.*?)^```"
+        moved = re.findall(fences, (ROOT / docs.PREPARED_REFERENCE).read_text(encoding="utf-8"), re.M | re.S)
+        original = re.findall(fences, old_guide.split(marker, 1)[0].decode(), re.M | re.S)
+        self.assertEqual(len(original), 3)
+        for block in original:
+            self.assertIn(block, moved, "Preserve each existing read-only/editor block in the reference")
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + report])
+        new = (ROOT / report).read_bytes()
+        def outside_t9c2(value):
+            value = re.sub(rb"^\| T9C\.2 - Introduction and Phase 1 \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9C\.2 - Introduction and Phase 1\n.*?(?=^### T9D -)", b"", value,
+                          flags=re.M | re.S)
+        self.assertEqual(outside_t9c2(new), outside_t9c2(old))
+        self.assertIn(b"Report state: DRAFT\n", new)
+        self.assertIn(b"| Umbrella status | IN PROGRESS |", new)
+        old_manifest = json.loads(subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.MANIFEST]))
+        new_manifest = json.loads((ROOT / docs.MANIFEST).read_bytes())
+        for manifest in (old_manifest, new_manifest):
+            manifest["documents"] = [entry for entry in manifest["documents"]
+                                     if entry["source"] not in {docs.GUIDE, docs.PREPARED_REFERENCE}]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(new_manifest, old_manifest)
 
     def test_assignment_resources_match_architecture_and_unchanged_contracts(self):
         content = (ROOT / docs.ASSIGNMENT).read_text(encoding="utf-8")
@@ -423,15 +468,40 @@ class PdfArtifactTests(unittest.TestCase):
         pages = [p.extract_text() for p in reader.pages]
         text = "\n".join(pages)
         self.assertNotRegex(text, r"\b(?:T6[AB]?|T7|Codex)\b")
-        self.assertIn("Guide contents", pages[0])
-        self.assertIn("PLANNED", pages[0])
+        self.assertIn("Follow the five phases in order", pages[0])
         self.assertIn("NOT TESTED", pages[0])
+        self.assertNotRegex(pages[0], r"PLANNED|Ordered|Delivered|Procurement")
         self.assertTrue(any(all(name in p.splitlines() for name in validator.DELIVERABLE_FILENAMES)
                             for p in pages))
         for n, title in enumerate(validator.PHASE_TITLES, 1):
             self.assertIn(docs.anchor_for(f"Phase {n}: {title}", set()), reader.named_destinations)
         self.assertIn("required-lab-deliverables", reader.named_destinations)
         self.assertEqual(docs.inspect_pdf(data, docs.GUIDE, content, sources)["text_token_coverage"], 1.0)
+        parsed = docs.MARKDOWN(content.decode())
+        for title in ("A. Verify the lab equipment and VM resources", "B. Verify network zones and management access",
+                      "C. Verify isolation and required network access"):
+            selected = next(page for page in pages if title in page)
+            self.assertIn("WHERE", selected)
+            self.assertIn("STEPS", selected)
+            self.assertIn("CHECK", selected)
+            self.assertIn("RECORD", selected)
+            self.assertIn("Deliverable 01 >", selected)
+            start = next(i for i, token in enumerate(parsed) if token["type"] == "heading"
+                         and docs.plain(token["children"]) == title)
+            end = next(i for i in range(start + 1, len(parsed)) if parsed[i]["type"] == "heading"
+                       and parsed[i]["attrs"]["level"] <= 3)
+            for token in parsed[start:end]:
+                parts = ([token] if token["type"] == "paragraph" else
+                         token["children"] if token["type"] == "list" else [])
+                for part in parts:
+                    children = part["children"]
+                    if not any(child["type"] == "inline_html" for child in children):
+                        expected = re.sub(r"\s+", "", docs.normalize(docs.plain(children)))
+                        self.assertIn(expected, re.sub(r"\s+", "", selected), "Split procedure content: " + expected[:60])
+        first = reader.get_destination_page_number(reader.named_destinations["phase-1-prepared-infrastructure"])
+        last = reader.get_destination_page_number(reader.named_destinations["c-verify-isolation-and-required-network-access"])
+        self.assertLessEqual(last - first, 1, "Phase 1 should occupy two adjacent pages")
+        self.assertIn("phase-1-infrastructure-and-network", reader.named_destinations)
         compact_pages = [re.sub(r"\s+", "", p) for p in pages]
         tokens = docs.MARKDOWN(content.decode())
         for index, token in enumerate(tokens):
@@ -449,12 +519,44 @@ class PdfArtifactTests(unittest.TestCase):
                     self.assertTrue(any(re.sub(r"\s+", "", step) in p for p in compact_pages),
                                     "Numbered step split across pages: " + step[:70])
 
+    def test_prepared_reference_has_complete_flow_rows_and_unsplit_commands(self):
+        content = (ROOT / docs.PREPARED_REFERENCE).read_bytes()
+        sources = set(docs.discover_sources(ROOT))
+        data = docs.render_pdf(docs.PREPARED_REFERENCE, content, sources)
+        reader = docs.PdfReader(io.BytesIO(data))
+        pages = [page.extract_text() for page in reader.pages]
+        self.assertIn("Required private records", pages[0])
+        self.assertIn("Physical map and Proxmox bridges", pages[0])
+        self.assertEqual(docs.inspect_pdf(data, docs.PREPARED_REFERENCE, content, sources)["text_token_coverage"], 1.0)
+        compact = [re.sub(r"\s+", "", page) for page in pages]
+        active = reader.get_destination_page_number(reader.named_destinations["approved-active-checks"])
+        section = content.decode().split("## Approved active checks\n", 1)[1].split("\n## ", 1)[0]
+        for token in docs.MARKDOWN(section):
+            parts = ([token] if token["type"] == "paragraph" else
+                     token["children"] if token["type"] == "list" else [])
+            for part in parts:
+                expected = re.sub(r"\s+", "", docs.normalize(docs.plain(part["children"])))
+                self.assertIn(expected, compact[active], "Split active-check procedure")
+        for row in re.findall(r"^\| FF-\d{2} \| (.+) \|$", content.decode(), re.M):
+            expected = re.sub(r"\s+", "", row)
+            self.assertTrue(any(expected in page for page in compact), "Split flow row: " + row[:60])
+        tokens = docs.MARKDOWN(content.decode())
+        for index, token in enumerate(tokens):
+            if token["type"] == "block_code":
+                expected = re.sub(r"\s+", "", docs.normalize(token["raw"]))
+                self.assertTrue(any(expected in page for page in compact), "Split reference command")
+                context = next(t for t in reversed(tokens[:index]) if t["type"] != "blank_line")
+                context_text = re.sub(r"\s+", "", docs.normalize(docs.plain(context["children"])))
+                self.assertTrue(any(expected in page and context_text in page for page in compact),
+                                "Reference command separated from its target/risk context")
+
     def test_guide_retains_core_commands_and_moves_publication_details_to_build_guide(self):
         base = "a3d7b1c6effde3bd5b18ab1a4b529c07a7cc7c61"
         old = subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + docs.GUIDE]).decode()
         current = (ROOT / docs.GUIDE).read_text(encoding="utf-8")
         fences = r"^```([^\n]*)\n(.*?)^```"
         current_blocks = re.findall(fences, current, re.M | re.S)
+        current_blocks += re.findall(fences, (ROOT / docs.PREPARED_REFERENCE).read_text(encoding="utf-8"), re.M | re.S)
         for language, block in re.findall(fences, old, re.M | re.S):
             if block.startswith("<VirtualHost"):
                 site = next(b for lang, b in current_blocks if lang == "apache" and b.startswith("<VirtualHost *:443>"))
