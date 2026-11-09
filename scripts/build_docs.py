@@ -70,6 +70,7 @@ TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE} 
 ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
 SECURITY = "docs/security/SECURITY-REQUIREMENTS.md"
 TEST_PLAN = "docs/testing/TEST-PLAN.md"
+ACCEPTANCE = "docs/testing/ACCEPTANCE-CRITERIA.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
 WIDTH, HEIGHT = letter
@@ -398,6 +399,8 @@ class Builder:
             self.cell_style = ParagraphStyle("guide-cell", parent=self.style, fontSize=8.9, leading=11.7, spaceAfter=0)
         elif source == ARCHITECTURE:
             self.style = ParagraphStyle("architecture-body", parent=self.style, allowWidows=0, allowOrphans=0)
+        elif source == ACCEPTANCE:
+            self.cell_style = ParagraphStyle("acceptance-cell", parent=self.cell_style, fontSize=9, leading=11.8)
         self.code_style = ParagraphStyle("code", fontName="Courier", fontSize=7.9, leading=10.2,
                                         backColor=colors.HexColor("#f5f7f8"), borderColor=colors.HexColor("#d7dfe4"),
                                         borderWidth=0.4, borderPadding=6, leftIndent=7, rightIndent=7, spaceAfter=11)
@@ -493,6 +496,8 @@ class Builder:
         elif self.source == TEST_PLAN and headers == ["Requirement", "Architecture component / flow",
                                                        "Security control", "Test", "Acceptance", "File"]:
             widths = [74, 192, 64, 50, 66, 58]
+        elif self.source == ACCEPTANCE and headers == ["ID", "Required evidence", "Mapping"]:
+            widths = [50, 394, 60]
         elif self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
             widths = [55, 389, 60]
         elif self.source == ASSIGNMENT and headers == ["Filename", "What to record"]:
@@ -552,11 +557,12 @@ class Builder:
             cells.append(values)
         test_record = self.source == TEST_PLAN and headers == ["Record", "Value"]
         keep_rows = self.source in TECHNICAL_REFERENCES | {
-            ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
+            ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN, ACCEPTANCE,
+            "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
         }
         table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=int(not keep_rows),
                           hAlign="LEFT", spaceAfter=8 if test_record else 12)
-        vertical_padding = 4 if self.source in {SECURITY, TEST_PLAN} else 5
+        vertical_padding = 4 if self.source in {SECURITY, TEST_PLAN, ACCEPTANCE} else 5
         if test_record:
             vertical_padding = 2.5
         table.setStyle(TableStyle([
@@ -607,7 +613,8 @@ class Builder:
                 story.append(Paragraph(inline(token["children"], self.source, self.sources), style))
             elif kind == "heading":
                 title = plain(token["children"])
-                if token["attrs"]["level"] == 2 and (title.startswith(("Stage ", "Phase ")) or title == "Source preservation appendix"):
+                if (self.source != ACCEPTANCE and token["attrs"]["level"] == 2
+                        and (title.startswith(("Stage ", "Phase ")) or title == "Source preservation appendix")):
                     story.append(CondPageBreak(240) if self.source == GUIDE else PageBreak())
                 story.append(self.heading(token))
             elif kind == "list":
@@ -623,7 +630,7 @@ class Builder:
                     if self.source == ASSIGNMENT:
                         style.spaceAfter = 4
                         style.keepWithNext = index < len(token["children"]) - 1
-                    elif self.source == GUIDE:
+                    elif self.source in {GUIDE, ACCEPTANCE}:
                         style.spaceAfter = 4
                     paragraph = Paragraph(prefix + inline(first["children"], self.source, self.sources), style)
                     following = self.blocks(children, depth + 1)
@@ -885,7 +892,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
                else Builder(source, sources))
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    compact_sources = {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN} | TECHNICAL_REFERENCES
+    compact_sources = {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN, ACCEPTANCE} | TECHNICAL_REFERENCES
     if source in compact_sources:
         story.append(builder.heading(tokens[0]))
     elif formal:

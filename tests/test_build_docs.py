@@ -15,6 +15,7 @@ T9C4_PUBLICATION = "052fa098dd1768c82bac850470accf306bc3f0cd"
 T9C6_PUBLICATION = "5278e43862f9b41eccb17315877b1c3b49b23217"
 T9C7_PUBLICATION = "1011e82d065251fa49e082e8581ab9158c9f18c3"
 T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
+T9D2_PUBLICATION = "4d14172f3bff29dd88a62b54dd8dccc2dfec474a"
 SPEC = importlib.util.spec_from_file_location("build_docs", ROOT / "scripts/build_docs.py")
 docs = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(docs)
@@ -741,31 +742,84 @@ class PdfArtifactTests(unittest.TestCase):
                    "scripts/validate_office_templates.py", "scripts/office_template_contract.py",
                    "tests/test_build_docs.py", "tests/test_office_templates.py"}
 
-        def published(name):
-            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9D1_PUBLICATION + ":" + name])
+        def snapshot(revision, name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", revision + ":" + name])
 
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
                                          T9D1_PUBLICATION]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                           T9D2_PUBLICATION]).decode().splitlines()
+        self.assertEqual(set(current), set(files))
+        for name in set(files) - allowed:
+            self.assertEqual(snapshot(T9D2_PUBLICATION, name), snapshot(T9D1_PUBLICATION, name), name)
+
+        def outside_t9d2(value):
+            without_row = re.sub(rb"^\| T9D\.2 - Test Plan \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9D\.2 - Test Plan\n.*?(?=^### T9E -)", b"", without_row, flags=re.M | re.S)
+
+        current_report = snapshot(T9D2_PUBLICATION, report)
+        self.assertEqual(current_report.count(b"#### T9D.2 - Test Plan\n"), 1)
+        self.assertEqual(outside_t9d2(current_report), outside_t9d2(snapshot(T9D1_PUBLICATION, report)))
+
+        manifests = [json.loads(snapshot(revision, docs.MANIFEST)) for revision in (T9D1_PUBLICATION, T9D2_PUBLICATION)]
+        for manifest in manifests:
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.TEST_PLAN]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_t9d3_preserves_excluded_paths_and_other_report_sections(self):
+        report = "docs/reports/T9-Report.md"
+        allowed = {docs.ACCEPTANCE, docs.ACCEPTANCE[:-3] + ".pdf", docs.MANIFEST, report,
+                   "scripts/build_docs.py", "tests/test_build_docs.py"}
+
+        def published(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9D2_PUBLICATION + ":" + name])
+
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                         T9D2_PUBLICATION]).decode().splitlines()
         current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
                                            "--exclude-standard"]).decode().splitlines()
         self.assertEqual(set(current), set(files))
         for name in set(files) - allowed:
             self.assertEqual((ROOT / name).read_bytes(), published(name), name)
 
-        def outside_t9d2(value):
-            without_row = re.sub(rb"^\| T9D\.2 - Test Plan \|[^\n]*\n", b"", value, flags=re.M)
-            return re.sub(rb"^#### T9D\.2 - Test Plan\n.*?(?=^### T9E -)", b"", without_row, flags=re.M | re.S)
-
         current_report = (ROOT / report).read_bytes()
-        self.assertEqual(current_report.count(b"#### T9D.2 - Test Plan\n"), 1)
-        self.assertEqual(outside_t9d2(current_report), outside_t9d2(published(report)))
+        without_row, row_count = re.subn(rb"^\| T9D\.3 - Acceptance Criteria \|[^\n]*\n", b"", current_report, flags=re.M)
+        outside_section, section_count = re.subn(rb"^#### T9D\.3 - Acceptance Criteria\n.*?(?=^#{3,4} )",
+                                                b"", without_row, flags=re.M | re.S)
+        baseline = re.sub(rb"^\| T9D\.3 - Acceptance Criteria \|[^\n]*\n", b"", published(report), flags=re.M)
+        self.assertEqual((row_count, section_count), (1, 1))
+        self.assertEqual(outside_section, baseline)
 
         manifests = [json.loads(published(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
         for manifest in manifests:
-            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.TEST_PLAN]
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.ACCEPTANCE]
             for entry in manifest["documents"]:
                 entry.pop("renderer_sha256")
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_acceptance_pdf_keeps_complete_criteria_and_navigation(self):
+        source = (ROOT / docs.ACCEPTANCE).read_text(encoding="utf-8")
+        pdf = docs.ACCEPTANCE[:-3] + ".pdf"
+        previous = subprocess.check_output(["git", "-C", str(ROOT), "show", T9D2_PUBLICATION + ":" + pdf])
+        reader = docs.PdfReader(ROOT / pdf)
+        pages = [page.extract_text() for page in reader.pages]
+        self.assertLessEqual(len(pages), len(docs.PdfReader(io.BytesIO(previous)).pages))
+        self.assertIn("Measurable completion criteria", pages[0])
+        for anchor in ("restore-approval-gate", "engineering-verification-record", "submission-files", "owner-uat-record"):
+            self.assertIn(anchor, reader.named_destinations)
+
+        compact_pages = [re.sub(r"\s+", "", page) for page in pages]
+        criteria = []
+        for table in (token for token in docs.MARKDOWN(source) if token["type"] == "table"):
+            for row in table["children"][1]["children"]:
+                cells = [docs.normalize(docs.plain(cell["children"])) for cell in row["children"]]
+                row_text = re.sub(r"\s+", "", "".join(cells))
+                self.assertTrue(any(row_text in page for page in compact_pages), cells[0])
+                if re.fullmatch(r"FAC-\d{2}", cells[0]):
+                    criteria.append((cells[0], cells[-1]))
+        self.assertEqual(criteria, [(f"FAC-{i:02d}", f"FWR-{i:02d}, FSC-{i:02d}, FWT-{i:02d}") for i in range(1, 11)])
 
     def test_test_plan_pdf_keeps_complete_definitions_tables_and_navigation(self):
         source = (ROOT / docs.TEST_PLAN).read_text(encoding="utf-8")
