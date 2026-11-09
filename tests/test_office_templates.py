@@ -6,6 +6,7 @@ external link, installation or lab resource is used by these tests.
 from contextlib import contextmanager
 import hashlib
 from pathlib import Path
+import re
 import shutil
 import tempfile
 import unittest
@@ -229,6 +230,28 @@ class OfficeTemplateTests(unittest.TestCase):
             path = root / REL / office.FILES[2]
             rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "D8", "FWT-02"))
             self.assertTrue(any("traceability differs" in x for x in office.template_set_issues(root)))
+
+    def test_test_plan_transition_preserves_baseline_and_rejects_scope_drift(self):
+        old = subprocess.check_output(
+            ["git", "-C", str(ROOT), "show", f"{office.T9D1_PUBLICATION}:{office.TEST_PLAN}"], encoding="utf-8")
+        current = (ROOT / office.TEST_PLAN).read_text(encoding="utf-8")
+        self.assertEqual(hashlib.sha256(current.encode("utf-8")).hexdigest(), office.T9D2_PLAN_SHA256)
+        self.assertEqual([len(checks) for checks in office.SUBCHECKS.values()], [9, 9, 13, 7, 7, 11, 9, 7, 10, 9])
+        for pattern in (r"^### FWT-.*", r"^\*\*Scope:.*", r"^\| C0[1-6] \|.*", r"^\| (FWR-\d{2}) \| [^|]+(\|.*)"):
+            self.assertEqual(re.findall(pattern, old, re.M), re.findall(pattern, current, re.M), pattern)
+
+        with fixture() as root:
+            plan = root / office.TEST_PLAN
+            plan.write_text(old, encoding="utf-8")
+            self.assertEqual(office.template_set_issues(root), [])
+            plan.write_text(current.replace("91 mandatory subchecks", "90 mandatory subchecks"), encoding="utf-8")
+            self.assertTrue(any("approved test plan" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, "D19", "Changed FWT-02.01"))
+            findings = office.template_set_issues(root)
+            self.assertTrue(any("Test Plan transition permits only the byte-frozen" in x for x in findings))
+            self.assertTrue(any("FWT-02.01 differs from approved test plan/subchecks" in x for x in findings))
 
     def test_missing_formula_guard_and_prepopulated_hardware_state_rejected(self):
         with fixture() as root:

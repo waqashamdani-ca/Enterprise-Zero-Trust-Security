@@ -478,7 +478,7 @@ The Apache startup and nftables persistence corrections were checked against the
 | Subtask | Authorization | Scope | Changed files | Validation | GitHub evidence | Owner review | Remaining dependencies |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T9D.1 - Security Requirements | OWNER-T9D1-SECURITY-2026-11-08 / 2026-11-08 | Security Requirements Markdown/PDF, this register and focused supporting checks, rendering and publication | Six paths listed below | Documentation VALIDATED, 125 offline regressions PASS | [PR 23](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/23), initial push and PR CI PASS. Closing evidence follows the cutoff | T9C.7 ACCEPTED, T9C closed for documentation. T9D.1 PENDING | Separate restore backend and isolated-path approvals. T9D.2 through T9F dependencies below |
-| T9D.2 - Test Plan | Not supplied | Physical-path, three-workload and verification evidence alignment in the Test Plan | None | NOT TESTED | None | PENDING | T9D.1 owner review and separate T9D.2 approval |
+| T9D.2 - Test Plan | OWNER-T9D2-TEST-PLAN-2026-11-08 / 2026-11-08 | Physical-path, three-workload and verification evidence alignment in the Test Plan | Nine paths listed below | Documentation VALIDATED. 128 offline regressions PASS | [PR 24](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/24), initial push and PR CI PASS. Closing read-back follows the cutoff | T9D.1 ACCEPTED. T9D.2 PENDING | Restore approvals and downstream alignment |
 | T9D.3 - Acceptance Criteria | Not supplied | FAC-02 and physical readiness/acceptance alignment | None | NOT TESTED | None | PENDING | T9D.2 and separate T9D.3 approval |
 | T9D.4 - Final Integration and Audit | Not supplied | Security, Test Plan and Acceptance Criteria consistency audit | None | NOT TESTED | None | PENDING | T9D.2 and T9D.3 results and separate T9D.4 approval |
 
@@ -540,6 +540,69 @@ The vendor comparison covered firewall rule and state processing, VLAN/bridge se
 **Publication.** Branch codex/009d1-security-requirements starts at the verified PR 22 merge. GitHub confirmed the authenticated owner has administrative access to the public repository and main is its default branch. The six-path content commit 9d92cfe2eff168d4baa302443d247109527b5be7 used the verified GitHub noreply author and committer. It was published as [PR 23](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/23). [Push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42548321791) and [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42548325837) passed on that commit. PR 23 was open with no requested review. The publication evidence cutoff is 2026-11-08 20:59:33 -05:00 America/Toronto. The report-update commit, final-head CI, merge, main CI and synchronization follow that cutoff.
 
 **Owner review and stop.** T9C.7 documentation is ACCEPTED and T9C is closed for documentation under this request. T9D.1 review and lab owner UAT are PENDING. Stop after publication read-back. The next bounded task is T9D.2, Test Plan alignment, after owner review and explicit approval of its scope, validation and rollback.
+
+#### T9D.2 - Test Plan
+
+**Authority and boundary.** OWNER-T9D2-TEST-PLAN-2026-11-08 records the owner's 2026-11-08 America/Toronto request accepting T9D.1 documentation and explicitly authorizing T9D.2 alignment, its adjacent PDF, focused support and reviewed publication. This is the only active subtask. T9D.2 documentation review and lab owner UAT are PENDING.
+
+**Verified predecessor.** [PR 23](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/23) merged at `2852dbd8b5e85bf7e306650e6e73013860dfec4c`. Its final head `242db042d5b80c312d5005d225f1489f407ea6f4` passed [push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42548486808) and [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42548493662). [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42548655703) passed. Local, tracking and live main matched. The clean task worktree fast-forward check passed. Five pre-existing archive deletions in the original checkout stay outside the task and publication.
+
+**Aligned Test Plan.** FWT-01 verifies the prepared Dell, physical HP OPNsense, TP-Link TL-SG108E and GL.iNet Beryl AX paths with private mapping and both route families. Real protected boundaries use passive observations. The lab-owned mock requires a working control and evidence of the HP block. FWT-02.01 and FWR-02 identify three zones and exactly DC1, WIN1 and APP1 on Dell. The 6 vCPU / 16 GiB RAM / 160 GiB disk guest budget excludes HP and keeps measured host/storage reserves and temporary restore capacity separate. The plan distinguishes routed HP policy, Windows same-zone rules, Tailscale grants and device state, and independent APP1 host and Apache decisions. Each denial needs evidence of the control that acted.
+
+FWT-03 to FWT-10 retain the six application cases, separate directory and application role changes, both revocation contexts, approved endpoint/HTTPS checks, the APP1-only remote grant and revocation timing, five attributable event categories, one local automation and one encrypted isolated APP1 restore. FWT-09 requires the exact approved WIN1 path through physical HP, manifest verification, temporary-scope cleanup and final-state evidence. FWT-10 names the five released files and links the 100-point rubric. The plan retains separate owner UAT, mandatory second observations and blank operational result fields.
+
+**Changed paths**
+
+- `docs/testing/TEST-PLAN.md` and `docs/testing/TEST-PLAN.pdf` are the aligned source and adjacent eight-page edition.
+- `scripts/build_docs.py` applies compact page flow and intact tables to the Test Plan only. The normal build refreshed `docs/documentation-manifest.json`. Other PDF bytes stayed identical.
+- `scripts/office_template_contract.py` reads complete test definitions. `scripts/validate_office_templates.py` pairs the exact reviewed Test Plan digest with the five frozen package hashes and still checks all workbook rows against the published PR 23 plan. The validator rejects other drift and labels Office wording alignment as deferred.
+- `tests/test_build_docs.py` and `tests/test_office_templates.py` cover the PDF, scope and workbook transition. The previous T9D.1 comparison still enforces the same assertions against its published tree.
+- `docs/reports/T9-Report.md` records this authorization, register entry and evidence.
+
+**Mandatory child checks.** Read-only comparison of the published and current Deliverable 03 Test Cases XML verified the ordered child IDs. All rows and the Office packages match the published bytes. The Test Plan retains the ten test headings, scopes, mappings and C01-C06 decisions.
+
+| Test | Before | After |
+| --- | ---: | ---: |
+| FWT-01 | 9 | 9 |
+| FWT-02 | 9 | 9 |
+| FWT-03 | 13 | 13 |
+| FWT-04 | 7 | 7 |
+| FWT-05 | 7 | 7 |
+| FWT-06 | 11 | 11 |
+| FWT-07 | 9 | 9 |
+| FWT-08 | 7 | 7 |
+| FWT-09 | 10 | 10 |
+| FWT-10 | 9 | 9 |
+| Total | 91 | 91 |
+
+**Documentation verification.** Primary Codex agent, local evidence cutoff 2026-11-08 22:42:21 -05:00 America/Toronto. Used the existing pinned documentation runtime and Poppler.
+
+| Executed check | Expected and observed result | Verdict |
+| --- | --- | --- |
+| Source and package comparison | Architecture, Assignment, Lab Guide, References 01-07 and Security Requirements agree with the revised physical paths, enforcement layers and expected outcomes. Ten FWR/FSC/FWT/FAC/file mappings and all eight FF permissions are preserved. Acceptance and Office wording differences are listed below. | PASS |
+| `python scripts/validate_docs.py --require-finalized --allow-t9-draft` and `python scripts/validate_office_templates.py` | 99 public candidates and 49 Markdown files passed links, coverage, public-content checks and history preservation. The five frozen packages retain 14 worksheets, all mandatory IDs and expected outcomes, blank results, pending UAT and the 100-point rubric. The strict gate without the exception rejected only the DRAFT T9 report. | PASS |
+| `python scripts/build_docs.py` and `python scripts/build_docs.py --check --rebuild-check` | 27 pairs and 135 pages passed deterministic rebuild. Only the Test Plan PDF changed. A repeat build preserved hashes and modification times for all 32 maintained and archived PDFs. PDF read-back verified eight searchable pages, full source-token coverage, 14 destinations, two internal links and 26 repository targets and anchors. | PASS |
+| `pdftoppm -r 120 -png` and visual review of final pages 1-8 | Corrected a split coverage header. Final pages have complete test definitions and rows, readable tables, and visible headers, page numbers and version. Poppler reported optional display-font notices. The rendered text and symbols were intact. | PASS |
+| `python -m unittest discover -s tests -k test_plan -k t9d2 -v` and `python -m unittest discover -s tests -q` | Five focused cases and the final full suite of 128 offline cases passed. Negative cases reject changed current plan text, changed workbook rows, test mapping drift and prefilled results or owner acceptance. | PASS |
+| Git blob inventory, manual content and metadata review, and `git diff --check` | Nine modified paths and 90 byte-identical paths compared with PR 23. All five Office packages, Reference 07 source/PDF, finalized records and archived PDFs matched. Reviewed public content and PDF metadata without finding private values, raw records or credentials. | PASS |
+| Operational checks, native Office trials and independent human review | Repository verification only. Lab verdicts are NOT TESTED. T9D.2 documentation review and owner UAT are PENDING. | NOT TESTED / PENDING |
+
+The technical comparison used the current vendor material for firewall rules and states, bridge separation, Windows host rules, device capabilities and overlay grants. Release-specific commands stay in the technical references and need their applicable approvals. [OPNsense](https://docs.opnsense.org/manual/firewall.html), [Proxmox](https://github.com/proxmox/pve-docs/blob/master/pve-network.adoc), [Microsoft](https://learn.microsoft.com/en-us/windows/security/operating-system-security/network-security/windows-firewall/rules), [TP-Link](https://www.tp-link.com/us/home-networking/8-port-switch/tl-sg108e/), [GL.iNet](https://docs.gl-inet.com/router/en/4/user_guide/gl-mt3000/), [Tailscale](https://tailscale.com/docs/reference/syntax/grants).
+
+**Deferred issues**
+
+| Owner scope | Exact items for later review |
+| --- | --- |
+| T9D.3 | FAC-02 still counts four baseline VMs. The Phase 1 exit gate and readiness paragraph still refer to delivery. Align the prepared HP/Dell path, capacity and management evidence. FAC-06 needs enforcement attribution and observed revocation timing. FAC-09 needs both operational approvals, the physical path and cleanup evidence. FAC-10 still refers to T7 and needs the released filenames and separate owner decision checked against the plan. |
+| T9D.4 | Audit the integrated Security Requirements, Test Plan and Acceptance Criteria. Check all mappings, routed/host/overlay attribution, restore gates, evidence and links in both editions. |
+| T9E | Office 01 puts OPNsense in Virtual Machines, uses fixed bridge prompts in Network Zones and four-row SUM/COUNT inputs at Resource Allocation C8:D10. The 336 GiB wording needs reconciliation with the 320 GiB provisional ledger and separate HP capacity. Office 03 still quotes the former ten OVERALL definitions, the FWT-01.01 delivery premise, FWT-02.01 four-VM count, old FWR-02 text and future T7 handover. Backup & Restore B08 needs the physical path and approval/rollback references. Office 05 Architecture Overview asks for a one-host/four-VM summary. Verify Office 02 layer-specific evidence fields and Office 04 failure/retest references during integration. |
+| T9F | Align the root README and document index's four-VM summaries, glossary bridge language and supporting virtual-firewall references. Verify navigation, renderer scope and repository consistency after T9E. |
+
+**Remaining gates.** Operational restore is BLOCKED until the owner approves the encrypted external-storage backend and recovery procedure and the exact isolated physical HP path, disconnection and rollback checklist. Reference 07 retains its accepted manifest-command presentation risk. The execution-stage shell continuation check remains outstanding. Independent upstream isolation and private maps and capacity observations are prerequisites.
+
+**Publication and rollback.** Branch `codex/009d2-test-plan` starts at the verified PR 23 merge. The authenticated owner has administrative access to the public repository and its default branch is main. The nine-path content commit `93bd566a45e1ff33d09a7810492fe0d3d42c3509` used the verified GitHub noreply author and committer. [PR 24](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/24) was open and mergeable with no requested or submitted review at the publication evidence cutoff of 2026-11-08 22:45:44 -05:00 America/Toronto. [Push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42558011777) and [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42558016246) passed on the content commit. The report update's final-head checks, merge, main CI and synchronization follow that cutoff. If the documentation change needs reversal, use a reviewed revert of its bounded diff and preserve concurrent work.
+
+**Owner review and stop.** T9D.1 documentation is ACCEPTED under this request. T9D.2 review and lab owner UAT are PENDING. T9 stays DRAFT / IN PROGRESS. The next bounded task is T9D.3, Acceptance Criteria alignment, after owner review and explicit scope, validation and rollback approval.
 
 ### T9E - Office Deliverable Alignment
 

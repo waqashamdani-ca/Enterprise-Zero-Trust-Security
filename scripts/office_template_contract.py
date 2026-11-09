@@ -3,7 +3,6 @@
 The test plan owns the full methods, expected outcomes and second observations.
 The checks below divide those methods into recordable steps, not new tests.
 """
-from pathlib import Path
 import re
 
 FILES = (
@@ -150,15 +149,14 @@ SUBCHECKS = {
 }
 
 
-def approved_tests(root: Path) -> list[dict[str, str]]:
-    """Read exact definitions from the maintained plan, failing on omissions."""
-    plan = (root / "docs/testing/TEST-PLAN.md").read_text(encoding="utf-8")
+def approved_tests(plan: str) -> list[dict[str, str]]:
+    """Read exact definitions from a plan, failing on omissions."""
     blocks = re.findall(r"^### (FWT-\d{2}) - ([^\n]+)\n(.*?)(?=^### |^## |\Z)", plan, re.M | re.S)
     result = []
     for tid, title, body in blocks:
         row = {"id": tid, "requirement": tid.replace("FWT", "FWR"), "title": title}
         for key, label in (("method", "Objective and method"), ("expected", "Expected result and pass/fail criteria"), ("second", "Second observation"), ("scope", "Scope")):
-            match = re.search(r"\*\*" + re.escape(label) + r":\*\* (.*?)(?:\n\n|\Z)", body, re.S)
+            match = re.search(r"^\*\*" + re.escape(label) + r":\*\* (.*?)(?=^\*\*|^\||\Z)", body, re.M | re.S)
             if not match:
                 raise ValueError(f"{tid}: missing {label}")
             row[key] = match[1].strip()

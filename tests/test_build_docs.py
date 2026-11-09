@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 T9C4_PUBLICATION = "052fa098dd1768c82bac850470accf306bc3f0cd"
 T9C6_PUBLICATION = "5278e43862f9b41eccb17315877b1c3b49b23217"
 T9C7_PUBLICATION = "1011e82d065251fa49e082e8581ab9158c9f18c3"
+T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
 SPEC = importlib.util.spec_from_file_location("build_docs", ROOT / "scripts/build_docs.py")
 docs = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(docs)
@@ -702,16 +703,16 @@ class PdfArtifactTests(unittest.TestCase):
         allowed = {docs.SECURITY, docs.SECURITY[:-3] + ".pdf", docs.MANIFEST, report,
                    "scripts/build_docs.py", "tests/test_build_docs.py"}
 
-        def published(name):
-            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9C7_PUBLICATION + ":" + name])
+        def snapshot(revision, name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", revision + ":" + name])
 
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
                                          T9C7_PUBLICATION]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
-                                           "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                           T9D1_PUBLICATION]).decode().splitlines()
         self.assertEqual(set(current), set(files))
         for name in set(files) - allowed:
-            self.assertEqual((ROOT / name).read_bytes(), published(name), name)
+            self.assertEqual(snapshot(T9D1_PUBLICATION, name), snapshot(T9C7_PUBLICATION, name), name)
 
         def outside_t9d(value):
             prefix, boundary, rest = value.partition(b"### T9D - Security and Testing Alignment\n")
@@ -720,19 +721,77 @@ class PdfArtifactTests(unittest.TestCase):
             self.assertTrue(next_boundary)
             return prefix, suffix
 
-        current_report = (ROOT / report).read_bytes()
-        self.assertEqual(outside_t9d(current_report), outside_t9d(published(report)))
+        current_report = snapshot(T9D1_PUBLICATION, report)
+        self.assertEqual(outside_t9d(current_report), outside_t9d(snapshot(T9C7_PUBLICATION, report)))
         self.assertIn(b"Report state: DRAFT\n", current_report)
         self.assertIn(b"| Umbrella status | IN PROGRESS |", current_report)
         self.assertEqual(re.findall(rb"^\| (T9D\.[1-4]) -", current_report, re.M),
                          [b"T9D.1", b"T9D.2", b"T9D.3", b"T9D.4"])
 
-        manifests = [json.loads(published(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        manifests = [json.loads(snapshot(revision, docs.MANIFEST)) for revision in (T9C7_PUBLICATION, T9D1_PUBLICATION)]
         for manifest in manifests:
             manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.SECURITY]
             for entry in manifest["documents"]:
                 entry.pop("renderer_sha256")
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_t9d2_preserves_excluded_paths_and_other_report_sections(self):
+        report = "docs/reports/T9-Report.md"
+        allowed = {docs.TEST_PLAN, docs.TEST_PLAN[:-3] + ".pdf", docs.MANIFEST, report, "scripts/build_docs.py",
+                   "scripts/validate_office_templates.py", "scripts/office_template_contract.py",
+                   "tests/test_build_docs.py", "tests/test_office_templates.py"}
+
+        def published(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9D1_PUBLICATION + ":" + name])
+
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                         T9D1_PUBLICATION]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                                           "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files))
+        for name in set(files) - allowed:
+            self.assertEqual((ROOT / name).read_bytes(), published(name), name)
+
+        def outside_t9d2(value):
+            without_row = re.sub(rb"^\| T9D\.2 - Test Plan \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9D\.2 - Test Plan\n.*?(?=^### T9E -)", b"", without_row, flags=re.M | re.S)
+
+        current_report = (ROOT / report).read_bytes()
+        self.assertEqual(current_report.count(b"#### T9D.2 - Test Plan\n"), 1)
+        self.assertEqual(outside_t9d2(current_report), outside_t9d2(published(report)))
+
+        manifests = [json.loads(published(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        for manifest in manifests:
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.TEST_PLAN]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_test_plan_pdf_keeps_complete_definitions_tables_and_navigation(self):
+        source = (ROOT / docs.TEST_PLAN).read_text(encoding="utf-8")
+        pdf = docs.TEST_PLAN[:-3] + ".pdf"
+        old = subprocess.check_output(["git", "-C", str(ROOT), "show", T9D1_PUBLICATION + ":" + pdf])
+        reader = docs.PdfReader(ROOT / pdf)
+        previous = docs.PdfReader(io.BytesIO(old))
+        pages = [page.extract_text() for page in reader.pages]
+        self.assertLessEqual(len(pages), len(previous.pages))
+        self.assertIn("Test governance and evidence", pages[0])
+        self.assertEqual(set(reader.named_destinations), set(previous.named_destinations))
+        heading = r"^\d+\.\d+\. (FWT-\d{2}) - [^\n]+\n"
+        definitions = []
+        for page in pages:
+            for match in re.finditer(heading + r"(.*?)(?=^\d+(?:\.\d+)?\. |\Z)", page, re.M | re.S):
+                definitions.append(match[1])
+                for label in ("Objective and method", "Expected result and pass/fail criteria", "Second observation",
+                              "Actual result", "Evidence reference", "Verdict", "NOT TESTED"):
+                    self.assertIn(label, match[2], match[1])
+        self.assertEqual(definitions, [f"FWT-{i:02d}" for i in range(1, 11)])
+        compact_pages = [re.sub(r"\s+", "", page) for page in pages]
+        for table in (token for token in docs.MARKDOWN(source) if token["type"] == "table"):
+            for row in table["children"][1]["children"]:
+                cells = [docs.normalize(docs.plain(cell["children"])) for cell in row["children"]]
+                row_text = re.sub(r"\s+", "", "".join(cells))
+                self.assertTrue(any(row_text in page for page in compact_pages), cells[0])
 
     def test_security_pdf_has_a_compact_title_and_keeps_table_rows_together(self):
         source = (ROOT / docs.SECURITY).read_text(encoding="utf-8")
