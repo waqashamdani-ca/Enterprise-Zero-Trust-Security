@@ -10,6 +10,7 @@ import hashlib
 import io
 import posixpath
 import re
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -27,6 +28,13 @@ NS = {
     "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
 }
 FORMULAS = {"IF", "COUNT", "SUM"}
+TEST_PLAN = "docs/testing/TEST-PLAN.md"
+
+# T9D.2 aligns the Test Plan while workbook 03 still quotes its prior text.
+# Pair the exact revised source (LF-normalized) with the byte-frozen Office
+# baseline and keep checking every legacy row against the published plan.
+T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
+T9D2_PLAN_SHA256 = "bcfa0e0bc269fc627a57d5632c9662e2be35ccd126b8957ef2a9016d64fbd189"
 
 # T9B changes only the assignment's FWR-02 architecture wording. Office
 # alignment is separately authorized later. Preserve the exact published T9A
@@ -179,6 +187,11 @@ def plain_word(parts: dict[str, bytes]) -> str:
     return "\n".join("".join(p.itertext()) for p in ET.fromstring(parts["word/document.xml"]).findall(".//w:p", NS))
 
 
+def frozen_office_baseline(directory: Path) -> bool:
+    return all(hashlib.sha256((directory / name).read_bytes()).hexdigest() == expected
+               for name, expected in T9A_OFFICE_HASHES.items())
+
+
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
     if not directory.is_dir():
@@ -187,7 +200,15 @@ def template_set_issues(root: Path) -> list[str]:
     if {p.name for p in directory.iterdir()} != set(FILES):
         issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
-        definitions = approved_tests(root)
+        plan = (root / TEST_PLAN).read_text(encoding="utf-8")
+        definitions = approved_tests(plan)
+        if hashlib.sha256(plan.encode("utf-8")).hexdigest() == T9D2_PLAN_SHA256:
+            if not frozen_office_baseline(directory):
+                issues.append("Test Plan transition permits only the byte-frozen published Office baseline")
+            published_plan = subprocess.check_output(
+                ["git", "-C", str(ROOT), "show", f"{T9D1_PUBLICATION}:{TEST_PLAN}"],
+                encoding="utf-8", stderr=subprocess.PIPE)
+            definitions = approved_tests(published_plan)
         all_workbooks = {}
         for filename, expected in SHEETS.items():
             parts = package_parts(directory / filename)
@@ -258,8 +279,7 @@ def template_set_issues(root: Path) -> list[str]:
         owners = ["01", "01", "02", "02", "02", "02", "03", "03", "03", "03, 04, 05"]
         for rn, ((rid, required_result), owner) in enumerate(zip(required, owners), 8):
             if rid == "FWR-02" and required_result.strip() == T9B_FWR02:
-                if any(hashlib.sha256((root / "docs/deliverables" / name).read_bytes()).hexdigest() != expected
-                       for name, expected in T9A_OFFICE_HASHES.items()):
+                if not frozen_office_baseline(directory):
                     issues.append("FWR-02 transition permits only the byte-frozen published Office baseline; package alignment requires its approved scope")
                 required_result = T9A_FWR02
             expected = [rid, required_result.strip(), rid.replace("FWR", "FSC"), rid.replace("FWR", "FWT"), rid.replace("FWR", "FAC"), owner]
@@ -326,7 +346,7 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: approved 100-point rubric/blank scores changed")
             if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|two-tier|twenty.event|twelve application|two automation", word_text, re.I):
                 issues.append(f"{filename}: obsolete enterprise target or ID")
-    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
+    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError, subprocess.CalledProcessError):
         issues.append("Office template structure/approved plan traceability could not be verified")
     return sorted(set(issues))
 
@@ -344,6 +364,8 @@ def main() -> int:
     print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
     if T9B_FWR02 in (ROOT / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8"):
         print("BASELINE: FWR-02 checks byte-frozen published Office content; physical-firewall alignment remains deferred to T9E, not validated here.")
+    if hashlib.sha256((ROOT / TEST_PLAN).read_text(encoding="utf-8").encode("utf-8")).hexdigest() == T9D2_PLAN_SHA256:
+        print("BASELINE: Test Cases preserves the exact published workbook rows against the prior Test Plan. The revised plan is checked separately; workbook wording awaits T9E.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
 

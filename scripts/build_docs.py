@@ -69,6 +69,7 @@ OPERATIONS_REFERENCES = {MONITORING_REFERENCE, RECOVERY_REFERENCE}
 TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES | OPERATIONS_REFERENCES
 ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
 SECURITY = "docs/security/SECURITY-REQUIREMENTS.md"
+TEST_PLAN = "docs/testing/TEST-PLAN.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
 WIDTH, HEIGHT = letter
@@ -489,6 +490,9 @@ class Builder:
             widths = [62, 349, 93]
         elif self.source == SECURITY and headers[0] == "Threat":
             widths = [126, 230, 148]
+        elif self.source == TEST_PLAN and headers == ["Requirement", "Architecture component / flow",
+                                                       "Security control", "Test", "Acceptance", "File"]:
+            widths = [74, 192, 64, 50, 66, 58]
         elif self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
             widths = [55, 389, 60]
         elif self.source == ASSIGNMENT and headers == ["Filename", "What to record"]:
@@ -546,8 +550,15 @@ class Builder:
                         style = ParagraphStyle("points", parent=style, alignment=TA_RIGHT)
                     values.append(Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), style))
             cells.append(values)
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in TECHNICAL_REFERENCES | {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
-        vertical_padding = 4 if self.source == SECURITY else 5
+        test_record = self.source == TEST_PLAN and headers == ["Record", "Value"]
+        keep_rows = self.source in TECHNICAL_REFERENCES | {
+            ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md",
+        }
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=int(not keep_rows),
+                          hAlign="LEFT", spaceAfter=8 if test_record else 12)
+        vertical_padding = 4 if self.source in {SECURITY, TEST_PLAN} else 5
+        if test_record:
+            vertical_padding = 2.5
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
@@ -567,7 +578,7 @@ class Builder:
                 ("TOPPADDING", (0, 0), (-1, -1), 5),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
             ]))
-        if self.source in {ASSIGNMENT, GUIDE}:
+        if self.source in {ASSIGNMENT, GUIDE} or test_record:
             if "Points" in headers:
                 table.setStyle(TableStyle([("ALIGN", (1, 0), (1, -1), "RIGHT")]))
             table.wrap(CONTENT_WIDTH, HEIGHT)
@@ -874,7 +885,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
                else Builder(source, sources))
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    compact_sources = {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY} | TECHNICAL_REFERENCES
+    compact_sources = {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, TEST_PLAN} | TECHNICAL_REFERENCES
     if source in compact_sources:
         story.append(builder.heading(tokens[0]))
     elif formal:
@@ -911,11 +922,12 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
         story.extend([contents, PageBreak()])
-    if source in {ASSIGNMENT, GUIDE}:
-        # Keep short submission sections intact; allow long procedures to flow.
+    if source in {ASSIGNMENT, GUIDE, TEST_PLAN}:
+        # Keep short submission sections and individual test definitions intact.
         groups, current = [], []
+        section_levels = {2, 3} if source == TEST_PLAN else {2}
         for token in tokens[1:]:
-            if token["type"] == "heading" and token["attrs"]["level"] == 2 and current:
+            if token["type"] == "heading" and token["attrs"]["level"] in section_levels and current:
                 groups.append(current)
                 current = []
             current.append(token)
@@ -925,10 +937,13 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
                             "Four-Week Implementation Plan", "Evaluation Criteria"}
         if source == GUIDE:
             compact_sections = {"Required lab deliverables"}
+        elif source == TEST_PLAN:
+            compact_sections = {"Six application access cases", "Coverage index"}
         for group in groups:
             section = next((plain(t["children"]) for t in group if t["type"] == "heading"), "")
             blocks = builder.blocks(group)
-            story.extend([KeepTogether(blocks)] if section in compact_sections else blocks)
+            keep_test = source == TEST_PLAN and section.startswith("FWT-")
+            story.extend([KeepTogether(blocks)] if keep_test or section in compact_sections else blocks)
     else:
         story.extend(builder.blocks(tokens[1:]))
     output = io.BytesIO()
