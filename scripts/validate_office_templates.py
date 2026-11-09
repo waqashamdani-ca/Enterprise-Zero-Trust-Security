@@ -30,11 +30,11 @@ NS = {
 FORMULAS = {"IF", "COUNT", "SUM"}
 TEST_PLAN = "docs/testing/TEST-PLAN.md"
 
-# T9D.2 aligns the Test Plan while workbook 03 still quotes its prior text.
-# Pair the exact revised source (LF-normalized) with the byte-frozen Office
+# The T9D.4 Test Plan supersedes T9D.2 while workbook 03 still quotes T9D.1.
+# Pair the exact audited source (LF-normalized) with the byte-frozen Office
 # baseline and keep checking every legacy row against the published plan.
 T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
-T9D2_PLAN_SHA256 = "bcfa0e0bc269fc627a57d5632c9662e2be35ccd126b8957ef2a9016d64fbd189"
+T9D4_PLAN_SHA256 = "fdc664297e107b8f90179a4bb5da0e30bea8d91220067466ead9d78ff664e900"
 
 # T9B changes only the assignment's FWR-02 architecture wording. Office
 # alignment is separately authorized later. Preserve the exact published T9A
@@ -202,7 +202,7 @@ def template_set_issues(root: Path) -> list[str]:
     try:
         plan = (root / TEST_PLAN).read_text(encoding="utf-8")
         definitions = approved_tests(plan)
-        if hashlib.sha256(plan.encode("utf-8")).hexdigest() == T9D2_PLAN_SHA256:
+        if hashlib.sha256(plan.encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
             if not frozen_office_baseline(directory):
                 issues.append("Test Plan transition permits only the byte-frozen published Office baseline")
             published_plan = subprocess.check_output(
@@ -364,7 +364,7 @@ def main() -> int:
     print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
     if T9B_FWR02 in (ROOT / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8"):
         print("BASELINE: FWR-02 checks byte-frozen published Office content; physical-firewall alignment remains deferred to T9E, not validated here.")
-    if hashlib.sha256((ROOT / TEST_PLAN).read_text(encoding="utf-8").encode("utf-8")).hexdigest() == T9D2_PLAN_SHA256:
+    if hashlib.sha256((ROOT / TEST_PLAN).read_text(encoding="utf-8").encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
         print("BASELINE: Test Cases preserves the exact published workbook rows against the prior Test Plan. The revised plan is checked separately; workbook wording awaits T9E.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
