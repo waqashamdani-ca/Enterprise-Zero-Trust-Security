@@ -11,6 +11,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+T9C4_PUBLICATION = "052fa098dd1768c82bac850470accf306bc3f0cd"
+T9C6_PUBLICATION = "5278e43862f9b41eccb17315877b1c3b49b23217"
 SPEC = importlib.util.spec_from_file_location("build_docs", ROOT / "scripts/build_docs.py")
 docs = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(docs)
@@ -496,7 +498,7 @@ class PdfArtifactTests(unittest.TestCase):
 
     def test_t9c4_preserves_excluded_sources_history_report_and_moved_commands(self):
         # Retain the complete predecessor contract against its merged publication.
-        published = "052fa098dd1768c82bac850470accf306bc3f0cd"
+        published = T9C4_PUBLICATION
         def published_bytes(name):
             return subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
         base = "eb82f2ff5edee9f3af45d44b17a4182a35c29028"
@@ -608,18 +610,21 @@ class PdfArtifactTests(unittest.TestCase):
         def old(name):
             return subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
 
+        def published(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9C6_PUBLICATION + ":" + name])
+
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", T9C6_PUBLICATION]).decode().splitlines()
         self.assertEqual(set(current), set(files), "Phase 5 introduces no public file")
         for name in set(files) - allowed:
-            self.assertEqual((ROOT / name).read_bytes(), old(name), name)
+            self.assertEqual(published(name), old(name), name)
         boundary = b"## Phase 5: Validation and Final Submission\n"
         prefix, previous_phase = old(docs.GUIDE).split(boundary, 1)
-        self.assertEqual((ROOT / docs.GUIDE).read_bytes().split(boundary, 1)[0], prefix)
+        self.assertEqual(published(docs.GUIDE).split(boundary, 1)[0], prefix)
         fences = rb"^```([^\n]*)\n(.*?)^```"
         previous_commands = re.findall(fences, previous_phase, re.M | re.S)
         self.assertEqual(len(previous_commands), 3)
-        reference_commands = re.findall(fences, (ROOT / docs.MONITORING_REFERENCE).read_bytes(), re.M | re.S)
+        reference_commands = re.findall(fences, published(docs.MONITORING_REFERENCE), re.M | re.S)
         for command in previous_commands:
             self.assertIn(command, reference_commands, "Reference 06 retains the full technical procedure")
 
@@ -627,19 +632,86 @@ class PdfArtifactTests(unittest.TestCase):
             value = re.sub(rb"^\| T9C\.6 - Phase 5 \|[^\n]*\n", b"", value, flags=re.M)
             return re.sub(rb"^#### T9C\.6 - Phase 5\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
 
-        current_report = (ROOT / report).read_bytes()
+        current_report = published(report)
         self.assertEqual(outside_t9c6(current_report), outside_t9c6(old(report)))
         for required in (b"Report state: DRAFT\n", b"| Umbrella status | IN PROGRESS |",
                          b"the owner accepts that Reference 07's manifest",
                          b"may need a shell continuation character", b"Executability is unverified",
                          b"All manifest, backup and restore checks remain mandatory"):
             self.assertIn(required, current_report)
-        manifests = [json.loads(old(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        manifests = [json.loads(old(docs.MANIFEST)), json.loads(published(docs.MANIFEST))]
         for manifest in manifests:
             manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.GUIDE]
             for entry in manifest["documents"]:
                 entry.pop("renderer_sha256")
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_guide_integration_preserves_excluded_paths_and_reference_commands(self):
+        report = "docs/reports/T9-Report.md"
+        editions = {docs.GUIDE} | (docs.TECHNICAL_REFERENCES - {docs.RECOVERY_REFERENCE})
+        allowed = editions | {name[:-3] + ".pdf" for name in editions} | {
+            docs.MANIFEST, report, "scripts/build_docs.py", "scripts/validate_docs.py",
+            "tests/test_build_docs.py", "tests/test_validate_docs.py",
+        }
+
+        def old(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", T9C6_PUBLICATION + ":" + name])
+
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only",
+                                         T9C6_PUBLICATION]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others",
+                                           "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files))
+        for name in set(files) - allowed:
+            self.assertEqual((ROOT / name).read_bytes(), old(name), name)
+
+        def outside_t9c7(value):
+            value = re.sub(rb"^\| T9C\.7 - Final integration \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9C\.7 - Final guide integration and quality review\n.*?(?=^### T9D -)",
+                          b"", value, flags=re.M | re.S)
+
+        self.assertEqual(outside_t9c7((ROOT / report).read_bytes()), outside_t9c7(old(report)))
+        fences = rb"^```([^\n]*)\n(.*?)^```"
+        for name in sorted(docs.TECHNICAL_REFERENCES):
+            previous = re.findall(fences, old(name), re.M | re.S)
+            source = (ROOT / name).read_bytes()
+            actual = re.findall(fences, source, re.M | re.S)
+            if name == docs.HTTPS_REFERENCE:
+                # Root entry is now an explicit standalone action. The other
+                # shell changes add continuations without changing arguments.
+                self.assertIn(b"Run `sudo -i` on its own", source)
+                before = b" ".join(code for _, code in previous).replace(b"sudo -i\n", b"")
+                after = b" ".join(code for _, code in actual).replace(b"\\\n", b"")
+                self.assertEqual(before.split(), after.split())
+            else:
+                self.assertEqual(previous, actual, name)
+
+        manifests = [json.loads(old(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        for manifest in manifests:
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] not in editions]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(*manifests)
+
+    def test_reference_pdf_commands_and_mock_alias_survive_integration(self):
+        for name in sorted(docs.TECHNICAL_REFERENCES):
+            with self.subTest(reference=name):
+                reader = docs.PdfReader(ROOT / (name[:-3] + ".pdf"))
+                pages = [page.extract_text() for page in reader.pages]
+                compact_pages = [re.sub(r"\s+", "", page) for page in pages]
+                source = (ROOT / name).read_text(encoding="utf-8")
+                for token in docs.MARKDOWN(source):
+                    if token["type"] == "block_code":
+                        command = docs.normalize(token["raw"])
+                        self.assertTrue(any(re.sub(r"\s+", "", command) in page for page in compact_pages))
+                        if name != docs.RECOVERY_REFERENCE:
+                            self.assertTrue(any(command.rstrip() in page for page in pages),
+                                            "PDF must preserve command line breaks and continuations")
+                if name == docs.MONITORING_REFERENCE:
+                    destinations = reader.named_destinations
+                    old = reader.get_destination_page_number(destinations["deferred-phase-5-mock-and-connection-tools"])
+                    current = reader.get_destination_page_number(destinations["phase-5-mock-and-connection-tools"])
+                    self.assertEqual(old, current)
 
     def test_phase5_pdf_keeps_every_procedure_table_and_compatibility_link_intact(self):
         content = (ROOT / docs.GUIDE).read_bytes()
@@ -656,10 +728,16 @@ class PdfArtifactTests(unittest.TestCase):
         def without_version(page):
             return re.sub(r"Source version [0-9a-f]{12}", "", page.extract_text())
 
+        published = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                             T9C6_PUBLICATION + ":" + docs.GUIDE[:-3] + ".pdf"])
+        phase5_release = docs.PdfReader(io.BytesIO(published))
+        old_start = phase5_release.get_destination_page_number(
+            phase5_release.named_destinations["phase-5-validation-and-final-submission"])
+        self.assertEqual(old_start, 13)
+        for i in range(old_start):
+            self.assertEqual(without_version(phase5_release.pages[i]), without_version(before.pages[i]), f"Earlier page {i + 1}")
+        self.assertIn(len(reader.pages), range(12, 19))
         phase_start = page_for("phase-5-validation-and-final-submission")
-        self.assertEqual(phase_start, 13)
-        for i in range(phase_start):
-            self.assertEqual(without_version(reader.pages[i]), without_version(before.pages[i]), f"Earlier page {i + 1}")
         self.assertLessEqual(len(reader.pages) - phase_start, 4)
         phase = content.decode().split("## Phase 5: Validation and Final Submission\n", 1)[1]
         phase = re.sub(r'^<a id="[a-z][a-z0-9-]*"></a>\n', '', phase, flags=re.M)
@@ -692,7 +770,7 @@ class PdfArtifactTests(unittest.TestCase):
             ("phase-5-checkpoint-and-recovery", "d-review-evidence-submit-and-obtain-owner-acceptance"),
         ):
             self.assertEqual(page_for(alias), page_for(target))
-        expected = "06-Logs-Automation-and-Test-Tools.pdf#nameddest=deferred-phase-5-mock-and-connection-tools"
+        expected = "06-Logs-Automation-and-Test-Tools.pdf#nameddest=phase-5-mock-and-connection-tools"
         self.assertTrue(any(expected in str(link.get_object().get("/A", {}).get("/URI", ""))
                             for link in reader.pages[phase_start].get("/Annots", [])))
 
@@ -755,11 +833,20 @@ class PdfArtifactTests(unittest.TestCase):
         old = subprocess.check_output(["git", "-C", str(ROOT), "show",
                                        "eb82f2ff5edee9f3af45d44b17a4182a35c29028:" + docs.GUIDE[:-3] + ".pdf"])
         old_reader = docs.PdfReader(io.BytesIO(old))
-        for i in range(start):
-            def without_version(value):
-                return re.sub(r"Source version [0-9a-f]{12}", "Source version", value)
-            self.assertEqual(without_version(reader.pages[i].extract_text()), without_version(old_reader.pages[i].extract_text()),
-                             "Phase 1-2 PDF text/layout must remain unchanged except the source-version footer")
+        published = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                             T9C4_PUBLICATION + ":" + docs.GUIDE[:-3] + ".pdf"])
+        phase3_release = docs.PdfReader(io.BytesIO(published))
+        phase3_anchor = "phase-3-zero-trust-access-controls"
+        old_start = old_reader.get_destination_page_number(old_reader.named_destinations[phase3_anchor])
+        self.assertEqual(phase3_release.get_destination_page_number(phase3_release.named_destinations[phase3_anchor]), old_start)
+
+        def without_version(value):
+            return re.sub(r"Source version [0-9a-f]{12}", "Source version", value)
+
+        for i in range(old_start):
+            self.assertEqual(without_version(phase3_release.pages[i].extract_text()),
+                             without_version(old_reader.pages[i].extract_text()),
+                             "T9C.4 preserved Phase 1-2 PDF text/layout apart from the source-version footer")
 
     def test_phase2_pdf_keeps_five_procedures_intact_in_four_pages(self):
         content = (ROOT / docs.GUIDE).read_text(encoding="utf-8")
@@ -948,6 +1035,11 @@ class PdfArtifactTests(unittest.TestCase):
                     # The build guide uses its explicit pinned-environment executable.
                     self.assertIn(line.partition("python ")[2] if "python " in line else line, build_guide)
                 self.assertNotIn("scripts/validate_docs.py", current)
+            elif language == "sh" and block.startswith("openssl "):
+                # A POSIX continuation preserves the logical command and
+                # keeps copied PDF lines usable.
+                logical = [code.replace(" \\\n    ", " ") for lang, code in current_blocks if lang == language]
+                self.assertTrue(block in logical, "Preserve the full OpenSSL command: " + block.splitlines()[0])
             else:
                 self.assertIn((language, block), current_blocks)
         for command in ("Test-ComputerSecureChannel -Verbose", "apachectl configtest", "tailscale status",

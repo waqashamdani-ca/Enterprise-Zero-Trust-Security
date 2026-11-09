@@ -1,6 +1,6 @@
 # HTTPS and application roles reference
 
-Use with [Phase 3](../LAB-IMPLEMENTATION-GUIDE.md#phase-3-zero-trust-access-controls) for FWR-03/FWR-05 and FWT-03/FWT-05. The analyst reads reports, the engineer reads both pages and the unassigned user is denied. These are proposed procedures, not executed results. Obtain G approval for signing/trust, H for the application and E for the matching directory change, naming targets, private values, validation and recovery. Keep the offline signer and APP1 console available. Read each command's target and privilege label before use.
+Use with Phase 3's [certificates](../LAB-IMPLEMENTATION-GUIDE.md#a-create-and-verify-https-certificates), [Apache setup](../LAB-IMPLEMENTATION-GUIDE.md#b-configure-the-apache-application-and-accounts), [six access cases](../LAB-IMPLEMENTATION-GUIDE.md#c-test-the-six-application-access-cases) and [permission revocation](../LAB-IMPLEMENTATION-GUIDE.md#d-revoke-an-application-permission) for FWR-03/FWR-05 and FWT-03/FWT-05. Obtain G approval for signing/trust, H for the application and E for the matching directory change, naming targets, private values, validation and recovery. Keep the offline signer and APP1 console available. Read each command's target and privilege label before use.
 
 The conditional profiles are OpenSSL 3.x in a POSIX-compatible shell, Ubuntu Server with Apache 2.4/www-data, and an approved Windows lab browser using its reviewed certificate store. Record exact installed versions before execution. Do not paste these commands into Windows PowerShell, Proxmox or OPNsense. Use [Phase 2's Windows reference](02-Windows-Directory-and-Policy.md#users-groups-and-permissions) and [Linux host policy](03-Linux-Network-and-Host-Policy.md#nftables-policy) for existing dependencies; this reference changes no topology or flow. Physical HP OPNsense still owns routed FF-03; APP1 host policy and Apache apply their separate checks.
 
@@ -28,7 +28,10 @@ LabSerialPath="$PWD/lab-ca.srl"
 **CONFIGURATION CHANGE - same offline signer/file owner.** Create one 3072-bit encrypted CA key and a 365-day public root certificate. Keep the prompted passphrase in approved recovery custody; never supply it on the command line:
 
 ```sh
-openssl req -x509 -newkey rsa:3072 -sha256 -days 365 -keyout "$LabCaKeyPath" -out "$LabCaCertPath" -subj "/CN=HL-CYB-001 Lab CA" -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign,cRLSign"
+openssl req -x509 -newkey rsa:3072 -sha256 -days 365 \
+    -keyout "$LabCaKeyPath" -out "$LabCaCertPath" -subj "/CN=HL-CYB-001 Lab CA" \
+    -addext "basicConstraints=critical,CA:TRUE" \
+    -addext "keyUsage=critical,keyCertSign,cRLSign"
 ```
 
 **Check:** the key and public certificate are created without an error. Inspect the public properties and encrypted-key readability without printing the key:
@@ -48,11 +51,15 @@ openssl pkey -in "$LabCaKeyPath" -noout -check
 
 1. On APP1, prepare **/etc/labapp** as a restricted directory for the application. In the conditional Ubuntu profile Apache workers use **www-data**; verify the selected package account first. Run these commands only for a new approved lab directory, not over existing owner content.
 
-**CONFIGURATION CHANGE - APP1 console, sudo/root, G/H approved scope.** Create the private configuration directory and define new key/request paths in that root shell. The public/private filenames stay inside the lab layout:
+**CONFIGURATION CHANGE - APP1 console, sudo/root, G/H approved scope.** Create the private configuration directory:
 
 ```sh
 sudo install -d -o root -g www-data -m 0750 /etc/labapp
-sudo -i
+```
+
+**CONFIGURATION CHANGE - APP1 console, root shell.** Run `sudo -i` on its own. Confirm the root shell opened before setting its file-creation mask and paths below. Keep that shell for the key and request commands.
+
+```sh
 umask 077
 LabAppKeyPath=/etc/labapp/app.key
 LabAppCsrPath=/etc/labapp/app.csr
@@ -63,7 +70,8 @@ LabAppCsrPath=/etc/labapp/app.csr
 **CONFIGURATION CHANGE - APP1, that root shell, new approved paths.** Create its 2048-bit service key and certificate signing request (CSR). The request is public signing input; it is not yet a certificate:
 
 ```sh
-openssl req -new -newkey rsa:2048 -noenc -keyout "$LabAppKeyPath" -out "$LabAppCsrPath" -subj "/CN=app.ad.lab.test"
+openssl req -new -newkey rsa:2048 -noenc -keyout "$LabAppKeyPath" \
+    -out "$LabAppCsrPath" -subj "/CN=app.ad.lab.test"
 ```
 
 **Check:** request subject is app.ad.lab.test and the server key is root-owned/private. The **-noenc** option intentionally leaves this service key unencrypted so the service can start; strict permissions and encrypted backup protect it. Inspect the CSR with **openssl req -in "$LabAppCsrPath" -noout -subject -verify** in the same root shell: expect the matching subject and successful request signature. On error, stop before transfer and preserve the current files.
@@ -94,7 +102,9 @@ subjectAltName=DNS:app.ad.lab.test
 **CONFIGURATION CHANGE followed by READ-ONLY - offline signer, signing-file owner.** Sign the reviewed CSR for 90 days, maintaining private LabSerialPath; then verify the chain/name and show dates/SAN. Variables are those defined in [offline custody](#offline-ca-and-private-key-custody). [OpenSSL x509](https://docs.openssl.org/3.5/man1/openssl-x509/) and [verify](https://docs.openssl.org/3.5/man1/openssl-verify/) document the options:
 
 ```sh
-openssl x509 -req -in "$LabAppCsrPath" -CA "$LabCaCertPath" -CAkey "$LabCaKeyPath" -CAcreateserial -CAserial "$LabSerialPath" -days 90 -sha256 -extfile "$LabLeafExtensionsPath" -out "$LabAppCertPath"
+openssl x509 -req -in "$LabAppCsrPath" -CA "$LabCaCertPath" -CAkey "$LabCaKeyPath" \
+    -CAcreateserial -CAserial "$LabSerialPath" -days 90 -sha256 \
+    -extfile "$LabLeafExtensionsPath" -out "$LabAppCertPath"
 openssl verify -CAfile "$LabCaCertPath" -verify_hostname app.ad.lab.test "$LabAppCertPath"
 openssl x509 -in "$LabAppCertPath" -noout -dates -ext subjectAltName
 ```
@@ -119,7 +129,7 @@ openssl x509 -in "$LabAppCertPath" -noout -dates -ext subjectAltName
 
 **Purpose and location:** on APP1 under H approval, build two static pages. The application has **separate test accounts**, distinct passwords and **manually assigned roles**. AD handles Windows logon; these Apache accounts handle the web pages. There is no single sign-on or automatic AD synchronization.
 
-1. Use the approved package/update path to make the selected Apache 2.4 package and password utility available. In the Ubuntu profile, the proposed package command below installs the existing approved application tools only. Use approved local media when offline; do not connect to the Internet merely to complete installation.
+1. Use the approved package/update path to make Apache 2.4 and its password utility available. An Ubuntu install can start the default HTTP site. For a new install, use the approved release-specific method to suppress that automatic start until the HTTPS-only configuration passes its checks. Stop if that method is missing. Use approved local media when offline.
 
 **CONFIGURATION CHANGE - APP1 console, sudo/root, H approval and approved package source.** For the selected Ubuntu profile, install Apache and its password utility; no placeholders:
 
@@ -128,7 +138,7 @@ sudo apt install apache2 apache2-utils
 sudo install -d -o root -g root -m 0755 /srv/labapp/reports /srv/labapp/maintenance
 ```
 
-**Check:** the package manager reports success and the two root-owned directories exist. If packages are unavailable or signatures fail, stop and resolve the approved media path; do not disable verification or add a repository ad hoc.
+**Check:** the packages and two root-owned directories exist. After a new install, verify Apache remains stopped and TCP 80 is closed. If packages are unavailable, signatures fail or the default site starts, stop and follow the approved recovery before continuing.
 
 2. In the approved root editor, save a small **index.html** in each directory. For **/reports/index.html**, enter a title such as **Purple Eye - Synthetic Report** and a sentence identifying fictional data. For **/maintenance/index.html**, use **Purple Eye - Synthetic Maintenance Instructions** with harmless fictional instructions. Do not insert real business information. Pages should be root-owned, readable by Apache and unwritable by ordinary app users.
 3. Check **/etc/labapp/users** does not exist before the first password command. **-c creates or overwrites the whole file**; use it once only. Prompt for distinct app passwords, never AD passwords. [Apache documents htpasswd's overwrite and hashing behavior](https://httpd.apache.org/docs/2.4/programs/htpasswd.html).
@@ -267,10 +277,12 @@ The reader line must remain **LabReaders: ava eli**. After both maintenance deni
 **READ-ONLY - APP1 console, sudo/root; selected Ubuntu paths.** Check owners/modes and usernames only, then compare the two SHA-256 public-key digests. No private key is printed; identical digests establish that the leaf belongs to the server key:
 
 ```sh
-sudo stat -c '%U:%G %a %n' /etc/labapp /etc/labapp/app.key /etc/labapp/app.crt /etc/labapp/lab-ca.crt /etc/labapp/users /etc/labapp/groups
+sudo stat -c '%U:%G %a %n' /etc/labapp /etc/labapp/app.key /etc/labapp/app.crt \
+    /etc/labapp/lab-ca.crt /etc/labapp/users /etc/labapp/groups
 sudo cut -d: -f1 /etc/labapp/users
 sudo openssl pkey -in /etc/labapp/app.key -pubout -outform DER | openssl dgst -sha256
-openssl x509 -in /etc/labapp/app.crt -pubkey -noout | openssl pkey -pubin -outform DER | openssl dgst -sha256
+openssl x509 -in /etc/labapp/app.crt -pubkey -noout |
+    openssl pkey -pubin -outform DER | openssl dgst -sha256
 ```
 
 **Check:** directory root:www-data 0750; key root-owned 0600; users/groups root:www-data 0640; public certificates root-owned with approved read access. The only application names are ava, eli, uma. Public pages are root-owned and Apache-readable, with no app-user write access. If a command errors, do not use its digest as a successful comparison.
@@ -278,8 +290,10 @@ openssl x509 -in /etc/labapp/app.crt -pubkey -noout | openssl pkey -pubin -outfo
 **READ-ONLY - offline signer, signing-file owner, the same private path variables.** Supplement the original chain/date checks with explicit server-purpose and extension inspection. No changes or private values are required:
 
 ```sh
-openssl verify -CAfile "$LabCaCertPath" -purpose sslserver -verify_hostname app.ad.lab.test "$LabAppCertPath"
-openssl x509 -in "$LabAppCertPath" -noout -dates -ext basicConstraints,keyUsage,extendedKeyUsage,subjectAltName
+openssl verify -CAfile "$LabCaCertPath" -purpose sslserver \
+    -verify_hostname app.ad.lab.test "$LabAppCertPath"
+openssl x509 -in "$LabAppCertPath" -noout -dates \
+    -ext basicConstraints,keyUsage,extendedKeyUsage,subjectAltName
 openssl x509 -in "$LabCaCertPath" -noout -dates
 ```
 

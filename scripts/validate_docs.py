@@ -435,9 +435,14 @@ def prepared_infrastructure_issues(guide: str, reference: str) -> list[str]:
                     "read-only stage A approval", "B (host), C (network) or D (firewall) approval",
                     "private network map", "backup/recovery", "original Windows disk", "second observations",
                     "FWR-01/FWR-02", "FWT-01/FWT-02", "Before Phase 2", "NOT TESTED",
-                    "GUI inspection alone does not prove", "Never probe home or production"):
+                    "Inspect the real protected boundaries passively", "known-listening lab-owned mocks",
+                    "Match approved allowed and denied requests to policy/log evidence", "Never probe home or production"):
         if meaning not in phase:
             issues.append("guide Phase 1: missing prepared-design, approval, safety or evidence safeguard: " + meaning)
+    if not re.search(r"\*\*CHECK\*\*\n\n\*\*VISUAL CHECK\.\*\*[^\n]*\\\n\*\*SECURITY TEST\.\*\*", phase):
+        issues.append("guide Phase 1: separate visual and security checks in the isolation procedure")
+    if re.search(r"\b(?:802\.1Q|PVID|tagged/untagged)\b", visible):
+        issues.append("guide Phase 1: detailed switch terminology belongs in Reference 01")
     for anchor in ("physical-map-and-proxmox-bridges", "management-access", "default-deny-and-allowed-flows",
                    "isolation-and-routing", "approved-active-checks", "console-recovery-and-rollback"):
         if "reference/01-Prepared-Infrastructure.md#" + anchor not in phase:
@@ -588,7 +593,8 @@ def access_control_issues(guide: str, https: str, tailscale: str) -> list[str]:
                     "revocation-time SLA", "independently isolated", "explicit deny-all", "additive grant/ACL",
                     "MFA", "subnet routes", "Tailscale SSH", "Funnel", "Serve", "public sharing",
                     "FF-03", "FF-06", "no DC1, WIN1, Proxmox or OPNsense", "working positive controls",
-                    "closed port or broken DNS is insufficient", "Phase 5 mock dependency", "remove the client grant",
+                    "closed port or broken DNS is insufficient", "before revocation", "D/F/H/I/K scopes",
+                    "06-Logs-Automation-and-Test-Tools.md#phase-5-mock-and-connection-tools", "remove the client grant",
                     "exact device authorization", "existing browser and a fresh context", "observed denial time",
                     "cache/connection-state treatment", "OPNsense alone cannot prove", "second observations", "NOT TESTED"):
         if meaning not in phase:
@@ -708,7 +714,9 @@ def monitoring_recovery_issues(guide: str, logs: str, recovery: str) -> list[str
                     "incorrect credentials", "broken DNS", "stopped service", "network failure", "401", "403",
                     "junctions/symlinks/reparse points", "not a canonical-path", "execution-policy bypass", "No remote execution",
                     "second time successfully", "Get-Item", "WIN1-INVALID-TEST", "unchanged hash/mtime", "A01", "A07",
-                    "FWT-07", "FWT-08", "reference-only extraction", "deferred Phase 5 dependency", "FWR/FWT-01/02/06",
+                    "FWT-07", "FWT-08", "FWR/FWT-01/02/06", "D/F/H/I/K scopes", "before revocation",
+                    "LAB-IMPLEMENTATION-GUIDE.md#a-prepare-and-verify-network-tests",
+                    "LAB-IMPLEMENTATION-GUIDE.md#e-configure-test-and-revoke-tailscale-access",
                     "TCP CONNECTED", "NO TCP CONNECTION", "MOCK_PROTECTED", "LAB_ADMIN_IP", "tcp dport 8443",
                     "never a real protected address", "Keep the vendor TCP-443-only grant unchanged"):
         if meaning.lower() not in logs.lower():
@@ -744,16 +752,17 @@ def validation_submission_issues(phase: str) -> list[str]:
     if tuple(title for title, _ in procedures) != titles:
         return ["guide Phase 5: require exactly four validation and submission procedures"]
     safeguards = (
-        ("#deferred-phase-5-mock-and-connection-tools", "working allowed controls",
+        ("#phase-5-mock-and-connection-tools", "working allowed controls",
          "lab-only protected-boundary mock", "independent home/production isolation",
          "DC1 to APP1 TCP 443", "WIN1 to Proxmox TCP 8006", "network policy block before login",
-         "known-listening wrong port", "Tailscale grant limited to TCP 443",
+         "known-listening wrong port", "Tailscale grant limited to TCP 443", "pre-revocation evidence",
+         "Keep revoked permissions in place unless restoration is separately approved",
          "one bounded request", "effective policy and its log or counter",
          "Tailscale grants and device state with APP1 host rules and counters",
          "which control actually enforced the denial", "timeout, stopped listener, broken DNS",
          "unattributed denial as NOT TESTED", "Remove only the named temporary block, alias, permits and listener",
          "recheck normal HTTPS, management and isolation", "approved console rollback", "Deliverable 03 > Test Cases"),
-        ("91 mandatory subchecks", "exactly three workload VMs (DC1, WIN1 and APP1)", "Dell Proxmox host",
+        ("91 mandatory subchecks", "FWT-02.01", "exactly three workload VMs (DC1, WIN1 and APP1)", "Dell Proxmox host",
          "separate physical HP OPNsense", "Management, Corporate and Restricted", "FF-01 through FF-08",
          "default deny", "restricted management", "measured capacity/reserves", "console recovery",
          "physical HP routing", "same-zone host rules", "six application cases (C01-C06)",
@@ -822,6 +831,11 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     issues.extend(identity_endpoint_issues(guide, texts.get(WINDOWS_REFERENCE, ""), texts.get(LINUX_REFERENCE, "")))
     issues.extend(access_control_issues(guide, texts.get(HTTPS_REFERENCE, ""), texts.get(TAILSCALE_REFERENCE, "")))
     issues.extend(monitoring_recovery_issues(guide, texts.get(MONITORING_REFERENCE, ""), texts.get(RECOVERY_REFERENCE, "")))
+    for path, content in texts.items():
+        if path.startswith("docs/lab-guides/"):
+            visible = re.sub(r'^<a id="[a-z][a-z0-9-]*"></a>$', "", strip_fences(content)[0], flags=re.M)
+            if re.search(r"\bSteps? (?:[1-9]|1\d|2[0-7])\b|#step-\d+---", visible, re.I):
+                issues.append(f"{path}: use current procedure names and links instead of old step references")
     plan = texts.get("docs/testing/TEST-PLAN.md", "")
     titles = tuple(match[2] for match in HEADING.finditer(strip_fences(assignment)[0]) if match[1] == "##")
     if titles != ASSIGNMENT_HEADINGS:

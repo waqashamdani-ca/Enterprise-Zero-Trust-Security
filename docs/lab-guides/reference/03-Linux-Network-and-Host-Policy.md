@@ -49,7 +49,7 @@ network:
 
 **Check before applying:** the address belongs to Restricted, the gateway is its OPNsense interface and DNS is DC1. Do not paste the placeholders literally. Preserve any release-specific required fields.
 
-**CONFIGURATION CHANGE - APP1 console, sudo/root, F approval.** Generate checks the merged syntax; try temporarily applies it and asks for confirmation. No placeholders after the file is filled:
+**CONFIGURATION CHANGE - APP1 console, sudo/root, F approval.** Run each line separately. Continue to the timed trial only after generation succeeds. No placeholders after the file is filled:
 
 ```sh
 sudo netplan generate
@@ -121,9 +121,9 @@ table inet lab_host {
 
 ## Initial load and persistence
 
-**Target / approval:** APP1 console, sudo/root, F approval. Use this exact profile only when the reviewed boot file owns lab_host alone and the service/includes preserve other tables. If lab_host already exists, use [atomic replacement](#scoped-atomic-replacement) instead; never reload the table-creation file blindly.
+**Target / approval:** APP1 console, sudo/root, F approval. Use this exact profile only when the reviewed boot file owns lab_host alone and the service/includes preserve other tables. Inspect the effective unit and drop-ins with `systemctl cat nftables`. If startup, reload or shutdown would flush the full ruleset, stop for a reviewed persistence configuration before enabling or operating that unit. If lab_host already exists, use [atomic replacement](#scoped-atomic-replacement).
 
-**CONFIGURATION CHANGE, preceded/followed by READ-ONLY - APP1 console, sudo/root.** Check syntax first; only then load the new table and enable the package's persistent service. No replacements after the file is complete. Use this initial-load sequence once on the reviewed fresh table:
+**CONFIGURATION CHANGE, preceded/followed by READ-ONLY - APP1 console, sudo/root.** Run one line at a time and stop on error. Enable persistence only after successful syntax and load checks and the unit review above. Use this sequence once on the reviewed fresh table:
 
 ```sh
 sudo nft -c -f /etc/nftables.conf
