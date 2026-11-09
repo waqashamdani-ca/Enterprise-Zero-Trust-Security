@@ -414,10 +414,45 @@ class AssignmentContractTests(unittest.TestCase):
         self.assert_rejected(validator.GUIDE_TRANSITION, "| R02, R03, R04 |", "| R02, R04 |", "historical requirement transition")
         self.assert_rejected(validator.GUIDE_TRANSITION, "| T18 |", "| Old automation |", "historical test transition")
 
-    def test_guide_procedures_require_actions_context_and_failure_recovery(self):
-        self.assert_rejected(self.guide, "### Step 24 -", "### Step 0 -", "numbered procedures")
-        self.assert_rejected(self.guide, "**Purpose and location:**", "**Background:**", "instructional context")
-        self.assert_rejected(self.guide, "**If it fails:**", "**Notes:**", "instructional context")
+    def test_phase5_requires_ordered_procedures_actions_and_compatibility_navigation(self):
+        for before, after, expected in (
+            ("### A. Prepare and verify network tests", "### A. Review network", "exactly four"),
+            ("**WHERE**\n\nApproved lab clients", "**PLACE**\n\nApproved lab clients", "sample labels"),
+            ("1. Confirm the applicable D/F/H/I", "8. Confirm the applicable D/F/H/I", "sequential bounded actions"),
+            ('<a id="step-24---prepare-the-permitted-and-denied-network-checks"></a>', "", "compatibility anchors"),
+            ("stage L closeout approval", "publication", "stage K and L approvals"),
+        ):
+            with self.subTest(before=before):
+                self.assert_rejected(self.guide, before, after, expected)
+
+    def test_phase5_rejects_inconclusive_or_unattributed_network_denials(self):
+        for before in ("#deferred-phase-5-mock-and-connection-tools", "working allowed controls",
+                       "lab-only protected-boundary mock", "independent home/production isolation",
+                       "DC1 to APP1 TCP 443", "WIN1 to Proxmox TCP 8006", "known-listening wrong port",
+                       "Tailscale grant limited to TCP 443", "effective policy and its log or counter",
+                       "which control actually enforced the denial", "unattributed denial as NOT TESTED",
+                       "Remove only the named temporary block, alias, permits and listener",
+                       "recheck normal HTTPS, management and isolation", "approved console rollback"):
+            with self.subTest(before=before):
+                self.assert_rejected(self.guide, before, "REMOVED", "guide Phase 5 A.")
+
+    def test_phase5_preserves_topology_traceability_verdicts_and_owner_acceptance(self):
+        for before, after, expected in (
+            ("exactly three workload VMs (DC1, WIN1 and APP1)", "four VMs", "obsolete topology"),
+            ("separate physical HP OPNsense", "virtual firewall", "obsolete topology"),
+            ("FWT-02 / FWR-02 |", "FWT-02 / FWR-01 |", "ten FWT/FWR mappings"),
+            ("91 mandatory subchecks", "90 optional checks", "guide Phase 5 B."),
+            ("only when every mandatory child passes", "if most checks pass", "guide Phase 5 B."),
+            ("never waives a mandatory check", "can waive a mandatory check", "guide Phase 5 B."),
+            ("One encrypted off-compute APP1 backup and isolated restore", "a local snapshot", "guide Phase 5 B."),
+            ("`04-Troubleshooting-and-Lessons.xlsx` |", "`04-Troubleshooting.xlsx` |", "approved filenames"),
+            ("Infrastructure/Network 25", "Infrastructure/Network 24", "rubric weights"),
+            ("Total 100.", "Total 99.", "100-point total"),
+            ("Stop publication on a sensitive-data finding", "Publish first", "guide Phase 5 D."),
+            ("stays **PENDING**", "becomes **PASS**", "guide Phase 5 D."),
+        ):
+            with self.subTest(before=before):
+                self.assert_rejected(self.guide, before, after, expected)
 
     def test_guide_numbered_actions_cannot_merge_into_check_paragraphs(self):
         self.assert_rejected(self.guide, "\n\n4. Locate each event", "\n4. Locate each event", "blank line")

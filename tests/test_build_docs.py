@@ -543,6 +543,12 @@ class PdfArtifactTests(unittest.TestCase):
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
 
     def test_t9c5_preserves_excluded_sources_history_report_and_all_commands(self):
+        # Preserve the complete T9C.5 contract against the merged publication.
+        published = "7da96817918b92fc0f75bab6602bc82310c53264"
+
+        def published_bytes(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", published + ":" + name])
+
         base = "052fa098dd1768c82bac850470accf306bc3f0cd"
         report = "docs/reports/T9-Report.md"
         allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf", docs.MANIFEST, report,
@@ -551,23 +557,23 @@ class PdfArtifactTests(unittest.TestCase):
         def old(name):
             return subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
         files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
-        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", published]).decode().splitlines()
         self.assertEqual(set(current), set(files) | added, "Only four new reference editions are authorized")
         for name in files:
             if name not in allowed:
-                self.assertEqual((ROOT / name).read_bytes(), old(name), name)
+                self.assertEqual(published_bytes(name), old(name), name)
         def parts(value):
             prefix, rest = value.split(b"## Phase 4: Monitoring, Automation and Recovery\n", 1)
             phase, suffix = rest.split(b"## Phase 5: Validation and Final Submission\n", 1)
             return prefix, phase, suffix
         before, original, after = parts(old(docs.GUIDE))
-        actual = parts((ROOT / docs.GUIDE).read_bytes())
+        actual = parts(published_bytes(docs.GUIDE))
         self.assertEqual(actual[0], before, "Introduction and Phases 1-3 must remain byte-identical")
         self.assertEqual(actual[2], after, "Phase 5 and appendices must remain byte-identical")
         fences = r"^```([^\n]*)\n(.*?)^```"
         original_blocks = re.findall(fences, original.decode(), re.M | re.S)
         moved = [block for name in docs.OPERATIONS_REFERENCES
-                 for block in re.findall(fences, (ROOT / name).read_text(encoding="utf-8"), re.M | re.S)]
+                 for block in re.findall(fences, published_bytes(name).decode(), re.M | re.S)]
         self.assertEqual(len(original_blocks), 8)
         for block in original_blocks:
             self.assertIn(block, moved, "Preserve all Phase 4 commands, especially the complete automation")
@@ -576,22 +582,119 @@ class PdfArtifactTests(unittest.TestCase):
         # retain every other instruction/command and keep Phase 5 byte-frozen.
         self.assertEqual(old_mock.count("add no permanent fifth VM or fourth zone."), 1)
         expected_mock = old_mock.replace("add no permanent fifth VM or fourth zone.", "add no permanent VM or zone.")
-        self.assertIn(expected_mock, (ROOT / docs.MONITORING_REFERENCE).read_text(encoding="utf-8"),
+        self.assertIn(expected_mock, published_bytes(docs.MONITORING_REFERENCE).decode(),
                       "Deferred mock extraction allows only the no-extra-resource wording correction")
         def outside_t9c5(value):
             value = re.sub(rb"^\| T9C\.5 - Phase 4 \|[^\n]*\n", b"", value, flags=re.M)
             return re.sub(rb"^#### T9C\.5 - Phase 4\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
-        new_report = (ROOT / report).read_bytes()
+        new_report = published_bytes(report)
         self.assertEqual(outside_t9c5(new_report), outside_t9c5(old(report)))
         self.assertIn(b"Report state: DRAFT\n", new_report)
         self.assertIn(b"| Umbrella status | IN PROGRESS |", new_report)
-        manifests = [json.loads(old(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        manifests = [json.loads(old(docs.MANIFEST)), json.loads(published_bytes(docs.MANIFEST))]
         for manifest in manifests:
             manifest["documents"] = [entry for entry in manifest["documents"]
                                      if entry["source"] not in {docs.GUIDE} | docs.OPERATIONS_REFERENCES]
             for entry in manifest["documents"]:
                 entry.pop("renderer_sha256")
         self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_t9c6_preserves_excluded_sources_reports_and_technical_commands(self):
+        base = "7da96817918b92fc0f75bab6602bc82310c53264"
+        report = "docs/reports/T9-Report.md"
+        allowed = {docs.GUIDE, docs.GUIDE[:-3] + ".pdf", docs.MANIFEST, report,
+                   "scripts/build_docs.py", "scripts/validate_docs.py", "tests/test_build_docs.py", "tests/test_validate_docs.py"}
+
+        def old(name):
+            return subprocess.check_output(["git", "-C", str(ROOT), "show", base + ":" + name])
+
+        files = subprocess.check_output(["git", "-C", str(ROOT), "ls-tree", "-r", "--name-only", base]).decode().splitlines()
+        current = subprocess.check_output(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard"]).decode().splitlines()
+        self.assertEqual(set(current), set(files), "Phase 5 introduces no public file")
+        for name in set(files) - allowed:
+            self.assertEqual((ROOT / name).read_bytes(), old(name), name)
+        boundary = b"## Phase 5: Validation and Final Submission\n"
+        prefix, previous_phase = old(docs.GUIDE).split(boundary, 1)
+        self.assertEqual((ROOT / docs.GUIDE).read_bytes().split(boundary, 1)[0], prefix)
+        fences = rb"^```([^\n]*)\n(.*?)^```"
+        previous_commands = re.findall(fences, previous_phase, re.M | re.S)
+        self.assertEqual(len(previous_commands), 3)
+        reference_commands = re.findall(fences, (ROOT / docs.MONITORING_REFERENCE).read_bytes(), re.M | re.S)
+        for command in previous_commands:
+            self.assertIn(command, reference_commands, "Reference 06 retains the full technical procedure")
+
+        def outside_t9c6(value):
+            value = re.sub(rb"^\| T9C\.6 - Phase 5 \|[^\n]*\n", b"", value, flags=re.M)
+            return re.sub(rb"^#### T9C\.6 - Phase 5\n.*?(?=^### T9D -)", b"", value, flags=re.M | re.S)
+
+        current_report = (ROOT / report).read_bytes()
+        self.assertEqual(outside_t9c6(current_report), outside_t9c6(old(report)))
+        for required in (b"Report state: DRAFT\n", b"| Umbrella status | IN PROGRESS |",
+                         b"the owner accepts that Reference 07's manifest",
+                         b"may need a shell continuation character", b"Executability is unverified",
+                         b"All manifest, backup and restore checks remain mandatory"):
+            self.assertIn(required, current_report)
+        manifests = [json.loads(old(docs.MANIFEST)), json.loads((ROOT / docs.MANIFEST).read_bytes())]
+        for manifest in manifests:
+            manifest["documents"] = [entry for entry in manifest["documents"] if entry["source"] != docs.GUIDE]
+            for entry in manifest["documents"]:
+                entry.pop("renderer_sha256")
+        self.assertEqual(*manifests, "No unrelated generated-document change is authorized")
+
+    def test_phase5_pdf_keeps_every_procedure_table_and_compatibility_link_intact(self):
+        content = (ROOT / docs.GUIDE).read_bytes()
+        sources = set(docs.discover_sources(ROOT))
+        reader = docs.PdfReader(io.BytesIO(docs.render_pdf(docs.GUIDE, content, sources)))
+        baseline = subprocess.check_output(["git", "-C", str(ROOT), "show",
+                                            "7da96817918b92fc0f75bab6602bc82310c53264:" + docs.GUIDE[:-3] + ".pdf"])
+        before = docs.PdfReader(io.BytesIO(baseline))
+        destinations = reader.named_destinations
+
+        def page_for(anchor):
+            return reader.get_destination_page_number(destinations[anchor])
+
+        def without_version(page):
+            return re.sub(r"Source version [0-9a-f]{12}", "", page.extract_text())
+
+        phase_start = page_for("phase-5-validation-and-final-submission")
+        self.assertEqual(phase_start, 13)
+        for i in range(phase_start):
+            self.assertEqual(without_version(reader.pages[i]), without_version(before.pages[i]), f"Earlier page {i + 1}")
+        self.assertLessEqual(len(reader.pages) - phase_start, 4)
+        phase = content.decode().split("## Phase 5: Validation and Final Submission\n", 1)[1]
+        phase = re.sub(r'^<a id="[a-z][a-z0-9-]*"></a>\n', '', phase, flags=re.M)
+        procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+        self.assertEqual(len(procedures), 4)
+        for title, body in procedures:
+            page = reader.pages[page_for(docs.anchor_for(title, set()))].extract_text()
+            compact = re.sub(r"\s+", "", page)
+            self.assertIn(re.sub(r"\s+", "", title), compact)
+            for token in docs.MARKDOWN(body):
+                if token["type"] == "table":
+                    head, rows = token["children"]
+                    parts = head["children"] + [cell for row in rows["children"] for cell in row["children"]]
+                elif token["type"] == "list":
+                    parts = token["children"]
+                elif token["type"] == "paragraph":
+                    parts = [token]
+                else:
+                    continue
+                for part in parts:
+                    expected = re.sub(r"\s+", "", docs.normalize(docs.plain(part["children"])))
+                    self.assertIn(expected, compact, f"Split content in {title}: {expected[:50]}")
+        for alias, target in (
+            ("step-24---prepare-the-permitted-and-denied-network-checks", "a-prepare-and-verify-network-tests"),
+            ("step-25---execute-and-record-the-ten-tests", "b-complete-the-ten-formal-tests"),
+            ("historical-requirement-and-test-transition", "b-complete-the-ten-formal-tests"),
+            ("step-26---finish-the-five-office-deliverables", "c-complete-the-five-office-deliverables"),
+            ("required-lab-deliverables", "c-complete-the-five-office-deliverables"),
+            ("step-27---review-evidence-submit-and-obtain-owner-acceptance", "d-review-evidence-submit-and-obtain-owner-acceptance"),
+            ("phase-5-checkpoint-and-recovery", "d-review-evidence-submit-and-obtain-owner-acceptance"),
+        ):
+            self.assertEqual(page_for(alias), page_for(target))
+        expected = "06-Logs-Automation-and-Test-Tools.pdf#nameddest=deferred-phase-5-mock-and-connection-tools"
+        self.assertTrue(any(expected in str(link.get_object().get("/A", {}).get("/URI", ""))
+                            for link in reader.pages[phase_start].get("/Annots", [])))
 
     def test_phase4_pdf_has_compact_complete_procedures_and_intact_reference_commands(self):
         source = (ROOT / docs.GUIDE).read_bytes()

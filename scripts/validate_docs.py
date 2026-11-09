@@ -735,6 +735,84 @@ def monitoring_recovery_issues(guide: str, logs: str, recovery: str) -> list[str
     return issues
 
 
+def validation_submission_issues(phase: str) -> list[str]:
+    """Check the Phase 5 workflow and evidence requirements offline."""
+    issues = []
+    titles = ("A. Prepare and verify network tests", "B. Complete the ten formal tests",
+              "C. Complete the five Office deliverables", "D. Review evidence, submit and obtain owner acceptance")
+    procedures = re.findall(r"^### ([^\n]+)\n(.*?)(?=^### |\Z)", phase, re.M | re.S)
+    if tuple(title for title, _ in procedures) != titles:
+        return ["guide Phase 5: require exactly four validation and submission procedures"]
+    safeguards = (
+        ("#deferred-phase-5-mock-and-connection-tools", "working allowed controls",
+         "lab-only protected-boundary mock", "independent home/production isolation",
+         "DC1 to APP1 TCP 443", "WIN1 to Proxmox TCP 8006", "network policy block before login",
+         "known-listening wrong port", "Tailscale grant limited to TCP 443",
+         "one bounded request", "effective policy and its log or counter",
+         "Tailscale grants and device state with APP1 host rules and counters",
+         "which control actually enforced the denial", "timeout, stopped listener, broken DNS",
+         "unattributed denial as NOT TESTED", "Remove only the named temporary block, alias, permits and listener",
+         "recheck normal HTTPS, management and isolation", "approved console rollback", "Deliverable 03 > Test Cases"),
+        ("91 mandatory subchecks", "exactly three workload VMs (DC1, WIN1 and APP1)", "Dell Proxmox host",
+         "separate physical HP OPNsense", "Management, Corporate and Restricted", "FF-01 through FF-08",
+         "default deny", "restricted management", "measured capacity/reserves", "console recovery",
+         "physical HP routing", "same-zone host rules", "six application cases (C01-C06)",
+         "five security event categories", "one repeatable capacity automation",
+         "one encrypted off-compute APP1 backup and isolated restore",
+         "expected and actual results", "private evidence references", "second technical observation",
+         "all mandatory evidence", "executed mismatches", "blocked, unperformed or unverified",
+         "never waives a mandatory check", "only when every mandatory child passes",
+         "approved correction and retest", "Deliverable 03 > Requirements Coverage / Evidence Index"),
+        ("Complete every worksheet or section", "05 > Final Evaluation", "engineering verifier/evidence cutoff",
+         "Award credit only for verified implementation", "Correct unsupported claims"),
+        ("hidden content", "screenshots", "staged diff", "new Git history", "outside Git", "Preserve private originals",
+         "reviewed sanitized artifacts", "observed PR, final-head CI, merge and local/remote synchronization",
+         "Stop publication on a sensitive-data finding", "five completed files and evidence index",
+         "analyst report access", "engineer maintenance access", "unassigned/revoked denial",
+         "approved remote access/revocation", "measured recovery", "limitations",
+         "Deliverable 03 > Owner Acceptance", "confirmation reference", "stays **PENDING**",
+         "independent of test results, CI and scoring", "critical or high safety issues block acceptance"),
+    )
+    for (title, body), required in zip(procedures, safeguards):
+        if re.findall(r"^\*\*(WHERE|STEPS|CHECK|RECORD)\*\*$", body, re.M) != ["WHERE", "STEPS", "CHECK", "RECORD"]:
+            issues.append(f"guide Phase 5 {title}: missing ordered sample labels")
+        actions = [int(n) for n in re.findall(r"^(\d+)\. ", body, re.M)]
+        if not 3 <= len(actions) <= 7 or actions != list(range(1, len(actions) + 1)):
+            issues.append(f"guide Phase 5 {title}: missing sequential bounded actions")
+        for meaning in required:
+            if meaning.lower() not in body.lower():
+                issues.append(f"guide Phase 5 {title}: missing safeguard: {meaning}")
+    if not all(scope in phase for scope in ("stage K validation", "stage L closeout approval")):
+        issues.append("guide Phase 5: preserve stage K and L approvals")
+    pairs = re.findall(r"^\| (FWT-\d{2}) / (FWR-\d{2}) \|", phase, re.M)
+    if pairs != [(f"FWT-{n:02d}", f"FWR-{n:02d}") for n in range(1, 11)]:
+        issues.append("guide Phase 5: retain all ten FWT/FWR mappings in order")
+    filenames = re.findall(r"^\|\s*`([^`]+)`\s*\|", procedures[2][1], re.M)
+    if tuple(filenames) != DELIVERABLE_FILENAMES:
+        issues.append("guide Phase 5: match the five approved filenames")
+    weights = re.findall(r"(Infrastructure/Network|Identity/Access|Monitoring/Operations|Testing/Recovery|"
+                         r"Documentation/Submission) (\d+)", procedures[2][1])
+    labels = ("Infrastructure/Network", "Identity/Access", "Monitoring/Operations",
+              "Testing/Recovery", "Documentation/Submission")
+    if weights != [(label, str(weight)) for label, (_, weight) in zip(labels, RUBRIC_WEIGHTS)]:
+        issues.append("guide Phase 5: preserve the approved rubric weights")
+    if "Total 100." not in procedures[2][1]:
+        issues.append("guide Phase 5: preserve the 100-point total")
+    aliases = {"step-24---prepare-the-permitted-and-denied-network-checks",
+               "step-25---execute-and-record-the-ten-tests", "step-26---finish-the-five-office-deliverables",
+               "step-27---review-evidence-submit-and-obtain-owner-acceptance", "phase-5-checkpoint-and-recovery",
+               "required-lab-deliverables", "historical-requirement-and-test-transition"}
+    if not aliases <= heading_anchors(phase):
+        issues.append("guide Phase 5: preserve compatibility anchors")
+    visible = re.sub(r'<a id="[a-z][a-z0-9-]*"></a>', '', phase)
+    if re.search(r"^```|^~~~|\b(?:vmbr\d+|VLAN\s+\d+|Steps? \d+)\b|\b(?:\d{1,3}\.){3}\d{1,3}\b", visible, re.M | re.I):
+        issues.append("guide Phase 5: use reference links for commands and current procedure navigation")
+    if re.search(r"\b(?:four[- /](?:baseline[- ]|workload[- ])?(?:VMs?|virtual machines)|virtual[- ](?:firewall|OPNsense)|"
+                 r"procurement|ordered|PLANNED|IN PROGRESS|T9[A-F]?(?:\.\d+)?)\b", visible, re.I):
+        issues.append("guide Phase 5: obsolete topology, procurement or internal status")
+    return issues
+
+
 def completeness_issues(texts: dict[str, str]) -> list[str]:
     """Validate the approved focused specification; never execute lab content."""
     issues: list[str] = []
@@ -809,22 +887,15 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
     if re.search(r"\b(?:four[- ](?:VMs?|virtual machines)|virtual OPNsense|PLANNED|NOT TESTED|UAT PENDING|"
                  r"[Oo]rdered|[Dd]elivered|[Pp]rocurement)\b", assignment):
         issues.append("assignment: obsolete topology, procurement or execution status belongs outside the assignment")
-    guide_files = guide.partition("## Required lab deliverables")[2].split("\n## ", 1)[0]
-    if tuple(re.findall(r"^\|\s*`([^`]+)`\s*\|", guide_files, re.M)) != DELIVERABLE_FILENAMES:
-        issues.append("guide must match the five approved filenames")
     phases = re.split(r"^## Phase (\d): ([^\n]+)\n", guide, flags=re.M)
     phase_rows = [tuple(phases[i:i + 3]) for i in range(1, len(phases), 3)]
     if [(n, title) for n, title, _ in phase_rows] != [(str(i), t) for i, t in enumerate(PHASE_TITLES, 1)]:
         issues.append("guide must contain the five approved phases exactly once in order")
     for number, _, section in phase_rows:
-        if number in {"1", "2", "3", "4"}:
-            if f"**Before Phase {int(number) + 1}:**" not in section:
-                issues.append(f"phase {number} missing field: checkpoint and recovery")
-        elif not re.search(rf"^### Phase {number} checkpoint and recovery\s*$", section, re.M):
+        if number == "5":
+            issues.extend(validation_submission_issues(section))
+        elif f"**Before Phase {int(number) + 1}:**" not in section:
             issues.append(f"phase {number} missing field: checkpoint and recovery")
-        for field in (() if number in {"1", "2", "3", "4"} else ("**Outcome:**", "Approvals:", "Test")):
-            if field not in section:
-                issues.append(f"phase {number} missing field: {field}")
         expected_tests = {"1": (1, 2), "2": (3, 4), "3": (3, 5, 6),
                           "4": (7, 8, 9), "5": (10,)}.get(number, ())
         for test in expected_tests:
@@ -839,15 +910,6 @@ def completeness_issues(texts: dict[str, str]) -> list[str]:
         context = guide[:match.start()].rstrip().rsplit("\n\n", 1)[-1]
         if not re.search(r"READ-ONLY|CONFIGURATION CHANGE|DESTRUCTIVE / HIGH-RISK", context):
             issues.append("guide: command/configuration block needs a risk/target context")
-    procedures = re.findall(r"^### Step (\d+) - [^\n]+\n(.*?)(?=^### |^## |\Z)", guide, re.M | re.S)
-    if [int(n) for n, _ in procedures] != list(range(24, 28)):
-        issues.append("guide: preserve downstream numbered procedures 24-27 in order")
-    for number, body in procedures:
-        for field in ("**Purpose and location:**", "**Check", "**If it fails:**"):
-            if field not in body:
-                issues.append(f"guide procedure {number}: missing instructional context {field}")
-        if not re.search(r"^1\. ", body, re.M):
-            issues.append(f"guide procedure {number}: missing numbered actions")
     lines = strip_fences(guide)[0].splitlines()
     for previous, line in zip(lines, lines[1:]):
         if re.match(r"^\d+\. ", line) and previous.strip() and not re.match(r"^\d+\. ", previous):
