@@ -49,7 +49,7 @@ Read the complete [FF matrix](../../architecture/ARCHITECTURE.md#inter-zone-poli
 | Flow | Required restriction and observation |
 | --- | --- |
 | FF-01 | Only the named administrator reaches named management services; local host/device policy also protects same-zone paths. Supported multifactor authentication and console recovery remain required. |
-| FF-02 | WIN1 to DC1 only for selected AD/DNS/time dependencies; same Corporate zone, so inspect Windows host firewalls separately. Match the selected-version service table and Phase 2's host rules; no all-host/all-port allow. |
+| FF-02 | WIN1 to DC1 only for selected AD/DNS/time dependencies. Inspect the same-zone Windows host firewalls and scope every permit to the named hosts and services. |
 | FF-03 | WIN1 to APP1 TCP 443 only; physical OPNsense, Linux host policy and application roles all apply. |
 | FF-04 | APP1 to DC1 DNS TCP/UDP 53 and only the selected time service. No other directory access or Linux domain join follows. |
 | FF-05 | Dedicated administrator to named guests, only approved management services; physical firewall and destination host policy apply. |
@@ -57,7 +57,7 @@ Read the complete [FF matrix](../../architecture/ARCHITECTURE.md#inter-zone-poli
 | FF-07 | Default disconnected. Exact update/activation/Tailscale dependencies require independently isolated, approved egress; include firewall-originated traffic. |
 | FF-08 | Deny unlisted inter-zone traffic, ordinary-user management and protected destinations; also inspect same-zone/overlay host restrictions and matching logs/counters. |
 
-No inbound forwarding, UPnP/NAT-PMP, subnet advertisements, exit node or public application sharing is included. A stale state can outlive a changed rule; inspect it read-only here. Only a separately approved correction may remove its exact state. Never flush all states or disable a firewall to obtain a result.
+For FF-02, use the [selected-release port table](02-Windows-Directory-and-Policy.md#scoped-service-ports). No inbound forwarding, UPnP/NAT-PMP, subnet advertisements, exit node or public application sharing is included. A stale state can outlive a changed rule; inspect it read-only here. Only a separately approved correction may remove its exact state. Never flush all states or disable a firewall to obtain a result.
 
 ## Isolation and routing
 
@@ -83,7 +83,7 @@ Use configuration inspection and passive observations for real protected boundar
 
 ## Approved active checks
 
-These checks generate traffic. They are separate from Phase 1 inspection and require approval naming the stage, lab-owned source/target, identity, one connection/service, expected result, evidence, stop condition and rollback. Use the complete [FWT-01](../../testing/TEST-PLAN.md#fwt-01---isolation-and-readiness) and [FWT-02](../../testing/TEST-PLAN.md#fwt-02---three-zone-network-and-administration) definitions and [Phase 5](../LAB-IMPLEMENTATION-GUIDE.md#phase-5-validation-and-final-submission) for the later bounded tools. Missing listeners or approval means NOT TESTED.
+These checks generate traffic. They are separate from Phase 1 inspection and require approval naming the stage, lab-owned source/target, identity, one connection/service, expected result, evidence, stop condition and rollback. Read [FWT-01](../../testing/TEST-PLAN.md#fwt-01---isolation-and-readiness) and [FWT-02](../../testing/TEST-PLAN.md#fwt-02---three-zone-network-and-administration), then use the guide's [network tests](../LAB-IMPLEMENTATION-GUIDE.md#a-prepare-and-verify-network-tests) for bounded actions. Missing listeners or approval means NOT TESTED.
 
 1. Establish a working allowed control to a known listening lab-owned service. Use only an approved lab-owned mock to represent the protected boundary; never a real protected address.
 2. Make the single approved denied request. Check an unlisted inter-zone service and ordinary-user management denial within their separately named scopes. An approved administrator control and console observation must also succeed.

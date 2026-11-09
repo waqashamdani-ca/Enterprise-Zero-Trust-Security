@@ -426,10 +426,12 @@ class AssignmentContractTests(unittest.TestCase):
                 self.assert_rejected(self.guide, before, after, expected)
 
     def test_phase5_rejects_inconclusive_or_unattributed_network_denials(self):
-        for before in ("#deferred-phase-5-mock-and-connection-tools", "working allowed controls",
+        for before in ("#phase-5-mock-and-connection-tools).", "working allowed controls",
                        "lab-only protected-boundary mock", "independent home/production isolation",
                        "DC1 to APP1 TCP 443", "WIN1 to Proxmox TCP 8006", "known-listening wrong port",
-                       "Tailscale grant limited to TCP 443", "effective policy and its log or counter",
+                       "Tailscale grant limited to TCP 443", "pre-revocation evidence",
+                       "Keep revoked permissions in place unless restoration is separately approved",
+                       "effective policy and its log or counter",
                        "which control actually enforced the denial", "unattributed denial as NOT TESTED",
                        "Remove only the named temporary block, alias, permits and listener",
                        "recheck normal HTTPS, management and isolation", "approved console rollback"):
@@ -467,7 +469,7 @@ class AssignmentContractTests(unittest.TestCase):
         ):
             self.assert_rejected(self.guide, before, after, expected)
         for before in ("one deliberately wrong-password attempt", "lockout margin", "source UTC minus observer UTC",
-                       "private originals", "reference-only extraction", "Keep the vendor TCP-443-only grant unchanged"):
+                       "private originals", "before revocation", "D/F/H/I/K scopes", "Keep the vendor TCP-443-only grant unchanged"):
             self.assert_all_rejected(validator.MONITORING_REFERENCE, before, "REMOVED", "safeguard")
 
     def test_phase4_rejects_changed_automation_and_missing_negative_checks(self):
@@ -539,7 +541,9 @@ class AssignmentContractTests(unittest.TestCase):
 
     def test_prepared_security_controls_and_each_flow_cannot_be_removed(self):
         for phrase in ("read-only stage A approval", "B (host), C (network) or D (firewall) approval",
-                       "second observations", "GUI inspection alone does not prove", "Never probe home or production"):
+                       "second observations", "Inspect the real protected boundaries passively",
+                       "known-listening lab-owned mocks", "Match approved allowed and denied requests to policy/log evidence",
+                       "Never probe home or production"):
             with self.subTest(phrase=phrase):
                 self.assert_rejected(self.guide, phrase, "omitted", "safeguard")
 
@@ -611,7 +615,8 @@ class AssignmentContractTests(unittest.TestCase):
     def test_phase3_remote_controls_and_second_observations_cannot_be_removed(self):
         for name, phrases in (
             (self.guide, ("independently isolated", "explicit deny-all", "additive grant/ACL", "MFA", "Funnel", "Serve",
-                          "no DC1, WIN1, Proxmox or OPNsense", "working positive controls", "Phase 5 mock dependency",
+                          "no DC1, WIN1, Proxmox or OPNsense", "working positive controls", "before revocation",
+                          "D/F/H/I/K scopes", "06-Logs-Automation-and-Test-Tools.md#phase-5-mock-and-connection-tools",
                           "exact device authorization", "existing browser and a fresh context", "cache/connection-state treatment")),
             (validator.TAILSCALE_REFERENCE, ("before Internet connectivity", "before enrollment", "--accept-routes=false --accept-dns=false --ssh=false",
                                              "no direct physical/zone route", "before established traffic", "forward chain drops",
@@ -649,6 +654,16 @@ class AssignmentContractTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assert_rejected(self.guide, "## Phase 1: Prepared Infrastructure\n",
                                      "## Phase 1: Prepared Infrastructure\n\n" + phrase, "private mapping")
+
+    def test_guide_separates_inspection_and_behavior_and_uses_current_procedures(self):
+        self.assert_rejected(self.guide, "**SECURITY TEST.**", "**VISUAL CHECK.**",
+                             "separate visual and security checks")
+        self.assert_rejected(self.guide, "Open the switch network settings", "Open the 802.1Q PVID settings",
+                             "detailed switch terminology")
+        self.assert_rejected(validator.MONITORING_REFERENCE, "APP1 console replacement transaction",
+                             "Step 12", "old step references")
+        self.assert_rejected(validator.TAILSCALE_REFERENCE, "#a-prepare-and-verify-network-tests",
+                             "#step-24---prepare-the-permitted-and-denied-network-checks", "old step references")
 
     def test_guide_retains_approval_and_existing_phase_test_mappings(self):
         self.assert_rejected(self.guide, "each stage A-L", "optional stages", "safeguards")

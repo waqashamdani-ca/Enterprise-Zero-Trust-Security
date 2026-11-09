@@ -1,6 +1,6 @@
 # Windows directory and policy reference
 
-Use with [Phase 2](../LAB-IMPLEMENTATION-GUIDE.md#phase-2-identity-and-endpoint-security) for FWR-03/FWR-04 and FWT-03/FWT-04. These are proposed procedures, not executed results. Stages E (directory) and F (endpoint) require separate approval naming assets, changes, validation and rollback. Creating a missing workload also needs its applicable host/network scope. Use the dedicated lab administrator path with guest console recovery.
+Use with Phase 2's [workload profiles](../LAB-IMPLEMENTATION-GUIDE.md#a-verify-or-create-the-three-workload-vms), [directory setup](../LAB-IMPLEMENTATION-GUIDE.md#b-configure-dc1-and-active-directory), [users and domain join](../LAB-IMPLEMENTATION-GUIDE.md#c-create-lab-users-and-groups-then-join-win1) and [Windows security policies](../LAB-IMPLEMENTATION-GUIDE.md#d-apply-windows-security-policies) for FWR-03/FWR-04 and FWT-03/FWT-04. Stages E (directory) and F (endpoint) require separate approval naming assets, changes, validation and rollback. Creating a missing workload also needs its applicable host/network scope. Use the dedicated lab administrator path with guest console recovery.
 
 ## Required private plan and supported profile
 
@@ -149,6 +149,7 @@ Use [Microsoft's AD service table](https://learn.microsoft.com/en-us/troubleshoo
 
 4. In the **WIN1 endpoint GPO** edit **Computer Configuration > Policies > Windows Settings > Security Settings > Advanced Audit Policy Configuration > Audit Policies > Logon/Logoff > Audit Logon**, enabling approved success/failure auditing. Create/link the separately approved **DC audit GPO** to the **Domain Controllers** OU, then edit its **Account Logon > Audit Kerberos Authentication Service** success/failure settings under that same advanced-audit path. WIN1's OU policy cannot apply to DC1. Include approved account-management auditing and ensure basic audit settings do not override advanced policy; inspect the effective advanced audit selection on each actual target before Phase 4.
 5. On WIN1 use the local policy-result commands below. Check the intended GPOs are applied and WIN1 is in the correct OU; compare specific values with the local effective security-policy/firewall views. In **Windows Security**, inspect antivirus, firewall and update status. Log off/restart only when the approved setting needs it.
+
 ## Privilege and protection checks
 
 **Target / approval:** WIN1, F approval; the named administrator and ava in separate sessions. Expected: protection enabled and ordinary-user administration denied, with a working elevated control. On mismatch inspect effective policy/membership; recover only approved pilot settings at console.

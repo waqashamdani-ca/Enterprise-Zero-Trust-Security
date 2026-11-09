@@ -5,7 +5,7 @@
 
 ## How to use the guide
 
-The analyst reads reports. The engineer reads maintenance instructions. The unassigned user is denied. Follow the [assignment](../assignments/PROJECT-ASSIGNMENT.md) for required outcomes.
+The analyst reads reports. The engineer reads maintenance instructions. The unassigned user is denied. Use the [assignment](../assignments/PROJECT-ASSIGNMENT.md) for outcomes and the [security requirements](../security/SECURITY-REQUIREMENTS.md#mandatory-security-requirements) for controls.
 
 Follow the five phases in order: [infrastructure](#phase-1-prepared-infrastructure), [identity and endpoints](#phase-2-identity-and-endpoint-security), [access controls](#phase-3-zero-trust-access-controls), [monitoring and recovery](#phase-4-monitoring-automation-and-recovery), then [validation and submission](#phase-5-validation-and-final-submission). Read each procedure first. Obtain approval before each stage A-L, covering assets, changes, validation and rollback. Use the [architecture](../architecture/ARCHITECTURE.md) and [technical reference](reference/01-Prepared-Infrastructure.md) for detail.
 
@@ -58,12 +58,12 @@ Administrator computer: Proxmox, HP OPNsense and switch web pages.
 1. Open **OPNsense > Interfaces > Assignments**. Match Management, Corporate and Restricted to the HP ports and private map.
 2. Open **Proxmox > Dell node > System > Network**. Compare bridge ports, addresses and VLAN-aware settings with the [approved relationships](reference/01-Prepared-Infrastructure.md#physical-map-and-proxmox-bridges).
 3. Open each VM's **Hardware > Network Device**. Match bridge and VLAN tag to the map: DC1/WIN1 in Corporate; APP1 in Restricted, with one zone NIC each.
-4. Open the switch's **VLAN > 802.1Q VLAN** and **802.1Q PVID Setting** pages. Compare tagged/untagged membership and port defaults with the map; change nothing.
+4. Open the switch network settings. Compare each port with the approved private diagram.
 5. Inspect the [management restrictions](reference/01-Prepared-Infrastructure.md#management-access): named administrator sources/services, effective host/device rules, supported multifactor authentication and console recovery.
 
 **CHECK**
 
-Three zones reach HP; no switch/host route bypasses OPNsense. Workload bridges have no host address. Only the dedicated path reaches management; APP1's approved overlay is the sole extra interface.
+Mapped routes reach HP. Workload bridges have no host address or routing role. Management rules name only the dedicated path. Only APP1 has an approved overlay.
 
 **RECORD**
 
@@ -81,17 +81,18 @@ Administrator computer: read-only Windows, Beryl AX and firewall/host views.
 
 1. Open Windows **Settings > Network & internet > Advanced network settings**. Compare adapters with the isolation record; flag extra Wi-Fi, VPN or shared connections.
 2. In Beryl AX **INTERNET**, inspect **Ethernet**, **Repeater**, **Tethering** and **Cellular**. Keep upstream disconnected until independent isolation and egress are approved.
-3. Compare [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix) with effective firewall/host rules, states, NAT and listeners. Use the [flow checklist](reference/01-Prepared-Infrastructure.md#default-deny-and-allowed-flows); unlisted access stays denied.
-4. Complete the [IPv4/IPv6, route and trust checks](reference/01-Prepared-Infrastructure.md#isolation-and-routing). GUI inspection alone does not prove home/production isolation.
-5. For separately approved active validation, use [lab-owned mocks](reference/01-Prepared-Infrastructure.md#approved-active-checks). Record allowed and denied behavior plus policy/log evidence under FWT-01/FWT-02. Never probe home or production.
+3. Use the [flow checklist](reference/01-Prepared-Infrastructure.md#default-deny-and-allowed-flows) to compare [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix) with rules, states, NAT and listeners.
+4. [Check IPv4/IPv6, routes and trust](reference/01-Prepared-Infrastructure.md#isolation-and-routing). Inspect the real protected boundaries passively.
+5. For separately approved active validation, use [known-listening lab-owned mocks](reference/01-Prepared-Infrastructure.md#approved-active-checks). Never probe home or production.
 
 **CHECK**
 
-Map/flows match. FWR-01/FWR-02 need FWT-01/FWT-02 evidence and second observations. Unperformed active checks stay **NOT TESTED**.
+**VISUAL CHECK.** Connections, settings and paths match the private diagram.\
+**SECURITY TEST.** Match approved allowed and denied requests to policy/log evidence. FWR-01/FWR-02 require FWT-01/FWT-02 and second observations. Missing checks stay **NOT TESTED**.
 
 **RECORD**
 
-**Deliverable 01 > Allowed Network Flows** and **Deliverable 03 > Test Cases**.
+**Deliverable 01 > Allowed Network Flows** and **03 > Test Cases**.
 
 **Before Phase 2:** Resolve mismatches; carry pending checks forward. For unexpected connectivity, stop and use [console isolation/recovery](reference/01-Prepared-Infrastructure.md#console-recovery-and-rollback).
 
@@ -212,8 +213,8 @@ APP1 Proxmox **Console**, approved sudo administrator. APP1 stays outside AD.
 1. Match interface MAC with **Hardware > Network Device** and the private map. Inspect [addresses/routes/DNS/rules](reference/03-Linux-Network-and-Host-Policy.md#interface-and-backend-inspection); save recovery copies.
 2. If needed, edit [Netplan](reference/03-Linux-Network-and-Host-Policy.md#netplan-configuration-and-rollback): approved private interface/address/gateway, DC1-only DNS. Check syntax, use the timed trial and verify rollback.
 3. Verify [lab-only time](reference/03-Linux-Network-and-Host-Policy.md#lab-only-time), without public/corporate DNS/time fallback or another backend.
-4. Apply [nftables policy](reference/03-Linux-Network-and-Host-Policy.md#nftables-policy): default-deny input/forward, exact WIN1/admin HTTPS, IPv4/IPv6 restrictions; future overlay on APP1 alone.
-5. Use [initial load or scoped atomic replacement](reference/03-Linux-Network-and-Host-Policy.md#initial-load-and-persistence). Preserve other tables. Verify [rules/routes/services/reboot persistence](reference/03-Linux-Network-and-Host-Policy.md#verification-and-console-recovery); test HTTPS permit/deny when its listener exists.
+4. Prepare the [nftables policy](reference/03-Linux-Network-and-Host-Policy.md#nftables-policy) with default-deny input/forward, exact WIN1/admin HTTPS, IPv4/IPv6 restrictions and the future APP1-only overlay.
+5. Choose the [initial load](reference/03-Linux-Network-and-Host-Policy.md#initial-load-and-persistence) or [scoped atomic replacement](reference/03-Linux-Network-and-Host-Policy.md#scoped-atomic-replacement). Preserve other tables. [Verify rules, routes, services and reboot persistence](reference/03-Linux-Network-and-Host-Policy.md#verification-and-console-recovery). Test HTTPS permit/deny once it listens.
 
 **CHECK**
 
@@ -223,7 +224,7 @@ Configuration/state agree; forwarding is off. On failure restore saved files at 
 
 **Deliverable 02 > Windows and Linux Endpoint Controls**; **03 > Test Cases**, FWT-04. Include second observations.
 
-**Before Phase 3:** Compare directory/logon/DNS/policy/privilege evidence. Unperformed FWT-03/FWT-04 checks, including later app cases, stay **NOT TESTED**. Resolve failures through approved console recovery; directory rebuild/snapshot rollback needs separate supported recovery approval.
+**Before Phase 3:** Review directory, logon, DNS, policy and privilege evidence. Keep unperformed FWT-03/FWT-04 checks, including app cases, **NOT TESTED**. Use approved console recovery for failures. Directory rebuild or snapshot rollback needs separate supported recovery approval.
 
 ## Phase 3: Zero Trust Access Controls
 
@@ -319,7 +320,7 @@ APP1 root editor; DC1 **AD Users and Computers**; WIN1 browser.
 
 **STEPS**
 
-1. Confirm eli's maintenance access; save groups and change time against a separate observer clock.
+1. Confirm eli's maintenance access. Save the group file and record the change time against a separate observer clock.
 2. In **/etc/labapp/groups**, remove eli from **LabMaintainers**, keeping **LabReaders: ava eli** and [ownership/mode](reference/04-HTTPS-and-Application-Roles.md#application-permission-revocation).
 3. Under E approval remove eli on DC1: approved **LabMaintainers > Properties > Members**. Record both changes; AD membership does not update Apache.
 4. Disable cache; force a **/maintenance/** server request in eli's existing authenticated browser, then a fresh context with valid app credentials. Compare both with Apache logs/effective groups; check reader access.
@@ -347,7 +348,7 @@ Separate lab **Tailscale admin console > Access controls / Machines**; APP1 cons
 2. Save the lab policy; apply the [explicit deny-all baseline](reference/05-Tailscale-Policy.md#explicit-deny-all-baseline) before enrollment. Inspect every additive grant/ACL, SSH rule and tag owner; a blank policy is insufficient.
 3. [Enroll APP1 and the existing client](reference/05-Tailscale-Policy.md#device-enrollment) with separate approved lab identities. Inspect device records. Keep subnet routes, exit node, Tailscale SSH, Funnel, Serve and public sharing off; use no home/production identity or trust.
 4. Apply the [exact client-to-APP1 TCP 443 grant](reference/05-Tailscale-Policy.md#exact-https-only-grant); review enrolled addresses privately. [Map app.ad.lab.test to APP1's overlay address](reference/05-Tailscale-Policy.md#overlay-name-mapping-and-host-enforcement), approve only lab-root trust, and verify independent APP1 host rules/forwarding. FF-06 adds no DC1, WIN1, Proxmox or OPNsense access.
-5. [Test approved HTTPS, unauthorized identity and wrong listening port/resource](reference/05-Tailscale-Policy.md#allowed-and-denied-remote-tests). Use working positive controls and vendor/device/host/Apache evidence. A closed port or broken DNS is insufficient. The [Phase 5 mock dependency](#step-24---prepare-the-permitted-and-denied-network-checks) needs separate scope; do not broaden grants.
+5. [Test approved HTTPS, wrong listening port/resource and unauthorized identity](reference/05-Tailscale-Policy.md#allowed-and-denied-remote-tests) before revocation. Use working positive controls and vendor/device/host/Apache evidence. A closed port or broken DNS is insufficient. Use the [mock listener procedure](reference/06-Logs-Automation-and-Test-Tools.md#phase-5-mock-and-connection-tools) only under the applicable D/F/H/I/K scopes.
 6. Restore the approved context through its authorized sequence; confirm working HTTPS. Record time, then [remove the client grant and exact device authorization](reference/05-Tailscale-Policy.md#client-and-grant-revocation), keeping APP1 intact.
 7. Force new server requests in the existing browser and a fresh context. Both must fail; compare policy/device/log state, observed denial time and cache/connection-state treatment. Re-enrollment or permission restoration needs approval.
 
@@ -366,7 +367,7 @@ Only approved APP1 HTTPS works; unauthorized/wrong-port and both revoked context
 
 Explain five security events, repeat one useful local operation and demonstrate APP1 recovery. Coverage: FWR-07/08/09 and FWT-07/FWT-08/FWT-09. Use existing logs and the three workload VMs; HP runs physical OPNsense.
 
-**Before you start:** J approval covers logs/events; explicit L portions cover automation and recovery. Existing D/H/I/K scopes must cover any mock check; E/H/I cover any final permission changes. Keep raw evidence private. Recovery is **BLOCKED** until the [encrypted backend and private isolation plan](reference/07-Backup-and-Recovery.md#required-private-recovery-plan) are approved; no safe port/bridge mapping is supplied here.
+**Before you start:** J approval covers logs/events; explicit L portions cover automation and recovery. Existing D/F/H/I/K scopes must cover any mock check; E/H/I cover any final permission changes. Keep raw evidence private. Recovery is **BLOCKED** until the [encrypted backend and private isolation plan](reference/07-Backup-and-Recovery.md#required-private-recovery-plan) are approved; no safe port/bridge mapping is supplied here.
 
 <a id="step-20---open-the-logs-and-produce-five-benign-events"></a>
 
@@ -493,13 +494,13 @@ Approved lab clients and APP1 console. On the administrator computer open **HP O
 
 **STEPS**
 
-1. Confirm the applicable D/F/H/I and K scopes for the requests and any temporary changes. Record approval/date, lab source, identity, target, one port, expected policy, observer, stop condition and rollback. Use [Reference 06 > Deferred Phase 5 mock and connection tools](reference/06-Logs-Automation-and-Test-Tools.md#deferred-phase-5-mock-and-connection-tools).
+1. Confirm the applicable D/F/H/I and K scopes for the requests and any temporary changes. Record approval/date, lab source, identity, target, one port, expected policy, observer, stop condition and rollback. Use [Reference 06 > Phase 5 mock and connection tools](reference/06-Logs-Automation-and-Test-Tools.md#phase-5-mock-and-connection-tools).
 2. Establish working allowed controls. WIN1 reaches APP1 HTTPS, and the dedicated administrator reaches the named management services. Confirm each target is listening before attempting its deny case.
 3. For **FWT-01**, use APP1 as the lab-only protected-boundary mock. Use Reference 06's exact logged block and compare its rule hit. Verify independent home/production isolation separately by inspecting cables, adapters, IPv4/IPv6 routes, egress and trust. Keep test traffic on lab-owned targets.
 4. For **FWT-02**, use DC1 to APP1 TCP 443 for unlisted inter-zone denial and WIN1 to Proxmox TCP 8006 for ordinary-user management denial. Require a network policy block before login.
-5. For **FWT-06**, verify approved remote HTTPS and the dedicated administrator's TCP access to the approved temporary APP1 listener. Use that known-listening wrong port for the remote denial. Keep the Tailscale grant limited to TCP 443 and host/firewall permissions within the approved scope.
-6. Make one bounded request per approved case. Match source, destination, port and time to the effective policy and its log or counter. For the overlay, compare Tailscale grants and device state with APP1 host rules and counters. Identify which control actually enforced the denial.
-7. Remove only the named temporary block, alias, permits and listener as described in Reference 06. Compare restored settings with the saved baseline, confirm the mock port is closed and recheck normal HTTPS, management and isolation.
+5. For **FWT-06**, review [pre-revocation evidence](#e-configure-test-and-revoke-tailscale-access) for approved remote HTTPS, the administrator's TCP access to the temporary APP1 listener and remote denial on that known-listening wrong port. Keep the Tailscale grant limited to TCP 443. Missing evidence stays NOT TESTED. Keep revoked permissions in place unless restoration is separately approved.
+6. For each new case, make one bounded request. Match source, destination, port and time to the effective policy and its log or counter. For the overlay, compare Tailscale grants and device state with APP1 host rules and counters. Identify which control actually enforced the denial.
+7. Remove only the named temporary block, alias, permits and listener used in the test, as described in Reference 06. Compare restored settings with the saved baseline, confirm the mock port is closed and recheck normal HTTPS, management and isolation.
 
 **CHECK**
 
@@ -521,7 +522,7 @@ Each denial has a working allowed control and matching policy evidence. A timeou
 **STEPS**
 
 1. Filter **Test ID**. Read its **OVERALL** row, every numbered child and the matching Test Plan entry. Complete all 91 mandatory subchecks.
-2. Confirm approval, scope and a safe target. For FWT-02 verify one Dell Proxmox host, one separate physical HP OPNsense firewall and exactly three workload VMs (DC1, WIN1 and APP1). Cite the [Architecture](../architecture/ARCHITECTURE.md#physical-and-virtual-topology) and [capacity budget](../architecture/ARCHITECTURE.md#initial-capacity-budget) in the expected result.
+2. Confirm approval, scope and a safe target. In FWT-02.01 verify one Dell Proxmox host, one separate physical HP OPNsense firewall and exactly three workload VMs (DC1, WIN1 and APP1). Use the [approved topology](../architecture/ARCHITECTURE.md#physical-and-virtual-topology) and [capacity budget](../architecture/ARCHITECTURE.md#initial-capacity-budget) for the expected result. Retain every subcheck ID.
 3. Execute only approved actions. Record expected and actual results, operator/date/version, private evidence references and second observations. Preserve failures and link each approved correction and retest in **04 > Issue Log**.
 4. Use **PASS** for verified results with all mandatory evidence, **FAIL** for executed mismatches, and **NOT TESTED** for blocked, unperformed or unverified checks. **NOT APPLICABLE** never waives a mandatory check. **OVERALL** passes only when every mandatory child passes, fails if any fails and otherwise stays NOT TESTED.
 

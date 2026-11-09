@@ -644,7 +644,7 @@ class Builder:
                 story.extend(self.blocks(token["children"], depth + 1))
             elif kind in {"blank_line", "thematic_break"}:
                 continue
-            elif kind == "block_html" and self.source in {ASSIGNMENT, ARCHITECTURE, GUIDE} and re.fullmatch(
+            elif kind == "block_html" and self.source in {ASSIGNMENT, ARCHITECTURE, GUIDE, MONITORING_REFERENCE} and re.fullmatch(
                     r'(?:<a id="[a-z][a-z0-9-]*"></a>\s*)+', token.get("raw", "").strip()):
                 self.pending_anchors.extend(re.findall(r'<a id="([a-z][a-z0-9-]*)"></a>', token["raw"]))
             elif kind == "block_html" and token.get("raw", "").lstrip().startswith("<!--"):
@@ -853,7 +853,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
     if source.lower().startswith(REPORT_PREFIXES):
         raise ValueError("Task reports are Markdown only; docs/reports/ is excluded from PDF generation")
     tokens = MARKDOWN(content.decode("utf-8"))
-    if source in {ASSIGNMENT, ARCHITECTURE, GUIDE}:
+    if source in {ASSIGNMENT, ARCHITECTURE, GUIDE, MONITORING_REFERENCE}:
         for token in tokens:
             if token["type"] == "paragraph":
                 raw = "".join("\n" if c["type"] == "softbreak" else c.get("raw", "")
