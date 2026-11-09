@@ -786,7 +786,7 @@ class PdfArtifactTests(unittest.TestCase):
 
         current_report = (ROOT / report).read_bytes()
         without_row, row_count = re.subn(rb"^\| T9D\.3 - Acceptance Criteria \|[^\n]*\n", b"", current_report, flags=re.M)
-        outside_section, section_count = re.subn(rb"^#### T9D\.3 - Acceptance Criteria\n.*?(?=^### T9E -)",
+        outside_section, section_count = re.subn(rb"^#### T9D\.3 - Acceptance Criteria\n.*?(?=^#{3,4} )",
                                                 b"", without_row, flags=re.M | re.S)
         baseline = re.sub(rb"^\| T9D\.3 - Acceptance Criteria \|[^\n]*\n", b"", published(report), flags=re.M)
         self.assertEqual((row_count, section_count), (1, 1))
