@@ -655,14 +655,12 @@ class Builder:
 
 
 class PreparedInfrastructureBuilder(Builder):
-    """Accepted sample style for introduction, Phases 1-4 and their references."""
+    """Accepted sample style for the guide and its technical references."""
 
     def __init__(self, source: str, sources: set[str]):
         super().__init__(source, sources)
-        self.legacy_style, self.legacy_cell = self.style, self.cell_style
-        self.prepared = True
         self.identity_phase = False
-        self.access_phase = False
+        self.compact_guide = False
         self.monitoring_phase = False
         self.style = ParagraphStyle("prepared-body", fontName="Vera", fontSize=10.5, leading=13.8,
                                     spaceAfter=5, allowWidows=0, allowOrphans=0,
@@ -671,15 +669,13 @@ class PreparedInfrastructureBuilder(Builder):
                                          spaceAfter=0)
 
     def heading(self, token: dict, cover: bool = False) -> Paragraph:
-        if not self.prepared:
-            return super().heading(token, cover)
         level = token["attrs"]["level"]
         title = plain(token["children"])
         size = {1: 21, 2: 13, 3: 11.2}.get(level, 10.5)
         style = ParagraphStyle("prepared-heading", parent=self.style, fontName="Vera-Bold",
                                fontSize=size, leading=size * 1.23, spaceBefore=8 if level > 1 else 0,
                                spaceAfter=6, keepWithNext=1, textColor=colors.HexColor("#16364f"))
-        if self.source == GUIDE and (self.access_phase or self.monitoring_phase) and level == 3:
+        if self.source == GUIDE and self.compact_guide and level == 3:
             style.spaceBefore, style.spaceAfter = 6, 4
         paragraph = Paragraph(inline(token["children"], self.source, self.sources), style)
         paragraph._anchor, paragraph._level = anchor_for(title, self.anchors), level
@@ -694,27 +690,31 @@ class PreparedInfrastructureBuilder(Builder):
                                      fontSize=9.2, leading=12, spaceAfter=0,
                                      textColor=colors.HexColor("#16364f"))
         body_style = ParagraphStyle("prepared-result", parent=self.style, spaceAfter=0)
+        compact = self.identity_phase or self.compact_guide
         panel = Table([[Paragraph(label, label_style),
                         Paragraph(inline(token["children"], self.source, self.sources), body_style)]],
                       colWidths=[65, CONTENT_WIDTH - 65], hAlign="LEFT",
-                      spaceBefore=3 if self.identity_phase or self.access_phase or self.monitoring_phase else 5,
-                      spaceAfter=4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6)
+                      spaceBefore=3 if compact else 5,
+                      spaceAfter=4 if compact else 6)
         panel.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f0f3f5")),
             ("LINEBEFORE", (0, 0), (0, -1), 1.4, colors.HexColor("#16364f")),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("TOPPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if self.identity_phase or self.access_phase or self.monitoring_phase else 6),
+            ("TOPPADDING", (0, 0), (-1, -1), 4 if compact else 6),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if compact else 6),
             ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8),
         ]))
         return panel
 
     def table(self, token: dict) -> list:
-        if self.source == GUIDE and (self.access_phase or self.monitoring_phase):
-            headers = [plain(cell["children"]) for cell in token["children"][0]["children"]]
-            widths = ([44, 62, 142, 256] if headers == ["Case", "Account", "Page", "Expected HTTP result"]
-                      else [180, 324] if self.monitoring_phase and headers == ["Event", "Action and matching source"]
-                      else None)
+        if self.source == GUIDE and self.compact_guide:
+            headers = tuple(plain(cell["children"]) for cell in token["children"][0]["children"])
+            widths = {
+                ("Case", "Account", "Page", "Expected HTTP result"): [44, 62, 142, 256],
+                ("Event", "Action and matching source"): [180, 324],
+                ("Test / requirement", "Purpose and main evidence"): [99, 405],
+                ("Filename", "What to complete", "Main evidence source"): [240, 172, 92],
+            }.get(headers)
             if widths:
                 rows = [token["children"][0]["children"]] + [row["children"] for row in token["children"][1]["children"]]
                 cells = [[Paragraph(("<b>" if n == 0 else "") + inline(cell["children"], self.source, self.sources)
@@ -730,7 +730,7 @@ class PreparedInfrastructureBuilder(Builder):
                     ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5),
                 ]))
                 return [table]
-        if not self.prepared or self.source not in TECHNICAL_REFERENCES:
+        if self.source not in TECHNICAL_REFERENCES:
             return super().table(token)
         head = token["children"][0]["children"]
         if len(head) != 2:
@@ -754,21 +754,12 @@ class PreparedInfrastructureBuilder(Builder):
         return [CondPageBreak(sum(table._rowHeights[:2]) + 12), table]
 
     def blocks(self, tokens: list[dict], depth: int = 0, keep_procedures: bool = True) -> list:
-        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 2:") for t in tokens):
-            self.identity_phase = True
-        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 3:") for t in tokens):
-            self.access_phase = True
-            self.identity_phase = False
-        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 4:") for t in tokens):
-            self.access_phase = False
-            self.identity_phase = False
-            self.monitoring_phase = True
-        if any(t["type"] == "heading" and plain(t["children"]).startswith("Phase 5:") for t in tokens):
-            self.prepared = False
-            self.monitoring_phase = False
-            self.style, self.cell_style = self.legacy_style, self.legacy_cell
-        if not self.prepared:
-            return super().blocks(tokens, depth)
+        phase = next((plain(t["children"]) for t in tokens if t["type"] == "heading"
+                      and plain(t["children"]).startswith("Phase ")), "")
+        if self.source == GUIDE and phase:
+            self.identity_phase = phase.startswith("Phase 2:")
+            self.monitoring_phase = phase.startswith("Phase 4:")
+            self.compact_guide = phase.startswith(("Phase 3:", "Phase 4:", "Phase 5:"))
         tokens = [t for t in tokens if t["type"] != "blank_line"]
         story, i = [], 0
         while i < len(tokens):
@@ -817,7 +808,7 @@ class PreparedInfrastructureBuilder(Builder):
                     i += 2
                     continue
                 if label in {"WHERE", "STEPS"}:
-                    if self.source == GUIDE and (self.access_phase or self.monitoring_phase) and label == "WHERE":
+                    if self.source == GUIDE and self.compact_guide and label == "WHERE":
                         if i + 1 >= len(tokens) or tokens[i + 1]["type"] != "paragraph":
                             raise ValueError("Compact WHERE must introduce a target paragraph")
                         location = '<b><font color="#16364f">WHERE</font></b>  ' + inline(tokens[i + 1]["children"], self.source, self.sources)

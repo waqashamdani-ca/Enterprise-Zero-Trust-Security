@@ -481,138 +481,122 @@ Backup/restore output, separate clock, file integrity and HTTPS allow/deny agree
 
 ## Phase 5: Validation and Final Submission
 
-**Outcome:** ten fully evidenced engineering results, five clear submissions and a separate owner acceptance decision. Approvals: K validation and remaining L closeout. Test: FWT-10; requirement: FWR-10. Earlier observations can be reused only while they describe the current configuration and meet every mandatory check.
+Verify the ten tests, complete the five submissions and record the owner's decision. Confirm stage K validation and the remaining stage L closeout approval. Reuse earlier evidence only if it covers the current configuration and every applicable check.
 
-### Step 24 - Prepare the permitted and denied network checks
+<a id="step-24---prepare-the-permitted-and-denied-network-checks"></a>
 
-**Purpose and location:** under the exact D/H/I/K validation scope, use existing lab guests and listeners to distinguish a real deny from a broken service. These are subchecks of FWT-01/FWT-02/FWT-06, not extra exercises or permanent resources. Freeze source, target, identity, single destination port, expected result, observer, stop condition and cleanup before each check.
+### A. Prepare and verify network tests
 
-1. Establish a working allowed control: WIN1 opens APP1 HTTPS and the dedicated administrator opens the lab management interfaces. Compare the active listener to the relevant permit/policy. If the control fails, diagnose it before the negative test.
-2. For FWT-01's protected-boundary mock, use **APP1's lab address**, never a real protected address. Under the approved temporary rule scope, add a separate **MOCK_PROTECTED** alias containing that lab address and a logged Corporate rule blocking **WIN1 > MOCK_PROTECTED > TCP 443**, ahead of FF-03. Keep real protected networks physically absent. Make the one frozen request, compare its denial with this exact rule/counter, remove only the temporary mock rule/alias, and confirm normal FF-03 access again. The real isolation conclusion also requires cable/routes/trust review; the mock is one behavioral observation.
-3. For FWT-02 unlisted inter-zone access, use DC1 as the source to the known listening APP1 TCP 443 while only WIN1 has FF-03 permission. For ordinary-user management denial, use WIN1 to Proxmox TCP 8006 with the dedicated-admin control working. Compare the intended network/host deny, not just a failed password prompt.
-4. For FWT-06's wrong listening port, temporarily configure Apache's existing APP1 service to listen on one approved unused mock port such as **8443**. This example is conditional on that exact port/scope approval. Save the site/ports files, add the following separate temporary file in the approved Ubuntu Apache configuration directory, enable it, syntax-check and reload as in Step 16. No new page, account or software is needed.
+**WHERE**
 
-**CONFIGURATION CHANGE - APP1 root editor, temporary /etc/apache2/conf-available/lab-mock.conf; approved 8443 mock only.** Configuration content, not commands; reuse the synthetic document tree and deny page content. The positive control needs only a listening TCP connection:
+Approved lab clients and APP1 console. On the administrator computer open **HP OPNsense > Firewall > Log Files > Live View**.
 
-```apache
-Listen 8443
-<VirtualHost *:8443>
-    ServerName app.ad.lab.test
-    DocumentRoot "/srv/labapp"
-    <Directory "/srv/labapp">
-        Require all denied
-    </Directory>
-</VirtualHost>
-```
+**STEPS**
 
-**Check before enabling:** the port is unused, the exact temporary listener has approval, and no new Tailscale grant or ordinary-user permit is added.
+1. Confirm the applicable D/F/H/I and K scopes for the requests and any temporary changes. Record approval/date, lab source, identity, target, one port, expected policy, observer, stop condition and rollback. Use [Reference 06 > Deferred Phase 5 mock and connection tools](reference/06-Logs-Automation-and-Test-Tools.md#deferred-phase-5-mock-and-connection-tools).
+2. Establish working allowed controls. WIN1 reaches APP1 HTTPS, and the dedicated administrator reaches the named management services. Confirm each target is listening before attempting its deny case.
+3. For **FWT-01**, use APP1 as the lab-only protected-boundary mock. Use Reference 06's exact logged block and compare its rule hit. Verify independent home/production isolation separately by inspecting cables, adapters, IPv4/IPv6 routes, egress and trust. Keep test traffic on lab-owned targets.
+4. For **FWT-02**, use DC1 to APP1 TCP 443 for unlisted inter-zone denial and WIN1 to Proxmox TCP 8006 for ordinary-user management denial. Require a network policy block before login.
+5. For **FWT-06**, verify approved remote HTTPS and the dedicated administrator's TCP access to the approved temporary APP1 listener. Use that known-listening wrong port for the remote denial. Keep the Tailscale grant limited to TCP 443 and host/firewall permissions within the approved scope.
+6. Make one bounded request per approved case. Match source, destination, port and time to the effective policy and its log or counter. For the overlay, compare Tailscale grants and device state with APP1 host rules and counters. Identify which control actually enforced the denial.
+7. Remove only the named temporary block, alias, permits and listener as described in Reference 06. Compare restored settings with the saved baseline, confirm the mock port is closed and recheck normal HTTPS, management and isolation.
 
-**CONFIGURATION CHANGE followed by READ-ONLY - APP1 console, sudo/root, temporary mock scope.** Enable only that named configuration and verify syntax/listening. No placeholders once 8443 is approved:
+**CHECK**
 
-```sh
-sudo a2enconf lab-mock
-sudo apachectl configtest
-sudo systemctl reload apache2
-sudo ss -lntp
-```
+Each denial has a working allowed control and matching policy evidence. A timeout, stopped listener, broken DNS or failed login alone leaves the denial unverified. Record an unattributed denial as NOT TESTED. On failure stop and use the approved console rollback.
 
-**Check:** proceed to reload only after Syntax OK. Confirm Apache listens on 8443; if parsing fails, disable the named mock configuration and restore the saved files before reloading.
+**RECORD**
 
-5. Use Step 12's console-only replacement transaction to add **ip saddr LAB_ADMIN_IP tcp dport 8443 counter accept** after the physical-source HTTPS permit and before the input chain's closing brace; retain the tailscale0 drop and final drop policy. Replace the source with the exact dedicated administrator IPv4 address. OPNsense's corresponding temporary FF-05 Management permit must name the same source/destination/port. Keep the vendor TCP-443-only grant unchanged. Confirm the administrator reaches the listener, then make the frozen remote wrong-port request; it must be denied. Match the actual vendor/host rule state/counter; do not claim one layer caused the deny without evidence.
-6. After the recorded check, disable only **lab-mock** with the Ubuntu **a2disconf lab-mock** service helper, syntax-check, reload and confirm 8443 is no longer listening. Remove the exact temporary host/firewall permits through the saved transaction. Recheck production/home isolation and normal APP1 HTTPS. Preserve the temporary-rule evidence privately; add no permanent fifth VM or fourth zone.
+**Deliverable 03 > Test Cases**, FWT-01/02/06 and **Evidence Index**. Link controls, request outcomes, second observations and cleanup. Cross-reference **01 > Allowed Network Flows** and log issues in **04 > Issue Log**.
 
-**READ-ONLY bounded connection check - approved Windows lab source, local PowerShell, standard user.** Set **$LabApprovedTarget** privately to the one approved lab-owned address/name and **$LabApprovedPort** to its single frozen port. This makes a TCP connection attempt only; it is not a scan or a protected-network probe:
+<a id="step-25---execute-and-record-the-ten-tests"></a>
+<a id="historical-requirement-and-test-transition"></a>
 
-```powershell
-$connection = [System.Net.Sockets.TcpClient]::new()
-try {
-    $attempt = $connection.ConnectAsync($LabApprovedTarget, $LabApprovedPort)
-    if (-not $attempt.Wait(5000)) { throw 'Lab connection timed out.' }
-    'TCP CONNECTED'
-} catch {
-    'NO TCP CONNECTION: ' + $_.Exception.Message
-} finally {
-    $connection.Dispose()
-}
-```
+### B. Complete the ten formal tests
 
-**Check:** the positive control prints TCP CONNECTED; a denied attempt prints NO TCP CONNECTION and has matching intended policy/log/counter evidence. A timeout alone remains inconclusive. Do not supply a home/production address, loop through ports or rerun repeatedly to force a result.
+**WHERE**
 
-**If it fails:** preserve the observation, restore only the named temporary configuration under the approved plan and recheck normal access. Missing approval or working listener means NOT TESTED, not permission to broaden access.
+**Deliverable 03 > Test Cases** and the [Test Plan](../testing/TEST-PLAN.md).
 
-### Step 25 - Execute and record the ten tests
+**STEPS**
 
-**Purpose and location:** in **03-Security-Monitoring-and-Testing.xlsx / Test Cases**, turn observed behavior into an accurate engineering record. The workbook already contains the approved methods and mandatory child checks; do not create another result template in this guide.
+1. Filter **Test ID**. Read its **OVERALL** row, every numbered child and the matching Test Plan entry. Complete all 91 mandatory subchecks.
+2. Confirm approval, scope and a safe target. For FWT-02 verify one Dell Proxmox host, one separate physical HP OPNsense firewall and exactly three workload VMs (DC1, WIN1 and APP1). Cite the [Architecture](../architecture/ARCHITECTURE.md#physical-and-virtual-topology) and [capacity budget](../architecture/ARCHITECTURE.md#initial-capacity-budget) in the expected result.
+3. Execute only approved actions. Record expected and actual results, operator/date/version, private evidence references and second observations. Preserve failures and link each approved correction and retest in **04 > Issue Log**.
+4. Use **PASS** for verified results with all mandatory evidence, **FAIL** for executed mismatches, and **NOT TESTED** for blocked, unperformed or unverified checks. **NOT APPLICABLE** never waives a mandatory check. **OVERALL** passes only when every mandatory child passes, fails if any fails and otherwise stays NOT TESTED.
 
-1. Open **Test Cases**, enable the existing table's filter and select a **Test ID**. Read its **OVERALL** row and every numbered child row, along with the [authoritative Test Plan](../testing/TEST-PLAN.md). Freeze actual source/target/user/version, approval/date, action/rate, stop/rollback and evidence ID in the linked private record.
-2. Perform the approved action, compare the outcome with the expected result and obtain the separate observation described below. Enter actual result, evidence, operator/date/version and defect/retest references in the existing columns. Never enter a planned outcome as an actual result.
-
-| Test / requirement | What to do and compare |
+| Test / requirement | Purpose and main evidence |
 | --- | --- |
-| FWT-01 / FWR-01 | Steps 1-6/24: compare physical/firmware inventory to readiness records; inspect cables, bridges, other adapters, routes/IPv6, trust/data/credential isolation and disconnected or approved independent egress; prove the listening mock deny with its matching policy evidence. |
-| FWT-02 / FWR-02 | Count one host/four VMs/three zones and compare measured capacity/reserves. Verify FF-01-FF-08, named admin/MFA limits, console recovery, HTTPS permit, unlisted/ordinary-user management denial and same-zone host rules against actual sessions/logs. |
-| FWT-03 / FWR-03 | Steps 8-10/15-17: inspect directory/DNS/policy/counts and standard logon; run C01-C06 with valid app credentials. Compare app file/log decisions, then prove removed eli maintenance permission denies existing/fresh requests and record actual timing. |
-| FWT-04 / FWR-04 | Steps 11-12: inspect supported builds, updates, antivirus, applied policy, host firewalls, rights, single NICs/APP1 overlay exception, listeners/forwarding. Compare a harmless standard-user admin denial with the approved admin control. |
-| FWT-05 / FWR-05 | Steps 13-16: inspect encrypted offline CA custody and leaf chain/SAN/serverAuth/constraints/dates/remaining validity. Compare the normal trusted browser session with the otherwise working client's pre-import rejection. No warning bypass or domain-time change. |
-| FWT-06 / FWR-06 | Steps 18-19/24: inspect separate tailnet/MFA/recovery/device identity, narrow additive policy, no routes/shares/SSH/Funnel/Serve and effective host/DNS rules. Demonstrate approved HTTPS, unauthorized identity, wrong listening-port/resource and existing/new revoked access, with actual times/state treatment. |
-| FWT-07 / FWR-07 | Steps 20-21: match all five event categories to real actions, source/observer times and separate policy/group observations; inspect access/rotation and explain the one denial. Keep private source records. |
-| FWT-08 / FWR-08 | Step 22: review target/private-path guard, run the one operation, compare output with OS storage, repeat and check target/path rejection. Compare before/after state; only the intended summary may change. |
-| FWT-09 / FWR-09 | Step 23: inspect encrypted off-compute backup scope/key access/time/manifest, original-off/disconnected-copy state and inactive copied overlay. Compare restore output to independent time, hashes/content and actual isolated HTTPS allow/deny; state exclusions. |
-| FWT-10 / FWR-10 | Steps 25-27: check every requirement/mandatory result/evidence/defect, five files and unchanged rubric; complete sensitive-data/publication review and engineering cutoff/verifier. Verify actual publication through the linked governance workflow and keep owner UAT separate. |
+| FWT-01 / FWR-01 | **Readiness and [independent isolation](#c-verify-isolation-and-required-network-access).** Inventory, cables, routes, trust and the protected-boundary mock block. |
+| FWT-02 / FWR-02 | **Management, Corporate and Restricted.** Verify [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-matrix), default deny and restricted management. Use measured capacity/reserves, console recovery, physical HP routing, same-zone host rules and allow/deny sessions. |
+| FWT-03 / FWR-03 | **Directory roles, [six application cases (C01-C06)](#c-test-the-six-application-access-cases) and [revocation](#d-revoke-an-application-permission).** Logon records, Apache decisions and existing/fresh request times. |
+| FWT-04 / FWR-04 | **[Endpoint protection](#phase-2-identity-and-endpoint-security) and least privilege.** Builds, updates, antivirus, host rules and standard/admin actions. |
+| FWT-05 / FWR-05 | **[HTTPS trust, name and validity](#a-create-and-verify-https-certificates).** CA/leaf inspection and trusted/untrusted browser outcomes. |
+| FWT-06 / FWR-06 | **[Remote allow, identity/port denial and revocation](#e-configure-test-and-revoke-tailscale-access).** Grants, device/host policy, sessions and revocation times. |
+| FWT-07 / FWR-07 | **[Five security event categories](#a-collect-five-security-events) and one investigation.** DC1, HP and Apache logs, clock comparison and matched policy. |
+| FWT-08 / FWR-08 | **[One repeatable capacity automation](#c-run-the-capacity-summary-automation).** Output, OS comparison, safe rejections and before/after state. |
+| FWT-09 / FWR-09 | **[One encrypted off-compute APP1 backup and isolated restore](#d-back-up-app1-and-restore-it-in-isolation).** Archive/key custody, manifest, separate clock, HTTPS role checks and cleanup. |
+| FWT-10 / FWR-10 | **[Handover and sanitized publication](#d-review-evidence-submit-and-obtain-owner-acceptance).** Ten traceable results, five submissions, manual review and GitHub read-back. |
 
-3. Mark **PASS** only when the actual result and all mandatory evidence/second observations match. Mark an observed mismatch **FAIL**. Mark an unexecuted, blocked or unverified mandatory check **NOT TESTED**. A mandatory test cannot be waived with NOT APPLICABLE.
-4. Set the OVERALL row to PASS only after every mandatory child passes. Preserve failures and use **04 / Issue Log** for correction/retest. Do not change an expected deny into an allow or silently replace the original evidence.
-5. In **03 / Requirements Coverage**, connect all ten FWR rows to the final test/evidence/defect references. Use **Evidence Index** for private-original references and separately reviewed public artifacts; raw paths/addresses never become public links.
+**CHECK**
 
-**Check:** the ten OVERALL rows and every mandatory child have an accurate verdict and traceable evidence. A second observation can be another log/UI/policy view; it is not independent human sign-off. Any missing mandatory evidence blocks engineering completion, and a critical safety failure blocks acceptance regardless of score.
+Every child has a verdict, evidence and a second technical observation.
 
-**If it fails:** leave the affected result FAIL or NOT TESTED, explain the issue and obtain bounded remediation/retest approval. Continue only work whose dependencies remain safe; do not erase the failed attempt.
+**RECORD**
 
-### Step 26 - Finish the five Office deliverables
+**Deliverable 03 > Requirements Coverage / Evidence Index**. Link results and defects to private evidence. See the [coverage index](../testing/TEST-PLAN.md#coverage-index) and [legacy IDs](../governance/HISTORICAL-REQUIREMENT-TRANSITION.md).
 
-**Purpose and location:** in the private working copies of the five released templates, assemble the existing records into a clear submission. Keep detailed test execution in 03 and cross-reference it elsewhere.
+<a id="step-26---finish-the-five-office-deliverables"></a>
+<a id="required-lab-deliverables"></a>
 
-1. **01-Lab-Environment-and-Architecture.xlsx:** finish **Hardware & Readiness**, **Virtual Machines**, **Network Zones**, **Allowed Network Flows** and **Resource Allocation**. Replace planned assumptions with observed fields only after verification, preserve procurement versus installation status and reference the private topology/public sanitized diagram appropriately.
-2. **02-Identity-and-Zero-Trust-Implementation.docx:** complete **Implementation Overview**, **Active Directory and User Roles**, **Windows and Linux Endpoint Controls**, **Application Accounts and Permissions**, **HTTPS Certificate Configuration**, **Six Application Access Tests**, **Tailscale Remote Access**, **Access Revocation**, and **Implementation Results and Limitations**. Summarize configuration and link execution evidence in 03; do not paste password files/keys.
-3. **03-Security-Monitoring-and-Testing.xlsx:** complete **Security Events**, **Denied Access Investigation**, **Test Cases**, **Requirements Coverage**, **Automation Verification**, **Backup & Restore**, and **Evidence Index**. Leave **Owner Acceptance** PENDING until explicit owner confirmation; test PASS does not fill that decision.
-4. **04-Troubleshooting-and-Lessons.xlsx / Issue Log:** record actual problems, impact/cause, approved correction, verification/retest and practical lesson. Preserve unresolved items and original failure references; do not invent a troubleshooting story.
-5. **05-Final-Project-Submission.docx:** complete **Executive Summary**, **Project Objectives**, **Architecture Overview**, **Implementation Summary**, **Security Testing Results**, **Key Findings**, **Challenges and Lessons Learned**, **Project Limitations**, **Final Evaluation**, and **Supporting Deliverables and Evidence**. Explain what works and what remains blocked, citing the owning records instead of copying their tables.
-6. In **05 / Final Evaluation**, apply only the assignment's existing [100-point rubric](../assignments/PROJECT-ASSIGNMENT.md#success-criteria): 25 infrastructure/network, 25 identity/access, 20 monitoring/operations, 20 testing/recovery and 10 documentation/submission. Record actual evaluator/date, engineering verifier and evidence cutoff. Unsupported plans earn no implementation credit.
+### C. Complete the five Office deliverables
 
-**Check:** exact filenames and worksheet/section names match the blank templates, all claims point to observed evidence, limits are visible and raw private records remain outside Git. The separate project-level [final report](../final-report/FINAL-REPORT.md) remains a template until its own real evidence/reporting is authorized.
+**WHERE**
 
-**If it fails:** fix the editable working record and trace its claim to current evidence. A blank template, screenshot placeholder or total score cannot replace a mandatory test or owner acceptance.
+Private copies of the five files, available as blank templates in the [deliverable library](../README.md#editable-lab-deliverable-templates).
 
-### Step 27 - Review evidence, submit and obtain owner acceptance
+**STEPS**
 
-**Purpose and location:** at the approved publication workstation under L closeout scope, release only reviewed public-safe work and ask the owner to assess the intended workflows. Follow the engineering [publication/build instructions](../governance/DOCUMENTATION-BUILD.md) and [repository workflow](../../AGENTS.md#git-and-github-conventions); internal automation/branch mechanics belong there.
+1. Complete every worksheet or section below. Use observed results and link detailed evidence in its owning record.
+2. In **05 > Final Evaluation**, apply the [assignment rubric](../assignments/PROJECT-ASSIGNMENT.md#success-criteria). Infrastructure/Network 25, Identity/Access 25, Monitoring/Operations 20, Testing/Recovery 20, Documentation/Submission 10. Total 100.
+3. Enter evaluator/date and engineering verifier/evidence cutoff. Award credit only for verified implementation.
 
-1. Review the whole proposed submission, not only the changed paragraph: filenames, document properties, hidden sheets/comments, screenshots, links and proposed Git history. Keep tokens/passwords, keys, hashes of passwords, actual addresses, private inventory, corporate details, raw logs/captures, backups and filled private working files outside the public set. Publish only explicitly reviewed sanitized summaries/artifacts. An ignore rule does not remove previously tracked content.
-2. Capture evidence narrowly: show the relevant action/result and sanitized rule/group context. Keep source timestamps and private originals intact; review a separate redacted copy, including metadata. Do not alter the original to make a result look successful. Record reviewer/date and redaction/limitations in **03 / Evidence Index**.
-3. Complete the linked documentation/report, Office-preservation, link, PDF/rebuild and focused checks for the proposed publication. Inspect the changed PDFs visually. Resolve findings and verify actual PR/CI/merge and local/remote synchronization using the established workflow; record only observed outcomes in the existing evidence record. Documentation checks do not validate lab controls.
-4. Give the owner the five reviewed files and evidence index. In **03 / Owner Acceptance**, have the owner assess analyst report access, engineer maintenance access, unassigned/revoked denial, remote behavior and understandable recovery/evidence records. Record usability observations, limits/follow-ups, reviewer/date and explicit confirmation reference.
-5. Keep engineering verdicts, rubric scoring and owner UAT distinct. UAT remains **PENDING** until that confirmation is supplied. Stop at the authorized boundary; do not begin another stage or project task from a publication result.
+| Filename | What to complete | Main evidence source |
+| --- | --- | --- |
+| `01-Lab-Environment-and-Architecture.xlsx` | Hardware & Readiness, Virtual Machines, Network Zones, Allowed Network Flows, Resource Allocation | Phase 1 records for Dell, physical HP and three workload VMs |
+| `02-Identity-and-Zero-Trust-Implementation.docx` | All nine sections from Implementation Overview through Implementation Results and Limitations | Phases 2-3 settings and tests in 03 |
+| `03-Security-Monitoring-and-Testing.xlsx` | Security Events, Denied Access Investigation, Test Cases, Requirements Coverage, Automation Verification, Backup & Restore, Evidence Index, Owner Acceptance | Private observations and evidence IDs |
+| `04-Troubleshooting-and-Lessons.xlsx` | Issue Log | Failures, approved fixes and retests |
+| `05-Final-Project-Submission.docx` | All ten sections from Executive Summary through Supporting Deliverables and Evidence | Findings and limitations from 01-04 |
 
-**Check:** the public set contains only reviewed safe material, FWT-10 has its actual required evidence, and owner acceptance accurately records the owner's decision. No CI result, score or second tool observation supplies that decision.
+**CHECK**
 
-**If it fails:** stop publication on a sensitive-data finding, retain private incident evidence and use the owner's authorized revoke/rotate process if a secret was exposed. History rewriting needs separate approval. For an editorial/build defect, correct the editable source and regenerate; preserve finalized historical reports and raw evidence.
+All five files have traceable evidence and accurate limits. Correct unsupported claims or broken links before submission.
 
-### Phase 5 checkpoint and recovery
+**RECORD**
 
-Use the [acceptance criteria](../testing/ACCEPTANCE-CRITERIA.md): all mandatory tests/subchecks need evidence and PASS for engineering completion; unresolved critical safety issues block acceptance. Owner UAT stays a separate explicit decision. Recover publication errors through reviewed corrections/reverts preserving immutable records; do not rewrite history or expand lab scope to close a report.
+**Deliverable 05 > Project Limitations** and **Supporting Deliverables and Evidence**.
 
-## Required lab deliverables
+<a id="step-27---review-evidence-submit-and-obtain-owner-acceptance"></a>
+<a id="phase-5-checkpoint-and-recovery"></a>
 
-These five files are **available as blank templates** in the [deliverable library](../README.md#editable-lab-deliverable-templates). Work privately, record actual results only after execution and publish only reviewed summaries. The number shorthand used throughout this manual refers to this table.
+### D. Review evidence, submit and obtain owner acceptance
 
-| Filename | Owning record |
-| --- | --- |
-| `01-Lab-Environment-and-Architecture.xlsx` | Hardware, four VMs, three zones, flows and capacity |
-| `02-Identity-and-Zero-Trust-Implementation.docx` | Identity, endpoints, HTTPS, app roles and remote configuration |
-| `03-Security-Monitoring-and-Testing.xlsx` | Events, tests, evidence, automation, recovery and owner acceptance |
-| `04-Troubleshooting-and-Lessons.xlsx` | Real issues, corrections, retests and lessons |
-| `05-Final-Project-Submission.docx` | Results summary, rubric, limitations and supporting records |
+**WHERE**
 
-## Historical requirement and test transition
+Approved publication workstation and **Deliverable 03 > Owner Acceptance**.
 
-The [historical mapping appendix](../governance/HISTORICAL-REQUIREMENT-TRANSITION.md) preserves the earlier requirement/test labels for readers following old records. It is outside the practical lab instructions and adds no current task or test. Use the current [coverage index](../testing/TEST-PLAN.md#coverage-index) for the ten FWR/FWT mappings.
+**STEPS**
+
+1. Inspect every public candidate's name, metadata, hidden content, screenshots and links. Review the staged diff and new Git history. Keep raw logs, actual addresses, inventories, credentials, private keys, working files and backup data outside Git. Preserve private originals.
+2. Run the [documentation checks](../governance/DOCUMENTATION-BUILD.md#validation-and-visual-review) and inspect changed PDFs. Publish only reviewed sanitized artifacts. Verify and record observed PR, final-head CI, merge and local/remote synchronization. Follow the [repository workflow](../../AGENTS.md#git-and-github-conventions).
+3. Give the owner the five completed files and evidence index. Demonstrate analyst report access, engineer maintenance access, unassigned/revoked denial and approved remote access/revocation. Use approved permissions and recorded revocation evidence.
+4. Present measured recovery, integrity and HTTPS role evidence. Discuss limitations and unavailable workflows. Capture the owner's observations, follow-ups and explicit decision.
+
+**CHECK**
+
+Stop publication on a sensitive-data finding and follow the [incident process](../../AGENTS.md#public-repository-and-secrets). All mandatory results must pass for engineering completion. Unresolved critical or high safety issues block acceptance regardless of score. Follow the [Acceptance Criteria](../testing/ACCEPTANCE-CRITERIA.md).
+
+**RECORD**
+
+**Deliverable 03 > Evidence Index** for reviewer/date and publication evidence. In **Owner Acceptance** record reviewer/date, observed usability, limits and confirmation reference. Owner user acceptance testing (UAT) stays **PENDING** without an explicit decision, independent of test results, CI and scoring.
