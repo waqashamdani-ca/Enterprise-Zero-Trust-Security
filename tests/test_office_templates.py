@@ -235,7 +235,7 @@ class OfficeTemplateTests(unittest.TestCase):
         old = subprocess.check_output(
             ["git", "-C", str(ROOT), "show", f"{office.T9D1_PUBLICATION}:{office.TEST_PLAN}"], encoding="utf-8")
         current = (ROOT / office.TEST_PLAN).read_text(encoding="utf-8")
-        self.assertEqual(hashlib.sha256(current.encode("utf-8")).hexdigest(), office.T9D2_PLAN_SHA256)
+        self.assertEqual(hashlib.sha256(current.encode("utf-8")).hexdigest(), office.T9D4_PLAN_SHA256)
         self.assertEqual([len(checks) for checks in office.SUBCHECKS.values()], [9, 9, 13, 7, 7, 11, 9, 7, 10, 9])
         for pattern in (r"^### FWT-.*", r"^\*\*Scope:.*", r"^\| C0[1-6] \|.*", r"^\| (FWR-\d{2}) \| [^|]+(\|.*)"):
             self.assertEqual(re.findall(pattern, old, re.M), re.findall(pattern, current, re.M), pattern)

@@ -6,9 +6,9 @@ Verify that the analyst can read reports, the engineer can read maintenance inst
 
 ## Test governance and evidence
 
-Obtain the relevant [stage approvals](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#how-to-use-the-guide) before any lab action. For each check, fix the approved lab source and target, versions, synthetic identity, action and rate, expected result, evidence ID, second observation, stop condition and rollback. Observe home and production boundaries passively. Use only approved lab-owned targets for active checks.
+Obtain [stage approvals](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md#how-to-use-the-guide) before lab action. Phase 5 active requests and temporary changes need K and applicable control approvals. Fix the lab source, target, versions, synthetic identity, action and rate, expected result, evidence ID, second observation, stop condition and rollback. Observe home and production passively. Active checks use approved lab-owned targets only.
 
-Use **Test Cases** in [Deliverable 03](../deliverables/03-Security-Monitoring-and-Testing.xlsx) for the 91 mandatory subchecks. Keep each exact ID and record its preconditions, scope, expected result from this plan, actual result, operator, observation time, evidence and second observation. Before a denial test, verify a working allowed control on the known-listening service. Match the denied request to the effective enforcing rule, grant or role and its log, counter or device evidence. A timeout, DNS failure, stopped listener or failed login alone leaves the denial unverified. Keep raw records private and retain failure, rollback and retest evidence. Follow the [evidence conventions](../../evidence/README.md).
+Record all 91 mandatory subchecks in **Test Cases** in [Deliverable 03](../deliverables/03-Security-Monitoring-and-Testing.xlsx). Keep exact IDs, preconditions, scope, this plan's expected result, actual result, operator, time, evidence and second observation. Before network denials, verify a working allowed control on the known-listening lab service. Match denials to the effective rule, grant or role and its log, counter or device evidence. Use FWT-04 for local privileges and FWT-05 for certificate trust. A failed connection or login alone proves no policy decision. Keep results, failures, rollback and retests private under the [evidence conventions](../../evidence/README.md).
 
 Mark a child **PASS** only when the result and required evidence are verified. Mark an observed mismatch **FAIL**. Blocked, unperformed or unverified checks are **NOT TESTED**. The overall test passes only when all its mandatory children pass. It fails if any child fails and otherwise stays NOT TESTED. NOT APPLICABLE cannot waive a mandatory check. A critical safety failure blocks acceptance regardless of score. Record owner user acceptance testing (UAT) separately from engineering verification.
 
@@ -73,7 +73,7 @@ Verify [FF-01 through FF-08](../architecture/ARCHITECTURE.md#inter-zone-policy-m
 
 **Expected result and pass/fail criteria:** Standard users are denied and the approved administrator succeeds. Protections and audit settings are effective. Windows host policy limits same-zone traffic. APP1 host policy limits local and overlay access independently of HP's routed enforcement. No unapproved profiles, listeners, forwarding or bypass adapters are present.
 
-**Second observation:** Match effective policy, services and rules to the standard-user denial and administrator control. Compare APP1 rules after an approved reboot and verify rollback from console if needed.
+**Second observation:** Match effective policy, services and rules to the standard-user denial and administrator control. Compare APP1 rules after an approved reboot. Pair the approved HTTPS permit and known-listening denial with the effective APP1 host rule and its log or counter. A routed block at HP establishes routed enforcement only. Keep the host check NOT TESTED if the listener, approved path or evidence is missing. Verify rollback from console if needed.
 
 | Record | Value |
 | --- | --- |
@@ -156,7 +156,7 @@ Demonstrate approved HTTPS with application roles, unauthorized identity denial 
 
 **Scope:** FWR-09; FSC-09; FAC-09. Critical. Approval L recovery portion.
 
-**Objective and method:** Operational restore remains **BLOCKED** until the owner approves the encrypted external-storage backend and recovery procedure as well as the exact isolated physical path, disconnection and rollback checklist. Follow the [private recovery prerequisites](../lab-guides/reference/07-Backup-and-Recovery.md#required-private-recovery-plan). Verify one encrypted off-compute APP1 full backup on approved external storage with separate key custody. Record its age and coverage of pages, configuration, hashed application accounts, roles, server key, leaf and public root. Protect the sole backup and keep original APP1 off.
+**Objective and method:** Operational restore remains **BLOCKED** until the owner approves the encrypted external-storage backend and recovery procedure as well as the exact isolated physical path, disconnection and rollback checklist. Follow the [private recovery prerequisites](../lab-guides/reference/07-Backup-and-Recovery.md#required-private-recovery-plan). Verify original APP1 is stopped before backup and stays off through the drill. Verify one encrypted off-compute APP1 full backup on approved external storage with separate key custody. Record its age and coverage of pages, configuration, hashed application accounts, roles, server key, leaf and public root. Protect the sole backup.
 
 Restore to an approved unused temporary VM ID. Before boot, disconnect every restored NIC and disable autostart. Verify copied Tailscale is inactive and disabled. Verify file hashes and content against the preserved manifest before attachment. Connect only the [approved isolated WIN1-to-restored-APP1 path through physical HP OPNsense](../lab-guides/reference/07-Backup-and-Recovery.md#physical-firewall-isolated-test-path). Exclude upstream and nonparticipants. Use only approved narrow temporary client and firewall settings. With valid ava credentials over trusted HTTPS, verify report access and authenticated maintenance denial. Measure actual time from restore confirmation until integrity and usable HTTPS are verified.
 
@@ -218,7 +218,7 @@ Each requirement maps to an architecture component or flow, security control, fo
 | Requirement | Architecture component / flow | Security control | Test | Acceptance | File |
 | --- | --- | --- | --- | --- | --- |
 | FWR-01 | Physical boundary; FF-07/08 | FSC-01 | FWT-01 | FAC-01 | 01 |
-| FWR-02 | Dell Proxmox, physical HP OPNsense, three workload VMs and three zones. FF-01/02/03/05/08 | FSC-02 | FWT-02 | FAC-02 | 01 |
+| FWR-02 | Dell Proxmox, physical HP OPNsense, three workload VMs and three zones. FF-01 through FF-08 | FSC-02 | FWT-02 | FAC-02 | 01 |
 | FWR-03 | DC1/WIN1/APP1 roles; FF-02/03 | FSC-03 | FWT-03 | FAC-03 | 02 |
 | FWR-04 | DC1, WIN1 and APP1 host policy | FSC-04 | FWT-04 | FAC-04 | 02 |
 | FWR-05 | Offline CA/APP1 HTTPS; FF-03 | FSC-05 | FWT-05 | FAC-05 | 02 |
