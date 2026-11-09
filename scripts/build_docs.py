@@ -68,6 +68,7 @@ RECOVERY_REFERENCE = "docs/lab-guides/reference/07-Backup-and-Recovery.md"
 OPERATIONS_REFERENCES = {MONITORING_REFERENCE, RECOVERY_REFERENCE}
 TECHNICAL_REFERENCES = {PREPARED_REFERENCE, WINDOWS_REFERENCE, LINUX_REFERENCE} | ACCESS_REFERENCES | OPERATIONS_REFERENCES
 ARCHITECTURE = "docs/architecture/ARCHITECTURE.md"
+SECURITY = "docs/security/SECURITY-REQUIREMENTS.md"
 PACKAGES = ("reportlab", "pypdf", "mistune", "Pygments", "pillow", "charset-normalizer")
 REPOSITORY = "https://github.com/waqashamdani-ca/enterprise-zero-trust-security"
 WIDTH, HEIGHT = letter
@@ -484,6 +485,10 @@ class Builder:
             widths = [105, 399]
         elif self.source == ARCHITECTURE and headers == ["Flow", "Source to destination", "Permission and enforcement owner"]:
             widths = [55, 150, 299]
+        elif self.source == SECURITY and headers[0] == "Security ID":
+            widths = [62, 349, 93]
+        elif self.source == SECURITY and headers[0] == "Threat":
+            widths = [126, 230, 148]
         elif self.source == ASSIGNMENT and headers == ["ID", "Required result", "Test"]:
             widths = [55, 389, 60]
         elif self.source == ASSIGNMENT and headers == ["Filename", "What to record"]:
@@ -541,14 +546,15 @@ class Builder:
                         style = ParagraphStyle("points", parent=style, alignment=TA_RIGHT)
                     values.append(Paragraph(("<b>" if row_number == 0 else "") + inline(cell["children"], self.source, self.sources) + ("</b>" if row_number == 0 else ""), style))
             cells.append(values)
-        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in TECHNICAL_REFERENCES | {ASSIGNMENT, GUIDE, ARCHITECTURE, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
+        table = LongTable(cells, colWidths=widths, repeatRows=1, splitByRow=1, splitInRow=0 if self.source in TECHNICAL_REFERENCES | {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY, "docs/governance/DECISIONS.md", "docs/governance/RISKS.md"} else 1, hAlign="LEFT", spaceAfter=12)
+        vertical_padding = 4 if self.source == SECURITY else 5
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#e5edf3")),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f9fa")]),
             ("GRID", (0, 0), (-1, -1), 0.35, colors.HexColor("#c5d0d8")),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ("LEFTPADDING", (0, 0), (-1, -1), 5), ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-            ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), vertical_padding), ("BOTTOMPADDING", (0, 0), (-1, -1), vertical_padding),
         ]))
         if self.source in {ASSIGNMENT, GUIDE}:
             table.setStyle(TableStyle([
@@ -868,7 +874,8 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
                else Builder(source, sources))
     formal = source.startswith(("docs/assignments/", "docs/lab-guides/", "docs/architecture/", "docs/security/", "docs/testing/", "docs/final-report/"))
     story = []
-    if source in {ASSIGNMENT, GUIDE, ARCHITECTURE} | TECHNICAL_REFERENCES:
+    compact_sources = {ASSIGNMENT, GUIDE, ARCHITECTURE, SECURITY} | TECHNICAL_REFERENCES
+    if source in compact_sources:
         story.append(builder.heading(tokens[0]))
     elif formal:
         cover_status = ""
@@ -899,7 +906,7 @@ def render_pdf(source: str, content: bytes, sources: set[str]) -> bytes:
         if source == ARCHITECTURE:
             story.append(PageBreak())
         tokens = [tokens[0], *tokens[first_section:]]
-    if source not in {ASSIGNMENT, GUIDE, ARCHITECTURE} | TECHNICAL_REFERENCES and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
+    if source not in compact_sources and sum(token["type"] == "heading" and token["attrs"]["level"] == 2 for token in tokens) >= 6 and len(content.split()) >= 900:
         story.append(Paragraph("Contents", ParagraphStyle("contents-title", parent=builder.style, fontName="Vera-Bold", fontSize=17, leading=22, spaceAfter=14)))
         contents = TableOfContents()
         contents.levelStyles = [ParagraphStyle("toc", fontName="Vera", fontSize=9.3, leading=14, spaceBefore=4)]
