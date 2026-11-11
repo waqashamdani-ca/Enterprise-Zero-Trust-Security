@@ -46,6 +46,7 @@ T9A_OFFICE_HASHES = {
     FILES[4]: "6e5622322ab962e03b159e31d4d5b1098d89de656fb7151ac09c24b7f53100c6",
 }
 T9E1_OFFICE01_SHA256 = "2359a415a4e9ab0f7abbf9065171e70f35de93273e82fc0637ba87443302f541"
+T9E2_OFFICE02_SHA256 = "06ad5f5d7387c183cec61330539163ef51483ccc4afd50ec4586626392d035b9"
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -71,6 +72,8 @@ OFFICE01_EVIDENCE = {
     "Allowed Network Flows": ("G", 15),
     "Resource Allocation": ("G", 19),
 }
+
+OFFICE02_TABLE_SIZES = ((5, 3), (6, 3), (4, 3), (6, 2), (7, 5), (5, 3))
 
 
 def package_parts(path: Path) -> dict[str, bytes]:
@@ -191,6 +194,81 @@ def plain_word(parts: dict[str, bytes]) -> str:
     return "\n".join("".join(p.itertext()) for p in ET.fromstring(parts["word/document.xml"]).findall(".//w:p", NS))
 
 
+def office02_issues(word_text: str, tables: list[list[list[str]]]) -> list[str]:
+    """Check the reviewed recording structure and key control boundaries."""
+    issues = []
+    directory = [
+        ["ava", "Standard analyst; LabReaders"],
+        ["eli", "Standard engineer; LabReaders and LabMaintainers"],
+        ["uma", "Standard unassigned user, none of the three AD role groups"],
+        ["Separate privileged admin", "LabAdmins; approved infrastructure rights only"],
+    ]
+    app_roles = [
+        ["ava", "LabReaders"],
+        ["eli", "LabReaders and LabMaintainers"],
+        ["uma", "No reader or maintenance role"],
+    ]
+    if [row[:2] for row in tables[0][1:]] != directory or [row[:2] for row in tables[2][1:]] != app_roles:
+        issues.append("approved directory or Apache group memberships changed")
+
+    contexts = ["ava /reports/", "ava /maintenance/", "eli /reports/", "eli /maintenance/", "uma /reports/", "uma /maintenance/"]
+    outcomes = ["Allow", "Deny", "Allow", "Allow", "Deny", "Deny"]
+    expected_cases = [[f"C{i:02}", context, outcome, f"FWT-03.{i+3:02}"] for i, (context, outcome) in enumerate(zip(contexts, outcomes), 1)]
+    if [row[:4] for row in tables[4][1:]] != expected_cases:
+        issues.append("six approved application cases/record references changed")
+    if tables[4][0][4] != "Evidence ID":
+        issues.append("application evidence field missing")
+
+    prompts = {
+        "approved three-workload architecture": (
+            "bare-metal OPNsense on the HP desktop", "exactly three workload VMs",
+            "DC1 and WIN1 share Corporate. APP1 is in Restricted. Management is the third zone.",
+        ),
+        "stage approval or Office 03 evidence ledger": (
+            "stage approval references and dates", "Office 03 > Test Cases and Evidence Index",
+            "second observation", "Office 04 > Issue Log",
+        ),
+        "endpoint enforcement attribution": (
+            "Match same-zone traffic to Windows host rules.",
+            "known-listening denial to the APP1 rule and log or counter.", "Use HP evidence for routed traffic.",
+        ),
+        "independent Apache roles": (
+            "passwords distinct from AD and manually mapped groups",
+            "AD single sign-on and automatic role synchronization are excluded.",
+        ),
+        "Tailscale access boundary": (
+            "APP1 TCP 443-only grant", "one approved existing remote client",
+            "subnet routes, exit nodes, Tailscale SSH, Funnel, Serve and sharing are off.",
+            "Exclude DC1, WIN1, Proxmox and OPNsense.",
+        ),
+        "remote denial attribution": (
+            "known-listening wrong-port control and denial",
+            "Match each denial to effective grants, device state, independent APP1 host rules or Apache roles and logs.",
+        ),
+        "revocation evidence": (
+            "separate AD change and both change times", "grant and exact device authorization removal times",
+            "new network requests from existing authenticated and fresh sessions",
+            "cache or connection-state handling", "denial and elapsed times against a separate clock",
+            "Deny maintenance, allow reports", "Link failures, retests and rollback.",
+        ),
+    }
+    if any(
+        f"{series}-{number:02}" not in word_text
+        for number in range(3, 7)
+        for series in ("FWR", "FSC", "FWT", "FAC")
+    ):
+        issues.append("required FWR/FSC/FWT/FAC-03 through -06 references missing")
+    for label, required in prompts.items():
+        if any(fragment not in word_text for fragment in required):
+            issues.append(f"{label} changed or missing")
+    if word_text.count("[Enter your response.]") != 6 or len(re.findall(
+        r"\[Insert a sanitized [^\n]+ screenshot and an evidence ID\.\]", word_text
+    )) != 4:
+        issues.append("answer or screenshot/evidence prompts missing")
+
+    return issues
+
+
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
     if not directory.is_dir():
@@ -199,7 +277,7 @@ def template_set_issues(root: Path) -> list[str]:
     if {p.name for p in directory.iterdir()} != set(FILES):
         issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
-        released_hashes = T9A_OFFICE_HASHES | {FILES[0]: T9E1_OFFICE01_SHA256}
+        released_hashes = T9A_OFFICE_HASHES | {FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256}
         for filename, expected in released_hashes.items():
             if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
                 issues.append(f"{filename}: package differs from the approved release")
@@ -346,16 +424,20 @@ def template_set_issues(root: Path) -> list[str]:
                     if any(value != "Segoe UI" for key, value in node.attrib.items() if key.rsplit("}", 1)[-1] in {"ascii", "hAnsi", "eastAsia", "cs"}):
                         issues.append(f"{filename}: Word fonts must use Segoe UI")
             tables = [[["".join(c.itertext()) for c in tr.findall("w:tc", NS)] for tr in t.findall("w:tr", NS)] for t in document.findall(".//w:body/w:tbl", NS)]
-            blank_columns = {0: (2,), 1: (1, 2), 2: (2,), 3: (1,)} if filename == FILES[1] else {0: (1,), 1: (1,), 2: (1,), 3: (2, 3)}
+            if filename == FILES[1]:
+                if len(tables) != len(OFFICE02_TABLE_SIZES) or any(
+                    len(table) != rows or any(len(row) != columns for row in table)
+                    for table, (rows, columns) in zip(tables, OFFICE02_TABLE_SIZES)
+                ):
+                    issues.append(f"{filename}: required tables or evidence cells missing")
+                    continue
+                issues.extend(f"{filename}: {finding}" for finding in office02_issues(word_text, tables))
+                blank_columns = {0: (2,), 1: (1, 2), 2: (2,), 3: (1,), 4: (4,)}
+            else:
+                blank_columns = {0: (1,), 1: (1,), 2: (1,), 3: (2, 3)}
             for index, columns in blank_columns.items():
                 if any(record[c] for record in tables[index][1:] for c in columns):
                     issues.append(f"{filename}: actual/score/evidence answer cells must be blank")
-            if filename == FILES[1]:
-                contexts = ["ava /reports/", "ava /maintenance/", "eli /reports/", "eli /maintenance/", "uma /reports/", "uma /maintenance/"]
-                outcomes = ["Allow", "Deny", "Allow", "Allow", "Deny", "Deny"]
-                expected_cases = [[f"C{i:02}", context, outcome, f"FWT-03.{i+3:02}"] for i, (context, outcome) in enumerate(zip(contexts, outcomes), 1)]
-                if tables[4][1:] != expected_cases:
-                    issues.append(f"{filename}: six approved application cases/record references changed")
             if filename == FILES[4] and tables[3] != [["Assessment area", "Maximum", "Score", "Evidence / evaluator note"]] + [[title, str(score), "", ""] for title, score in RUBRIC] + [["TOTAL", "100", "", ""]]:
                 issues.append(f"{filename}: approved 100-point rubric/blank scores changed")
             if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|two-tier|twenty.event|twelve application|two automation", word_text, re.I):
