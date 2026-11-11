@@ -18,9 +18,15 @@ from zipfile import BadZipFile, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 try:
-    from office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES, RUBRIC, office03_test_rows
+    from office_template_contract import (
+        FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES,
+        OFFICE04_TABLE, OFFICE04_LINKS, OFFICE04_PROMPTS, RUBRIC, office03_test_rows,
+    )
 except ModuleNotFoundError:
-    from scripts.office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES, RUBRIC, office03_test_rows
+    from scripts.office_template_contract import (
+        FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES,
+        OFFICE04_TABLE, OFFICE04_LINKS, OFFICE04_PROMPTS, RUBRIC, office03_test_rows,
+    )
 NS = {
     "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
@@ -47,6 +53,7 @@ T9A_OFFICE_HASHES = {
 T9E1_OFFICE01_SHA256 = "2359a415a4e9ab0f7abbf9065171e70f35de93273e82fc0637ba87443302f541"
 T9E2_OFFICE02_SHA256 = "06ad5f5d7387c183cec61330539163ef51483ccc4afd50ec4586626392d035b9"
 T9E3_OFFICE03_SHA256 = "bef697f6e1aff26af97f2d2ba86e66cbf49b904b48a8e488397f7e3cf1454177"
+T9E4_OFFICE04_SHA256 = "f440243ae4601295d938b600f4a5c4ff0e0219358e08163de73f1cf9d277b613"
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -370,6 +377,69 @@ def office03_record_issues(data: dict[str, dict], tables: list[ET.Element]) -> l
     return issues
 
 
+def office04_record_issues(sheet: dict, parts: dict[str, bytes], tables: list[ET.Element],
+                           approved_rows: list[list[str]]) -> list[str]:
+    """Check the blank Issue Log's fields and its links to authoritative Office 03 records."""
+    issues = []
+    tree, cells = sheet["tree"], sheet["cells"]
+    name, reference, headers = OFFICE04_TABLE
+    table = next((item for item in tables if item.get("name") == name), None)
+    if (table is None or table.get("ref") != reference
+            or table.find("s:autoFilter[@ref='A7:K13']", NS) is None
+            or tuple(col.get("name") for col in table.findall("s:tableColumns/s:tableColumn", NS)) != headers):
+        issues.append("Issue Log: approved table, filter or recording fields changed")
+    columns = BLANK_COLUMNS["Issue Log"]
+    if tuple(cells.get(f"{col}7", {}).get("value") for col in columns) != headers:
+        issues.append("Issue Log: required recording headers changed")
+    if any(f"{col}{row}" not in cells for row in range(8, 14) for col in columns):
+        issues.append("Issue Log: required blank issue, retest, lesson or evidence field missing")
+
+    for address, phrases in OFFICE04_PROMPTS.items():
+        if any(phrase not in cells.get(address, {}).get("value", "") for phrase in phrases):
+            issues.append(f"Issue Log: {address} required troubleshooting guidance changed")
+    visible = "\n".join(cell["value"] for cell in cells.values())
+    refs = set(re.findall(r"\bFWT-\d+(?:\.\d+)?\b", visible))
+    families = {row[0] for row in approved_rows}
+    children = {row[2] for row in approved_rows if row[2] != "OVERALL"}
+    if refs - (families | children) or not refs.intersection(children):
+        issues.append("Issue Log: broken or missing Office 03 FWT reference")
+    if re.search(r"\b(?:(?:four|4) (?:workload )?(?:VMs?|virtual machines)|"
+                 r"virtual(?:ized)? (?:HP )?(?:OPNsense|firewall)|OPNsense (?:VM|guest)|"
+                 r"(?:six|6) (?:mandatory )?VLANs)\b", visible, re.I):
+        issues.append("Issue Log: unapproved architecture assumption")
+
+    rules = tree.findall("s:dataValidations/s:dataValidation", NS)
+    if (len(rules) != 1 or any(rules[0].get(key) != value for key, value in {
+            "type": "list", "sqref": "I8:I13", "allowBlank": "1",
+            "showErrorMessage": "1", "errorStyle": "stop",
+        }.items()) or rules[0].get("showDropDown") not in (None, "0")
+            or rules[0].findtext("s:formula1", namespaces=NS) != f'"{ISSUE_STATUSES}"'):
+        issues.append("Issue Log: approved status dropdown or free-text severity changed")
+    formats = tree.findall("s:conditionalFormatting", NS)
+    if (len(formats) != 1 or formats[0].get("sqref") != "I8:I13"
+            or [(rule.get("type"), rule.get("operator"), rule.findtext("s:formula", namespaces=NS))
+                for rule in formats[0]] != [("cellIs", "equal", f'"{status}"')
+                                            for status in ("BLOCKED", "IN PROGRESS", "RESOLVED")]):
+        issues.append("Issue Log: approved status conditional formatting changed")
+
+    relationships = {rel.get("Id"): rel.get("Target")
+                     for rel in ET.fromstring(parts["xl/worksheets/_rels/sheet1.xml.rels"])
+                     if rel.get("Type") == NS["r"] + "/hyperlink" and rel.get("TargetMode") == "External"}
+    links = tree.findall("s:hyperlinks/s:hyperlink", NS)
+    if (len(links) != len(OFFICE04_LINKS)
+            or {link.get("ref"): link.get("location") for link in links} != OFFICE04_LINKS
+            or any(relationships.get(link.get("{" + NS["r"] + "}id")) != FILES[2] for link in links)):
+        issues.append("Issue Log: links to Office 03 Test Cases and Evidence Index changed")
+
+    book = ET.fromstring(parts["xl/workbook.xml"])
+    titles = book.find("s:definedNames/s:definedName[@name='_xlnm.Print_Titles'][@localSheetId='0']", NS)
+    if (titles is None or titles.text != "'Issue Log'!$A:$A,'Issue Log'!$7:$7"
+            or book.find("s:definedNames/s:definedName[@name='_xlnm.Print_Area']", NS) is not None):
+        issues.append("Issue Log: print must repeat identifiers and headers and include appended rows")
+
+    return issues
+
+
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
     if not directory.is_dir():
@@ -379,7 +449,8 @@ def template_set_issues(root: Path) -> list[str]:
         issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
         released_hashes = T9A_OFFICE_HASHES | {
-            FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256, FILES[2]: T9E3_OFFICE03_SHA256,
+            FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256,
+            FILES[2]: T9E3_OFFICE03_SHA256, FILES[3]: T9E4_OFFICE04_SHA256,
         }
         for filename, expected in released_hashes.items():
             if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
@@ -408,6 +479,8 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: table filters are missing")
             if filename == FILES[2]:
                 issues.extend(office03_record_issues(data, tables))
+            if filename == FILES[3] and "Issue Log" in data:
+                issues.extend(office04_record_issues(data["Issue Log"], parts, tables, expected_rows))
             for sheet_name, sheet in data.items():
                 tree, cells = sheet["tree"], sheet["cells"]
                 pane = tree.find("s:sheetViews/s:sheetView/s:pane", NS)
