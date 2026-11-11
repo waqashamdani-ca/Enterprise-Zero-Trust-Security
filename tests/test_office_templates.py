@@ -5,6 +5,7 @@ external link, installation or lab resource is used by these tests.
 """
 from contextlib import contextmanager
 import hashlib
+import io
 from pathlib import Path
 import re
 import shutil
@@ -15,6 +16,7 @@ import subprocess
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile, ZIP_DEFLATED
 
+from scripts import office_template_contract as contract
 from scripts import validate_office_templates as office
 from scripts.validate_docs import public_content_issues, file_issues
 
@@ -59,7 +61,7 @@ def set_cell(raw, address, value=None, formula=None):
 
 
 class OfficeTemplateTests(unittest.TestCase):
-    def test_assignment_transition_preserves_frozen_history_and_office03_description(self):
+    def test_assignment_transition_preserves_frozen_history_and_aligns_office03_description(self):
         baseline = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
         for name, expected in office.T9A_OFFICE_HASHES.items():
             data = subprocess.check_output(["git", "-C", str(ROOT), "show", baseline + ":" + REL + name])
@@ -73,7 +75,7 @@ class OfficeTemplateTests(unittest.TestCase):
             self.assertTrue(any("FWR-02 traceability differs" in x for x in office.template_set_issues(root)))
         with fixture() as root:
             path = root / REL / office.FILES[2]
-            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "B9", office.T9B_FWR02))
+            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "B9", office.T9A_FWR02))
             findings = office.template_set_issues(root)
             self.assertIn(f"{office.FILES[2]}: package differs from the approved release", findings)
             self.assertTrue(any("FWR-02 traceability differs" in x for x in findings))
@@ -236,14 +238,14 @@ class OfficeTemplateTests(unittest.TestCase):
             ["git", "-C", str(ROOT), "show", f"{office.T9D1_PUBLICATION}:{office.TEST_PLAN}"], encoding="utf-8")
         current = (ROOT / office.TEST_PLAN).read_text(encoding="utf-8")
         self.assertEqual(hashlib.sha256(current.encode("utf-8")).hexdigest(), office.T9D4_PLAN_SHA256)
-        self.assertEqual([len(checks) for checks in office.SUBCHECKS.values()], [9, 9, 13, 7, 7, 11, 9, 7, 10, 9])
+        self.assertEqual([len(checks) for checks in contract.SUBCHECKS.values()], [9, 9, 13, 7, 7, 11, 9, 7, 10, 9])
         for pattern in (r"^### FWT-.*", r"^\*\*Scope:.*", r"^\| C0[1-6] \|.*", r"^\| (FWR-\d{2}) \| [^|]+(\|.*)"):
             self.assertEqual(re.findall(pattern, old, re.M), re.findall(pattern, current, re.M), pattern)
 
         with fixture() as root:
             plan = root / office.TEST_PLAN
             plan.write_text(old, encoding="utf-8")
-            self.assertEqual(office.template_set_issues(root), [])
+            self.assertTrue(any("approved test plan" in x for x in office.template_set_issues(root)))
             plan.write_text(current.replace("91 mandatory subchecks", "90 mandatory subchecks"), encoding="utf-8")
             self.assertTrue(any("approved test plan" in x for x in office.template_set_issues(root)))
         with fixture() as root:
@@ -252,6 +254,89 @@ class OfficeTemplateTests(unittest.TestCase):
             findings = office.template_set_issues(root)
             self.assertIn(f"{office.FILES[2]}: package differs from the approved release", findings)
             self.assertTrue(any("FWT-02.01 differs from approved test plan/subchecks" in x for x in findings))
+
+    def test_office03_preserves_exact_child_ids_and_application_cases(self):
+        predecessor = "124386dbe95a6d345e72ae0f1086c61b3348708e"
+        blob = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{predecessor}:{REL}{office.FILES[2]}"])
+        with ZipFile(io.BytesIO(blob)) as package:
+            original = office.workbook_data({name: package.read(name) for name in package.namelist()})
+        current = office.workbook_data(office.package_parts(ROOT / REL / office.FILES[2]))
+
+        def child_ids(workbook):
+            return [cell["value"] for address, cell in workbook["Test Cases"]["cells"].items()
+                    if address.startswith("C") and re.fullmatch(r"FWT-\d{2}\.\d{2}", cell["value"])]
+
+        self.assertEqual(len(child_ids(current)), 91)
+        self.assertEqual(child_ids(current), child_ids(original))
+        original_cases = original["Test Cases"]["cells"]
+        current_cases = current["Test Cases"]["cells"]
+        for row in range(32, 38):
+            for col in "CDEF":
+                self.assertEqual(current_cases[f"{col}{row}"], original_cases[f"{col}{row}"])
+        self.assertEqual([current_cases[f"E{row}"]["value"] for row in range(32, 38)],
+                         ["Allow", "Deny", "Allow", "Allow", "Deny", "Deny"])
+
+    def test_office03_rejects_duplicate_and_extra_child_rows(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+            rewrite(path, "xl/worksheets/sheet3.xml", lambda raw: set_cell(raw, "C108", "FWT-10.08"))
+            self.assertTrue(any("must occur once" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+
+            def extra_child(raw):
+                tree = ET.fromstring(raw)
+                ns = "{" + office.NS["s"] + "}"
+                row = ET.SubElement(tree.find("s:sheetData", office.NS), ns + "row", {"r": "109"})
+                cell = ET.SubElement(row, ns + "c", {"r": "C109", "t": "str"})
+                ET.SubElement(cell, ns + "v").text = "FWT-10.10"
+                return ET.tostring(tree)
+
+            rewrite(path, "xl/worksheets/sheet3.xml", extra_child)
+            self.assertTrue(any("must occur once" in x for x in office.template_set_issues(root)))
+
+    def test_office03_rejects_control_or_procedure_drift(self):
+        mutations = (
+            (3, "E19", "Four required workload VMs", "FWT-02.01 differs"),
+            (3, "D19", "Use a virtual OPNsense VM", "FWT-02.01 differs"),
+            (3, "D21", "APP1 may reach DC1 on any service", "FWT-02.03 differs"),
+            (3, "D45", "Check only the HP firewall log", "FWT-04.03 differs"),
+            (3, "D67", "End the session without recording the revocation change", "FWT-06.09 differs"),
+            (6, "A3", "Use an available archive and test path", "A3 approved control or evidence prompt changed"),
+            (6, "B15", "Use an isolated existing client", "B15 approved control or evidence prompt changed"),
+            (5, "B11", "Run remotely as administrator", "B11 approved control or evidence prompt changed"),
+            (1, "C12", "Virtual firewall log", "C12 approved control or evidence prompt changed"),
+            (8, "A3", "Accept at 80 points", "A3 approved control or evidence prompt changed"),
+        )
+        for sheet, address, value, finding in mutations:
+            with self.subTest(sheet=sheet, address=address), fixture() as root:
+                path = root / REL / office.FILES[2]
+                rewrite(path, f"xl/worksheets/sheet{sheet}.xml", lambda raw: set_cell(raw, address, value))
+                self.assertTrue(any(finding in issue for issue in office.template_set_issues(root)))
+
+    def test_office03_rejects_missing_evidence_or_unexpected_calculation(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[2]
+
+            def remove_evidence(raw):
+                tree = ET.fromstring(raw)
+                row = tree.find(".//s:row[@r='9']", office.NS)
+                row.remove(row.find("s:c[@r='I9']", office.NS))
+                return ET.tostring(tree)
+
+            rewrite(path, "xl/worksheets/sheet3.xml", remove_evidence)
+            self.assertIn("Test Cases: required actual/evidence or other recording field missing",
+                          office.template_set_issues(root))
+        for sheet, address, value, formula, finding in (
+            (3, "G9", "INVALID STATUS", None, "shell status records an outcome"),
+            (3, "H9", None, "SUM(1,2)", "unexpected calculation"),
+            (8, "G8", "Synthetic acceptance reference", None, "actual/evidence/date fields must be blank"),
+        ):
+            with self.subTest(sheet=sheet, address=address), fixture() as root:
+                path = root / REL / office.FILES[2]
+                rewrite(path, f"xl/worksheets/sheet{sheet}.xml",
+                        lambda raw: set_cell(raw, address, value, formula))
+                self.assertTrue(any(finding in issue for issue in office.template_set_issues(root)))
 
     def test_missing_formula_guard_and_prepopulated_hardware_state_rejected(self):
         with fixture() as root:
@@ -418,7 +503,7 @@ class OfficeTemplateTests(unittest.TestCase):
             self.assertTrue(any("compatibility prefix" in x for x in office.package_issues(root, REL + path.name)))
 
     def test_network_flow_and_word_case_expectations_rejected(self):
-        for address in ("C8", "C15"):
+        for address in ("C8", "C11", "C15"):
             with self.subTest(address=address), fixture() as root:
                 path = root / REL / office.FILES[0]
                 rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, address, "Allow all services"))
