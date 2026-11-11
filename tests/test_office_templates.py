@@ -531,6 +531,45 @@ class OfficeTemplateTests(unittest.TestCase):
             self.assertTrue(any("page numbering" in x for x in office.template_set_issues(root)))
             self.assertTrue(any("active Word field" in x for x in office.package_issues(root, REL + path.name)))
 
+    def test_office05_rejects_architecture_and_recovery_drift(self):
+        changes = (
+            ("exactly three workload VMs", "four workload VMs", "approved physical architecture"),
+            ("HP desktop running bare-metal OPNsense", "virtual OPNsense guest", "approved physical architecture"),
+            ("share Corporate", "share Management", "zone placement"),
+            ("is in Restricted", "is in Corporate", "zone placement"),
+            ("6 vCPU / 16 GiB RAM / 160 GiB disk", "8 vCPU / 16 GiB RAM / 160 GiB disk", "capacity totals"),
+            ("APP1 TCP 443 only", "all Corporate ports", "restricted Tailscale scope"),
+            ("separate APP1 host evidence for host filtering", "one HP firewall log for host filtering",
+             "independent enforcement evidence"),
+            ("C04 eli /maintenance/ ALLOW", "C04 eli /maintenance/ DENY", "six approved application expectations"),
+            ("external encrypted storage backend and unlock/recovery method", "a spare disk", "restore approval gates"),
+            ("exact isolated WIN1-to-restored-APP1 path through physical HP", "any route", "restore approval gates"),
+        )
+        self.check_office05_mutations(changes)
+
+    def test_office05_rejects_summary_evidence_and_acceptance_drift(self):
+        changes = (
+            ("FWT-03 (13)", "FWT-03 (12)", "test family counts"),
+            ("FSC-04 / FAC-04", "FSC-04 / FAC-05", "FWT/FWR/FSC/FAC mappings"),
+            (office.FILES[4], "final.docx", "five released deliverable references"),
+            ("Actual result summary / evidence reference", "Notes", "summary or evidence fields missing"),
+            ("[Enter your response.]", "Lab testing PASS", "blank response"),
+            ("Missing evidence remains NOT TESTED", "Missing evidence counts as PASS", "missing-evidence guidance"),
+            ("[Enter owner decision and reference.]", "ACCEPTED", "pending owner acceptance"),
+        )
+        self.check_office05_mutations(changes)
+
+    def check_office05_mutations(self, changes):
+        for original, altered, finding in changes:
+            with self.subTest(original=original), fixture() as root:
+                def mutate(raw):
+                    self.assertIn(original.encode(), raw)
+                    return raw.replace(original.encode(), altered.encode(), 1)
+
+                rewrite(root / REL / office.FILES[4], "word/document.xml", mutate)
+                findings = office.template_set_issues(root)
+                self.assertTrue(any(finding in issue for issue in findings), findings)
+
     def test_office02_rejects_control_and_evidence_drift(self):
         changes = (
             ("exactly three workload VMs", "four required workload VMs", "approved three-workload architecture"),
