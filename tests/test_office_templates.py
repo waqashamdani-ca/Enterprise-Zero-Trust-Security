@@ -559,6 +559,69 @@ class OfficeTemplateTests(unittest.TestCase):
         )
         self.check_office05_mutations(changes)
 
+    def test_office05_rubric_resize_preserves_released_content(self):
+        relative = REL + office.FILES[4]
+        t9e5_main = "55c16a8cf8ad06241e7eebca7a744cbbc958e4be"
+        baseline = subprocess.check_output(["git", "-C", str(ROOT), "show", f"{t9e5_main}:{relative}"])
+        self.assertEqual(hashlib.sha256(baseline).hexdigest(),
+                         "3c59271b2d2c609cd5a0f135f7c697a9d13769797837cba8feb74cb38fa78c1f")
+        part = "word/document.xml"
+        with ZipFile(io.BytesIO(baseline)) as before, ZipFile(ROOT / relative) as after:
+            self.assertEqual(before.namelist(), after.namelist())
+            for member in before.namelist():
+                if member != part:
+                    self.assertEqual(before.read(member), after.read(member), member)
+            expected = ET.fromstring(before.read(part))
+            actual = ET.fromstring(after.read(part))
+        rubric = expected.findall("w:body/w:tbl", office.NS)[3]
+        width_attr = "{" + office.NS["w"] + "}w"
+        for index, width in enumerate(("4520", "1240")):
+            rubric.findall("w:tblGrid/w:gridCol", office.NS)[index].set(width_attr, width)
+            for row in rubric.findall("w:tr", office.NS):
+                row.findall("w:tc/w:tcPr/w:tcW", office.NS)[index].set(width_attr, width)
+        self.assertEqual(ET.tostring(actual), ET.tostring(expected))
+
+    def test_office05_rejects_rubric_header_or_geometry_drift(self):
+        ns = office.NS
+        w = "{" + ns["w"] + "}"
+
+        def revert_grid(rubric):
+            for column, width in zip(rubric.findall("w:tblGrid/w:gridCol", ns), ("4680", "1080")):
+                column.set(w + "w", width)
+            for row in rubric.findall("w:tr", ns):
+                for cell, width in zip(row.findall("w:tc/w:tcPr/w:tcW", ns), ("4680", "1080")):
+                    cell.set(w + "w", width)
+
+        def narrow_one_cell(rubric):
+            maximum = rubric.find("w:tr", ns).findall("w:tc", ns)[1]
+            maximum.find("w:tcPr/w:tcW", ns).set(w + "w", "1080")
+
+        def split_label(rubric):
+            maximum = rubric.find("w:tr", ns).findall("w:tc", ns)[1]
+            run = maximum.find("w:p/w:r", ns)
+            run.find("w:t", ns).text = "Maximu"
+            ET.SubElement(run, w + "br")
+            ET.SubElement(run, w + "t").text = "m"
+
+        def increase_padding(rubric):
+            rubric.find("w:tblPr/w:tblCellMar/w:right", ns).set(w + "w", "200")
+
+        for edit, finding in (
+            (revert_grid, "fixed column and cell widths"),
+            (narrow_one_cell, "fixed column and cell widths"),
+            (split_label, "single unbroken label"),
+            (increase_padding, "Maximum header clearance"),
+        ):
+            with self.subTest(edit=edit.__name__), fixture() as root:
+                def mutate(raw):
+                    tree = ET.fromstring(raw)
+                    edit(tree.findall("w:body/w:tbl", ns)[3])
+                    return ET.tostring(tree)
+
+                rewrite(root / REL / office.FILES[4], "word/document.xml", mutate)
+                findings = office.template_set_issues(root)
+                self.assertTrue(any(finding in issue for issue in findings), findings)
+
     def check_office05_mutations(self, changes):
         for original, altered, finding in changes:
             with self.subTest(original=original), fixture() as root:

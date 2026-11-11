@@ -56,7 +56,7 @@ T9E2_OFFICE02_SHA256 = "06ad5f5d7387c183cec61330539163ef51483ccc4afd50ec45866263
 T9E3_OFFICE03_SHA256 = "bef697f6e1aff26af97f2d2ba86e66cbf49b904b48a8e488397f7e3cf1454177"
 T9E4_OFFICE04_SHA256 = "f440243ae4601295d938b600f4a5c4ff0e0219358e08163de73f1cf9d277b613"
 
-T9E5_OFFICE05_SHA256 = "3c59271b2d2c609cd5a0f135f7c697a9d13769797837cba8feb74cb38fa78c1f"
+T9E6_OFFICE05_SHA256 = "777bc4faed826932816e18a596aa5eb80f9398273f400469a87f322b04631ce8"
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -85,6 +85,7 @@ OFFICE01_EVIDENCE = {
 
 OFFICE02_TABLE_SIZES = ((5, 3), (6, 3), (4, 3), (6, 2), (7, 5), (5, 3))
 OFFICE05_TABLE_SIZES = ((4, 2), (6, 2), (6, 2), (7, 4))
+OFFICE05_RUBRIC_GRID_TWIPS = ("4520", "1240", "936", "3672")
 
 
 def package_parts(path: Path) -> dict[str, bytes]:
@@ -358,6 +359,33 @@ def office05_issues(word_text: str, tables: list[list[list[str]]], test_rows: li
     return issues
 
 
+def office05_rubric_layout_issues(table: ET.Element) -> list[str]:
+    """Check the fixed rubric geometry after the table shape has been validated."""
+    issues = []
+    width_attr = "{" + NS["w"] + "}w"
+    grid = tuple(col.get(width_attr) for col in table.findall("w:tblGrid/w:gridCol", NS))
+    rows = table.findall("w:tr", NS)
+    row_widths = [
+        tuple(width.get(width_attr) for width in row.findall("w:tc/w:tcPr/w:tcW[@w:type='dxa']", NS))
+        for row in rows
+    ]
+    if (table.find("w:tblPr/w:tblLayout[@w:type='fixed']", NS) is None
+            or table.find("w:tblPr/w:tblW[@w:type='auto'][@w:w='0']", NS) is None
+            or grid != OFFICE05_RUBRIC_GRID_TWIPS
+            or any(widths != grid for widths in row_widths)):
+        issues.append("rubric layout must retain the reviewed fixed column and cell widths")
+    maximum = rows[0].findall("w:tc", NS)[1]
+    if (len(maximum.findall("w:p", NS)) != 1
+            or any(maximum.find(f".//w:{tag}", NS) is not None for tag in ("br", "cr", "tab"))):
+        issues.append("rubric Maximum header must be a single unbroken label")
+    if (any(table.find(f"w:tblPr/w:tblCellMar/w:{side}[@w:type='dxa'][@w:w='75']", NS) is None
+            for side in ("left", "right"))
+            or maximum.find("w:tcPr/w:tcMar", NS) is not None
+            or maximum.find("w:p/w:pPr/w:ind", NS) is not None):
+        issues.append("rubric layout must retain the reviewed Maximum header clearance")
+    return issues
+
+
 def office03_record_issues(data: dict[str, dict], tables: list[ET.Element]) -> list[str]:
     """Check the released recording tables, scope prompts and required blank fields."""
     issues = []
@@ -533,7 +561,7 @@ def template_set_issues(root: Path) -> list[str]:
         released_hashes = T9A_OFFICE_HASHES | {
             FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256,
             FILES[2]: T9E3_OFFICE03_SHA256, FILES[3]: T9E4_OFFICE04_SHA256,
-            FILES[4]: T9E5_OFFICE05_SHA256,
+            FILES[4]: T9E6_OFFICE05_SHA256,
         }
         for filename, expected in released_hashes.items():
             if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
@@ -666,7 +694,12 @@ def template_set_issues(root: Path) -> list[str]:
                 for node in tree.findall(".//w:rFonts", NS):
                     if any(value != "Segoe UI" for key, value in node.attrib.items() if key.rsplit("}", 1)[-1] in {"ascii", "hAnsi", "eastAsia", "cs"}):
                         issues.append(f"{filename}: Word fonts must use Segoe UI")
-            tables = [[["".join(c.itertext()) for c in tr.findall("w:tc", NS)] for tr in t.findall("w:tr", NS)] for t in document.findall(".//w:body/w:tbl", NS)]
+            word_tables = document.findall("w:body/w:tbl", NS)
+            tables = [
+                [["".join(cell.itertext()) for cell in row.findall("w:tc", NS)]
+                 for row in table.findall("w:tr", NS)]
+                for table in word_tables
+            ]
             sizes = OFFICE02_TABLE_SIZES if filename == FILES[1] else OFFICE05_TABLE_SIZES
             if len(tables) != len(sizes) or any(
                 len(table) != rows or any(len(row) != columns for row in table)
@@ -679,6 +712,7 @@ def template_set_issues(root: Path) -> list[str]:
                 blank_columns = {0: (2,), 1: (1, 2), 2: (2,), 3: (1,), 4: (4,)}
             else:
                 issues.extend(f"{filename}: {finding}" for finding in office05_issues(word_text, tables, expected_rows))
+                issues.extend(f"{filename}: {finding}" for finding in office05_rubric_layout_issues(word_tables[3]))
                 blank_columns = {0: (1,), 1: (1,), 2: (1,), 3: (2, 3)}
             for index, columns in blank_columns.items():
                 if any(record[c] for record in tables[index][1:] for c in columns):
