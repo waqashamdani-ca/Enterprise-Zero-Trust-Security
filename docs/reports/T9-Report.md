@@ -708,7 +708,7 @@ The vendor comparison covered stateful firewall rule processing, physical bridge
 
 | Subtask | Authorization | Scope | Changed files | Validation | GitHub evidence | Owner review | Remaining dependencies |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T9E.1 - Office 01 | OWNER-T9E1-OFFICE01-2026-11-10 / 2026-11-10 | Align Lab Environment and Architecture workbook with the approved physical firewall and three workloads | Five paths listed below | Workbook VALIDATED. Native Excel and 136 offline tests PASS | Publication pending | T9D.4 ACCEPTED. T9E.1 PENDING | Private readiness, capacity and network evidence. Separate approval for T9E.2 |
+| T9E.1 - Office 01 | OWNER-T9E1-OFFICE01-2026-11-10 / 2026-11-10 | Align Lab Environment and Architecture workbook with the approved physical firewall and three workloads | Five paths listed below | Workbook VALIDATED. Native Excel and 136 offline tests PASS | [PR 27](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/27), initial push and PR CI PASS | T9D.4 ACCEPTED. T9E.1 PENDING | Private readiness, capacity and network evidence. Separate approval for T9E.2 |
 | T9E.2 - Office 02 | PENDING | Review identity and zero-trust implementation prompts and layer-specific evidence | None | NOT TESTED | Pending | PENDING | T9E.1 owner review and separate authorization |
 | T9E.3 - Office 03 | PENDING | Align ten OVERALL definitions, legacy FWT-01.01/FWT-02.01 and FWR-02 wording, recovery B08 and handover prompts | None | NOT TESTED | Pending | PENDING | T9E.2 owner review and separate authorization. Preserve the 91 mandatory subchecks and pending UAT |
 | T9E.4 - Office 04 | PENDING | Review issue, correction and retest references | None | NOT TESTED | Pending | PENDING | T9E.3 owner review and separate authorization |
@@ -769,7 +769,7 @@ The workbook preserves the five named tables and their filters, frozen panes, Se
 
 **Remaining dependencies.** Private asset identities, supported versions, measured capacity, reviewed VLAN/PVID and bridge/NIC mappings, isolation, console recovery and rollback remain readiness evidence to collect under the applicable stage approvals. The later Office 02–05 work, T9E integration and T9F each await their register dependencies and owner authorization.
 
-**Publication.** Branch `codex/009e1-office01-architecture` is based on the verified public `main`. Publication evidence pending.
+**Publication evidence cutoff.** 2026-11-10 20:45:56 America/Toronto, when both initial-head workflows had completed. Content commit `f07ae37fa570880a65e3efad7f1dcccbc4a7ceb2` was pushed on `codex/009e1-office01-architecture` to the public repository with verified GitHub noreply author and committer identities. PR 27 targets the default branch `main`. Initial push and PR CI succeeded. The final-head checks, merge, main CI and local/tracking/live read-back follow this cutoff. [PR 27](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/27) · [Initial push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42941216326) · [Initial PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42941221972)
 
 **Rollback.** Revert the reviewed Office 01, focused contract/tests and T9E.1 draft change on a new branch if needed, using the preserved T9D.4 baseline for comparison.
 
