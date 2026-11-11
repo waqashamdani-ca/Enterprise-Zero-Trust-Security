@@ -25,18 +25,18 @@
       "uri_links": 8
     },
     {
-      "bookmarks": 6,
+      "bookmarks": 7,
       "internal_links": 0,
-      "pages": 2,
+      "pages": 1,
       "pdf": "README.pdf",
-      "pdf_sha256": "66e16467a6fd6d8912a1f8e66b19cf1af67ebeb3b2a23fb21e48984390e01aaa",
+      "pdf_sha256": "94712421c9d835f1f28e9d73fe28670382c3c8d2c0bbdeaa305c275ef7e55808",
       "renderer_sha256": "32fb92b61bc2f32dcde86e808b7c278cda32a93bcee0da3003b99889b8438165",
       "searchable": true,
       "source": "README.md",
-      "source_sha256": "845acf5bd1e8fb2c064af323d4d069f9bc21d2516272c1a3de3473d8251b3ac9",
-      "source_tokens": 360,
+      "source_sha256": "204cf8066417e693b4763f9abbeccdf2822c632ca28f6204dfda158aaef71c9e",
+      "source_tokens": 151,
       "text_token_coverage": 1.0,
-      "uri_links": 20
+      "uri_links": 6
     },
     {
       "bookmarks": 1,
