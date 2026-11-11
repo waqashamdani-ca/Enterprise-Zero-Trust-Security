@@ -1,14 +1,40 @@
 # T9 - Project Documentation and Architecture Alignment
 
-Report state: DRAFT
+Report state: FINALIZED
 
 ## A. Task Information
 
 | Field | Record |
 | --- | --- |
 | Task ID | T9 |
+| Task type | Documentation umbrella covering T9A-T9F and the approved GitHub README simplification |
+| Umbrella status | COMPLETE |
+| Initialization | OWNER-T9-INIT-2026-11-07, 2026-11-07 America/Toronto |
+| T9F authority | OWNER-T9F-CLOSURE-2026-11-11, 2026-11-11 America/Toronto. The owner accepted the GitHub README simplification and approved the final integration audit, bounded corrections, validation, one-time finalization and reviewed publication. |
+| Evidence cutoff | 2026-11-11 13:16:36 -05:00 America/Toronto, final local documentation review before publication |
+| Finalization date | 2026-11-11 America/Toronto |
+| Owner review | T9F documentation review and lab owner user acceptance testing (UAT) are PENDING. |
+
+### Current authorization and review
+
+| Portion | Document approval or acceptance recorded |
+| --- | --- |
+| Initialization | The owner authorized the umbrella and its governance under OWNER-T9-INIT-2026-11-07. PR 12 is merged. |
+| T9A Architecture | The owner approved the physical design in the T9B request, OWNER-T9B-ASSIGN-2026-11-07. |
+| T9B Assignment | The owner accepted the assignment in OWNER-T9C1-DESIGN-2026-11-07. |
+| T9C Lab Guide and References 01-07 | The subtask register records the accepted refined sample, subsequent phase approvals and integration. The owner accepted T9C.7 and closed T9C documentation in OWNER-T9D1-SECURITY-2026-11-08. |
+| T9D Security and Testing | The subtask register records the individual approvals. The owner accepted T9D.4 and closed T9D documentation in OWNER-T9E1-OFFICE01-2026-11-10. |
+| T9E Office Deliverables | The subtask register records acceptance of Office 01-05 and the Office 05 width correction. The owner accepted the integration audit in OWNER-T9-README-2026-11-11. |
+| GitHub README | The owner accepted the revision in OWNER-T9F-CLOSURE-2026-11-11. |
+| T9F Integration and Closure | The same request authorized this final documentation task. Review of its delivered result is PENDING. |
+
+### Initialization and T9A snapshot
+
+The following fields and authorization table describe the earlier cutoffs. The current record and dated microtask entries supply the later decisions.
+
+| Field | Record |
+| --- | --- |
 | Task type | Umbrella task; initialization and T9A are authorized |
-| Umbrella status | IN PROGRESS |
 | Initialization date | 2026-11-07, America/Toronto |
 | Owner authority | OWNER-T9-INIT-2026-11-07; OWNER-T9A-ARCH-2026-11-07; requests retained privately |
 | Authorized work | Initialization plus T9A architecture source/PDF, diagram, physical-firewall relationships, capacity model, supporting decisions/risks, focused validation and reviewed GitHub synchronization |
@@ -1057,12 +1083,33 @@ The root README introduces the lab's purpose, physical firewall, three workloads
 
 ### T9F - Final Integration and Audit
 
-- **Scope:** cross-document consistency, PDF/Office validation, requirement/test/deliverable traceability, focused regression/security-publication review, GitHub integration and one-time T9 report finalization.
-- **Acceptance criteria:** approved T9A-T9E changes agree; all required authorizations/review outcomes and unresolved issues are recorded; no omitted mandatory coverage or unsupported implementation claim; reviewed public artifacts and final-head CI/publication/synchronization are observed at their actual cutoffs.
-- **Validation:** complete applicable document/PDF/Office and regression gates, manual content/metadata/history review, traceability and preservation comparison, normal --require-finalized gate without draft exception, actual PR/CI/merge/live Git read-back. Record post-finalization observations in the final response or a later authorized addendum.
-- **Change summary / files:** NOT STARTED; none.
-- **T9A dependency:** README.md/PDF and docs/README.md/PDF still summarize four VMs; the root hardware link now resolves through a compatibility alias but its procurement text needs later alignment. docs/guides/GLOSSARY.md/PDF still defines workload bridges as having no physical uplink; docs/governance/REFERENCES.md/PDF emphasizes virtual OPNsense installation. Reconcile maintained navigation/supporting references, not historical report/snapshot evidence. scripts/office_template_contract.py and scripts/validate_office_templates.py enforce four-VM prompts and exact Office/test/flow agreement; update alongside the separately approved Office migration, not by exemptions. Audit scripts/validate_docs.py, build checks and tests against the integrated baseline, retaining strict draft/history/publication checks. Coordinate any indispensable T9E validator changes in that approval before editing. Verify all resource tables and traceability, source/PDF/Office agreement and unchanged frozen evidence. Depends on T9E and separate T9F approval; finalize this report once only after T9F passes and all required approvals are recorded.
-- **Owner review status:** PENDING; authorization reference/date not supplied; integration/umbrella completion NOT TESTED.
+**Scope.** Audit the complete public repository against the accepted README, DEC-28 physical design, assignment, Lab Guide and References 01-07, security and testing specifications and all five Office deliverables. Resolve confirmed documentation defects, run the repository gates and prepare reviewed publication. The owner authorized documentation only. No lab equipment, test target, service, credential or private evidence was accessed.
+
+**Baseline.** Live GitHub confirmed PR 33 and its expected merge. PR 34 subsequently changed only this report. The synchronized PR 34 merge was the clean task base. The 99 tracked paths comprised 49 Markdown files, 32 PDFs (27 maintained editions and five frozen archives), five Office packages and 13 workflow, script, test, manifest, dependency and Git-control files. The 27 manifest entries cover 134 maintained pages. Eight compatibility aliases preserve relocated navigation, including the separate manifest alias. The docs validator checks current relative links and anchors and the frozen T5 snapshot, the Office contract checks released file hashes and all test rows, and the renderer verifies deterministic source/PDF agreement. The GitHub workflow runs offline documentation checks with read-only repository access. The five deletions in the owner's original checkout remain excluded.
+
+| Class | Finding and disposition |
+| --- | --- |
+| A. Material inconsistency | The documentation library counted four VMs. Its architecture summary and Office 01 description now identify the separate HP bare-metal OPNsense firewall, Dell Proxmox host, DC1/WIN1/APP1 and three zones. The capacity link leads to the authoritative planned budget. |
+| A. Material inconsistency | The glossary claimed that workload bridges had no physical uplink. Its definitions now distinguish switch/VLAN separation, the Dell bridge paths to HP, OPNsense routed filtering, Windows same-zone and APP1 host filtering, Tailscale grants/device authorization and Apache role checks. |
+| A. Material inconsistency | The references emphasized virtual OPNsense installation and the risk guidance called for downstream alignment already completed. The current reference lists the vendor's physical installation and sizing guides. The virtual guide remains a historical citation. The decision introduction points to this audit and the risk register points to the mapped tests. Dated decision entries retain their original text. |
+| A. Material inconsistency | Reference 07 called B08 simply HTTPS and left the approved-path evidence destination implicit. The reference now directs B08 to the approved path, both approvals, checklist, temporary settings, matching HP/APP1 evidence and trusted HTTPS on that path. B09 records authenticated role outcomes. The added regression checks both destinations in Markdown and PDF. |
+| B. Navigation | The library no longer directs readers to the earlier T7 native validation as the evidence for the current packages. The active report index identifies the single completed T9 record. The current links and PDF targets were checked with compatibility aliases in place. |
+| C. Formatting and usability | Reviewed every rebuilt PDF page and representative pages from accepted core editions. The revised glossary fits its existing three pages. Reference 07's manifest-command page body renders identically to the published baseline. |
+| D. Historical record | T1-T8 and their addenda, the frozen index and archive PDFs, bootstrap evidence, prior T9 entries and dated decisions retain their evidence. Historical four-VM references remain attributable to the superseded design. The old FWR-02 test fixture is historical. The active validator already enforces the physical firewall and three workloads. |
+| E. Operational dependency | Hardware measurements and compatibility, the private physical map, independent upstream isolation, stage-specific approvals and both restore prerequisites remain open. See section F. |
+| F. Editorial preference | The accepted root README, assignment, architecture, Lab Guide, References 01-06, security/test/acceptance documents and Office layout require no redesign. The project-level final report remains a template. |
+
+**Changed files.** The revised source/PDF pairs are [documentation library](../README.md), [glossary](../guides/GLOSSARY.md), [references](../governance/REFERENCES.md), [decisions](../governance/DECISIONS.md), [risks](../governance/RISKS.md) and [Reference 07](../lab-guides/reference/07-Backup-and-Recovery.md). The build regenerated the [manifest](../documentation-manifest.json). The [report index](INDEX.md), this record and one focused test in [test_build_docs.py](../../tests/test_build_docs.py) complete the change set. There are no new tracked paths or changes to the validators, renderer, workflow, formal lab test definitions or Office files.
+
+**Architecture and traceability.** The physical HP handles inter-zone routing. TP-Link TL-SG108E and Dell bridges carry the separated zones and the GL.iNet Beryl AX remains beyond the independent egress gate. DC1 and WIN1 use Corporate, APP1 uses Restricted and Management is reserved for the dedicated administrator and named interfaces. The wider six-VLAN design stays outside Project 01. The assignment, architecture, guide, references and Office 01 and 05 agree on planned DC1 and WIN1 allocations of 2 vCPU, 6 GiB RAM and 64 GiB disk each, and APP1 at 2 vCPU, 4 GiB RAM and 32 GiB disk. Guest totals are 6 vCPU, 16 GiB RAM and 160 GiB disk. The provisional Dell ledger is 320 GiB. HP capacity is assessed separately. These values describe the design.
+
+All ten FWR/FSC/FWT/FAC mappings and the eight FF permissions agree. The 91 exact mandatory children per FWT family are 9, 9, 13, 7, 7, 11, 9, 7, 10 and 9. The guide, technical references, formal tests and Office prompts retain their methods, expected outcomes, verification and recording destinations. The Office 03 rows include a blank actual result, evidence, defect, retest and operator record for each child.
+
+**Identity, access and evidence.** LabReaders contains ava and eli, LabMaintainers contains eli, uma has neither application role and LabAdmins contains the separate privileged administrator. The six approved C01-C06 outcomes are allow, deny, allow, allow, deny and deny. Separate AD and Apache credentials, manual role mapping, existing and fresh requests, continued reader access, separate clocks and matching Apache authorization evidence remain required. A 401 alone or an unreachable endpoint cannot pass a role denial. One offline lab CA and one APP1 server-authentication certificate for app.ad.lab.test retain their private-key custody and untrusted-before-trusted checks. The separate lab-only tailnet grants one existing approved client APP1 TCP 443 only. Device state and grants, APP1 host policy and Apache role evidence remain distinct. Subnet routes, exit nodes, Tailscale SSH, Funnel, Serve, sharing and access to DC1, WIN1, HP and Proxmox are excluded.
+
+**Monitoring, automation and recovery.** The five event categories retain DC1 success/failure, Apache allow/deny and physical HP denial. One investigation pairs event time and effective policy with a working control, matched logs or counters, a second observation and limits. The single WIN1 disk-capacity operation retains two successful standard-user runs, both safe input rejections, an independent OS comparison, before/after checks and private output. The recovery contract retains one encrypted off-compute backup, separate key custody, original APP1 off throughout, a disconnected temporary copy with autostart off and copied Tailscale inactive and disabled, authentic manifest comparison, narrow approved access, trusted HTTPS role checks, measured restore-to-usable time and cleanup evidence.
+
+**Rollback.** A reviewed documentation revert can restore affected editable sources and regenerate their editions and manifest from the pinned toolchain. The finalized report and earlier history stay frozen. A later correction to the evidence requires separate owner authorization. There is no lab state to roll back.
 
 ## C. Testing and Validation
 
@@ -1117,6 +1164,22 @@ Primary Codex agent, 2026-11-07, architecture documentation scope only. Existing
 
 The initialization-preservation fixtures now compare committed initialization bytes at 1fbc006450d5a9815844202bf3f1098283f8a0b6 against their original baselines. The live T9A fixture independently rejects any changed excluded path or additional public file. Documentation validators, workflow privileges, requirements, test definitions, Office packages and all finalized records are unchanged. These observations are a second verification method, not a second human review.
 
+### T9F validation record
+
+**Verifier and scope.** Codex reviewed the documentation candidate in the isolated worktree with the existing pinned Python 3.12.14 documentation environment. The checks below used Git history, current sources and the released package bytes. No lab procedure or security test was run.
+
+| Check | Expected and observed result | Verdict |
+| --- | --- | --- |
+| Report and documentation gate while preparing the draft | `python scripts/validate_docs.py --require-finalized --allow-t9-draft` passed for 99 public candidates and 49 Markdown files. All relative links and anchors, the historical T5 targets, A-H structure and frozen history checks passed. The final strict invocation on the finalized tree is recorded in the completion response. | PASS |
+| Offline regressions | `python -m unittest discover -s tests -q` passed all 152 offline regressions in 111.809 seconds. This includes the history, archive and report-finalization fixtures, strict reporting checks, Office guardrails and PDF regeneration tests. | PASS |
+| Focused integration | Two focused reference PDF regressions passed, including the new B08/B09 source and PDF check. Independent comparisons verified eight FF permissions against the pre-alignment flow rows, ten complete FWR/FSC/FWT/FAC mappings, all 91 exact ordered mandatory children and their evidence destinations, six application cases, five event categories and the restore gate. | PASS |
+| Office packages and layout contracts | `python scripts/validate_office_templates.py` passed all five packages. A separate CRC check and XML parse covered all 93 parts. The five Office files match their accepted release bytes. Read-back verified 14 worksheets, 19 Word headings, 15 validation lists, 13 conditional-format ranges, existing links, print areas/titles and PAGE/NUMPAGES fields. Office 04 prints the used range with repeating identifiers. The 100-point rubric remains 25 / 25 / 20 / 20 / 10 with blank scores. Office 05 Maximum retains its 1,240-twip width. | PASS |
+| Office resource and evidence fields | The eight Office 01 formulas, independent arithmetic and stored planned results agree on 6 vCPU / 16 GiB / 160 GiB / 320 GiB. Actual formula caches, test and evidence fields remain blank and the five UAT decisions read PENDING. Native Word/Excel observations from T9E.6 apply to the identical release bytes. T9F used offline package and content checks. | PASS |
+| PDF build and deterministic comparison | `python scripts/build_docs.py` regenerated the six affected editions and their manifest entries. `python scripts/build_docs.py --check --rebuild-check` passed for all 27 pairs and 134 pages. Every fresh render matched the stored bytes and the other 21 manifest entries matched the baseline. | PASS |
+| PDF navigation and visual review | An independent PDF check inspected 264 named destinations, 64 internal links and 308 repository links, including 193 PDF and three report anchors. Checked text boundaries, searchable page bodies, page numbers, metadata and active-content restrictions. Poppler review covered all 24 pages of the rebuilt editions and representative title, contents, diagram, table, code and transition pages of unchanged core editions. Reference 07's eight pages remain legible. Page 3, including the manifest command, matches the published body above the version footer. | PASS |
+| Preservation and whitespace | Compared the proposed paths with PR 33 and the synchronized PR 34 base. Preserved all 18 frozen report, addendum, index and archive paths, including the 11 T4 migration files. The root README and its PDF, dated decision rows, prior T9 microtask evidence, Reference 07 command blocks, bootstrap evidence and five Office packages retained their applicable bytes. `git diff --check` passed. | PASS |
+| Operational controls and owner UAT | No operational verification was performed. The owner decision remains PENDING. | NOT TESTED |
+
 ## D. Security and Quality Review
 
 Threats considered: a draft falsely implying completion, unapproved progression, weakened report immutability, loss of owner edits, unreviewed binaries/private values and invented lab evidence. Mitigations are explicit per-microtask gates, the exact-path draft exception, unchanged ordinary/history validation, isolated checkout, bounded candidate review and observed evidence only.
@@ -1125,7 +1188,13 @@ Manual candidate/content/metadata/staged/history review and independent byte pre
 
 T9A adds physical switch/bridge bypass, firewall outage/recovery and temporary cross-document inconsistency to the reviewed risks. DEC-28 and RK-23 retain the independent isolation gate, host/overlay controls and documentation-only rollback. All permits remain unchanged. Complete content/metadata/inventory review and preservation checks PASS at the local cutoff; staged/new-commit checks follow before publication. Raw fixture/render outputs remain ignored and private. No licensing, rule/reviewer setting, global identity or lab asset changed.
 
+### T9F public-content review
+
+The candidate review covers the complete tracked inventory, changed sources, PDF text, navigation and metadata, and the five Office ZIP/XML packages and their metadata. The released templates carry synthetic names, planned values and empty execution, score and evidence fields. The repository retains private custody for credentials, maps, raw logs, recovery material and working copies. Checks found no new private values, unsupported implementation results, active Office/PDF content or unreviewed binaries in the candidate. Independent technical observations came from the GitHub read-back, byte comparisons, Open XML inspection and rendered PDF review. Independent human review remains PENDING.
+
 ## E. GitHub Operations
+
+### Initialization publication record
 
 [Repository](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security): PUBLIC, default branch main. Connector and existing GitHub CLI authentication identify waqashamdani-ca, ID 315227303; push/admin permissions verified. Local author/committer resolve to 315227303+waqashamdani-ca@users.noreply.github.com. New commits/merges require read-back of both identities; no global configuration/account change.
 
@@ -1149,31 +1218,36 @@ The connector returned HTTP 403 for PR creation (resource not accessible by inte
 
 This report update's own SHA/CI, final PR checks, merge and synchronization are outside the publication cutoff. Re-run the interim gate and staged/history/identity review before pushing it, then verify those later outcomes and give observed commit IDs/CI in the completion response. No future result is asserted. T9 remains DRAFT / IN PROGRESS; all later approvals remain separate.
 
+### T9F publication evidence at cutoff
+
+| Check | Observed result |
+| --- | --- |
+| Accepted README predecessor | [PR 33](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/33) merged into main at `a07866fa84c645b5f1e30bf08ac4f791782c5042`. Final head `ffadd9b8822e60a760e7d3bda8238577c5eb11f5` passed [push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061584179) and [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061594390). [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061960039) passed at the merge. |
+| Synchronized base | [PR 34](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/34) changed only this report. Final head `ddcc859a0e173403194aa3f33c6303516f1a0b0a` passed [push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43062726477) and [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43062742360). [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43063004651) passed at `c2effdb03772bc2d99da58e2d6e84830d8c7fc10`. Local main, origin/main and live main matched at preflight. Live GitHub showed PRs 12-34 merged into main. |
+| Task checkout and authorization | `codex/009f-final-documentation-integration` began on a clean isolated checkout after `git pull --ff-only origin main`. The owner identity had admin and push permissions. The author and committer resolved to the verified GitHub noreply address. The public repository default is main. Main was unprotected, effective rules were empty and merge commits were permitted at preflight. No concurrent open PR targeted main. |
+| Closing evidence | The final strict gate on the finalized tree, task and merge SHAs, T9F PR and CI, and synchronization are recorded after this cutoff in the completion response. |
+
 ## F. Outstanding Issues
 
-- Initialization and initial-head T9A publication/CI are verified. This report update's final checks/merge/synchronization follow the publication cutoff and must be reported after read-back; no local documentation/check defect remains.
-- T9B-T9F still require their own explicit owner authorization; none has started. Their exact downstream changes are listed in the register. The excluded assignment/guide/security/testing/Office/navigation contracts deliberately retain older counts/bridge assumptions until approved alignment; documentation-check PASS is not integration completion.
-- Private physical/VLAN/NIC/bridge/route mappings, measured Dell/HP capacity, independent upstream isolation and firewall recovery procedure remain open owner decisions. No hardware readiness, permission expansion or working network is claimed.
-- The specific prior Office formatting defect list is not in the supplied request; record confirmed issues before T9E repairs. No defect is declared fixed here.
-- Five original-checkout archive deletions remain owner work outside T9 and publication.
-- Independent human review and owner UAT are not supplied. Licensing and repository enforcement decisions remain open; no implementation stage is authorized.
+- Confirm the Dell and HP hardware, compatible releases, actual usable capacity and reserve fit, original disk and data protection, and both console recovery paths during approved readiness work. The private cable, switch, VLAN, interface, bridge and route map still needs owner approval.
+- Approve and verify independent upstream isolation, scoped egress and rollback before connecting the Beryl AX uplink or enrolling the existing remote client. Verify current lawful media, activation and provider terms at the relevant stage.
+- Operational restore is **BLOCKED** pending two separate owner approvals. One covers the exact encrypted external-storage backend, unlock and recovery method. The other covers the exact isolated WIN1-to-restored-APP1 path through physical HP OPNsense, including disconnection, reconnection and rollback. The rest of the [private recovery plan](../lab-guides/reference/07-Backup-and-Recovery.md#required-private-recovery-plan) remains required.
+- The owner accepted the Reference 07 PDF manifest-command presentation risk in T9C.6. Copying the displayed line may require a shell continuation character. The command and its page body retain their published form. Verify the command in the approved execution-stage shell before use.
+- Repository licensing, enforcement settings and any historical commit privacy remediation remain owner decisions. The five local archive deletions are outside the published change set.
 
 ## G. Completion Status
 
-| Area | Status |
+| Area | Status at cutoff |
 | --- | --- |
-| Initialization planning/governance | VALIDATED; local verification and initial-head PR CI PASS; final publication read-back follows cutoff |
-| Initialization publication | VALIDATED in T9A preflight; PR 12 merged, final branch/main CI SUCCESS and main synchronized |
-| T9A architecture documentation | VALIDATED; local checks and initial-head PR CI PASS; final report-update publication/merge/synchronization follows cutoff |
-| T9B-T9F | PLANNED; NOT STARTED; engineering checks NOT TESTED; no owner authorization |
-| T9 overall | IN PROGRESS; completion NOT TESTED |
-| Report | DRAFT; finalization deferred to approved T9F |
-| Independent human review | NOT TESTED |
-| Owner review / UAT | PENDING |
-| Operational controls/security tests | NOT TESTED; no lab work in initialization or T9A |
-
-Closing initialization never supplies umbrella PASS. Maintain this report through the approved microtasks, including owner approval/review and final integration evidence, and finalize only once at the end.
+| T9 documentation | COMPLETE. Engineering documentation validation PASS. |
+| Independent technical observations | GitHub, Git byte comparison, Office ZIP/XML, PDF structure and visual inspection |
+| Independent human review | PENDING |
+| Final T9 documentation owner review | PENDING |
+| Operational controls and FWT-01 through FWT-10 | NOT TESTED |
+| Backup, restore and measurement | NOT TESTED. Operational restore is BLOCKED. |
+| Lab owner UAT | PENDING |
+| Lab activity performed in T9F | None |
 
 ## H. Next Task
 
-Recommend **T9B - Assignment Refinement** only, after T9A owner review and explicit approval naming its document scope, permitted changes, validation and rollback. Align the assignment with the physical firewall and three-workload target while retaining ten requirements, five deliverables and the 100-point rubric. Do not begin T9B or any implementation stage from T9A's PASS or merge; stop at this authorization boundary.
+Owner review of the final T9 documentation deliverables. Any future operational work requires its own explicit stage approval identifying scope, assets, permitted changes, validation and rollback.

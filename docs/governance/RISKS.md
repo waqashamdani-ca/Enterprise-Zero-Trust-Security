@@ -1,6 +1,6 @@
 # Risk register
 
-**Architecture baseline: 2026-11-07; other focused controls retained.** Risks are design judgments, not operational test results. Owner risk acceptance is PENDING unless separately recorded. Refer to the [architecture](../architecture/ARCHITECTURE.md), [test plan](../testing/TEST-PLAN.md) and [decisions](DECISIONS.md). Earlier values/controls remain in Git history; downstream alignment is tracked in the [T9 register](../reports/T9-Report.md#microtask-register).
+**Architecture baseline: 2026-11-07; other focused controls retained.** Risks are design judgments, not operational test results. Owner risk acceptance is PENDING unless separately recorded. Refer to the [architecture](../architecture/ARCHITECTURE.md), [test plan](../testing/TEST-PLAN.md) and [decisions](DECISIONS.md). Earlier values and controls remain in Git history. The [T9 integration audit](../reports/T9-Report.md#t9f---final-integration-and-audit) records the documentation alignment.
 
 | ID | Risk / likelihood / impact | Mitigation and required evidence | Residual condition / owner |
 | --- | --- | --- | --- |
@@ -26,7 +26,7 @@
 | RK-20 | Legacy shell/current submission mismatch / T7 migration implemented; verification recorded separately | Five active four-week templates replace verified blank T5 files through history-preserving Git changes; [T7 report](../reports/T7-Report.md) records native, content and publication evidence | Historical links use the original T5 snapshot; completed lab records/owner acceptance remain pending, owner |
 | RK-21 | Manual AD/app role mapping leaves stale access / medium / high | Different passwords, explicit dual-record change, six cases and app revocation in FWT-03 | No automatic AD SSO/group propagation; engineer records every lifecycle change |
 | RK-22 | Delivery/readiness/approval consumes four-week window / medium / medium | Start working weeks after prerequisites, keep 8-12 hours/week estimate and defer dependent work honestly | Dates need revision if blockers remain; owner |
-| RK-23 | Switch/bridge membership bypasses firewall or HP failure removes routing / medium / high | Review physical and virtual zone continuity without guessed port/VLAN values; prohibit Dell/switch inter-zone routing; retain host/overlay controls, HP console and separate private configuration recovery copy | No firewall availability or recovery result; detailed mapping/recovery procedure needs owner approval. FWR-01/02/09 and related tests require downstream alignment; engineer + owner |
+| RK-23 | Switch/bridge membership bypasses firewall or HP failure removes routing / medium / high | Review physical and virtual zone continuity without guessed port/VLAN values; prohibit Dell/switch inter-zone routing; retain host/overlay controls, HP console and separate private configuration recovery copy | No firewall availability or recovery result; detailed mapping/recovery procedure needs owner approval. Use FWR-01, FWR-02 and FWR-09 and their [mapped tests](../testing/TEST-PLAN.md#coverage-index). Engineer and owner |
 
 ## Handling and escalation
 
