@@ -1021,6 +1021,32 @@ Word's fourth page begins with Section 9, fits the complete rubric, and includes
 
 **Next bounded task.** Owner review of T9E.6 is pending. README simplification and T9F require separate authorization. T9 remains DRAFT / IN PROGRESS.
 
+### GitHub README Simplification
+
+| Record | Value |
+| --- | --- |
+| Owner authority | OWNER-T9-README-2026-11-11, 2026-11-11 America/Toronto. The owner accepted the T9E.6 documentation audit and authorized the root README revision, generated edition, focused validation and reviewed publication. |
+| Verified predecessor | PR 32 merged at `e075ed39f1a5e5ebb4c5a583574f59bebd7da296`. Final head `44e2e253e1099b5634a4112dbad301d7cddb64c7` passed the push and pull request workflows. Main CI passed at the merge. Original local, tracking and live main matched the merge SHA at preflight. [PR 32](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/32) · [Push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42982569347) · [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42982575598) · [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42982880395) |
+| Checkout | Clean isolated worktree on `codex/009-readme-simplification`, based on verified main after `git pull --ff-only origin main`. The original checkout retained its five unstaged archive PDF deletions. |
+| Owner review | T9E.6 documentation ACCEPTED. README documentation acceptance, independent human review and lab owner UAT are PENDING. Umbrella report is DRAFT / IN PROGRESS. |
+
+The root README introduces the lab's purpose, physical firewall, three workloads, three zones and security capabilities. It links to the six authoritative project documents. The build contract maintains the root README PDF and its manifest entry. The publication scope is `README.md`, `README.pdf`, `docs/documentation-manifest.json` and this T9 record.
+
+**Rollback.** Revert the README source, generated PDF and manifest entry together through a reviewed pull request. Verify the pair against the PR 32 baseline and record the rollback in the living report.
+
+**Local evidence cutoff.** 2026-11-11 11:45:17 -05:00 America/Toronto. The documentation engineering review covered the following checks.
+
+| Check | Observed result | Verdict |
+| --- | --- | --- |
+| README content and navigation | Focused check counted 271 visible words, the six requested sections, four objectives, the separate physical HP firewall, exactly three workload VMs, the three approved zones and six working Markdown links. Manual comparison with the approved design confirmed the intended security capabilities, independent enforcement layers and approved technologies. The review found no progress language, deployment claims or private configuration. | PASS |
+| Source, PDF and visual review | `python scripts/build_docs.py` regenerated the README PDF and its manifest entry. `python scripts/build_docs.py --check --rebuild-check` matched 27 source/PDF pairs across 134 pages, with no further changes. The one-page README PDF has searchable text, the source hash, six correct PDF links and project metadata. Poppler rendering confirmed legible headings and body, link text, margins and footer. | PASS |
+| Documentation and report gates | `python scripts/validate_docs.py --require-finalized --allow-t9-draft` passed public hygiene, links, report history and the frozen archive checks. The ordinary `--require-finalized` invocation returned exactly one finding for unfinished T9. | PASS |
+| Office and offline regression checks | `python scripts/validate_office_templates.py` passed all five packages and their 91 mandatory subchecks. `python -m unittest discover -s tests -q` passed all 151 tests after rerunning with permission to create temporary synthetic Git fixtures. | PASS |
+| Publication and preservation review | Four changed paths, 95 unchanged Git blobs and 19 unchanged historical report and archive paths. The other 26 manifest entries are identical. Manual content and metadata review and `git diff --check` passed. | PASS |
+| Operational lab validation | Documentation scope only. | NOT TESTED |
+
+**T9F follow-up.** This revision resolves the root README part of the earlier T9A dependency. The documentation library's Office 01 summary still lists four VMs, and the glossary still describes workload bridges without a physical uplink. Both are follow-up items for the separately authorized integration audit.
+
 ### T9F - Final Integration and Audit
 
 - **Scope:** cross-document consistency, PDF/Office validation, requirement/test/deliverable traceability, focused regression/security-publication review, GitHub integration and one-time T9 report finalization.

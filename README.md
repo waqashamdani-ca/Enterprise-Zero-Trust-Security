@@ -1,56 +1,39 @@
 # Enterprise Zero Trust Security Architecture
 
-HL-CYB-001 | Four-week focused cybersecurity lab
+## Overview
 
-A synthetic analyst needs report access, an engineer needs maintenance instructions and an unassigned user must be denied. This project designs a small isolated lab to demonstrate those decisions, remote revocation and recovery with evidence a reviewer can follow.
+This enterprise-style cybersecurity lab is designed to show how an organization can give people access to the systems and data they need while protecting sensitive resources. It uses synthetic data in an isolated environment to demonstrate zero trust through identity and permission checks, and defense in depth through separate network, host and application controls.
 
-**Current state:** Aligned planning documents and repository checks exist. Lab implementation is **PLANNED**; operational controls are **NOT TESTED**; owner user acceptance testing (UAT) is **PENDING**. No production-impact or compliance claim is made.
+## Objectives
 
-## Focused architecture
+- Separate lab networks and allow only required traffic between them.
+- Give users and administrators only the permissions their roles require.
+- Review security events and investigate denied access.
+- Verify controls, automate a routine check and practice application recovery.
 
-One Proxmox host runs four VMs: virtual OPNsense, one Windows Server with Active Directory/DNS/Group Policy, one Windows endpoint and one Linux HTTPS application server. Management, Corporate and Restricted are the three zones. Three synthetic standard users, three role groups and a separate privileged administrator support six application access cases and an access-revocation demonstration.
+## Lab Environment
 
-One simple lab certificate authority signs the application certificate. Tailscale alone exposes one named HTTPS resource in a separate lab tailnet. Two or three log sources, five representative events, one investigation, one repeatable PowerShell/Python operation and one measured application restore complete the lab.
+The design places three workload virtual machines on a Dell Precision 5820 running Proxmox VE. The OPNsense firewall runs on a separate physical HP desktop. A TP-Link TL-SG108E managed switch separates the lab networks, and a GL.iNet Beryl AX serves as the upstream router.
 
-The [architecture](docs/architecture/ARCHITECTURE.md) explains flows, capacity and limits, including manual AD-to-application role mapping. [The assignment](docs/assignments/PROJECT-ASSIGNMENT.md) owns ten FWR requirements, the four-week schedule and the single 100-point rubric. [The guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md) groups practical steps into five phases while retaining separate stage A-L approvals.
+- **DC1** provides Active Directory on Windows Server.
+- **WIN1** is a Windows workstation.
+- **APP1** serves the application over HTTPS using Apache on Linux.
 
-## Hardware and safety
+The three logical zones are **Management** for administration, **Corporate** for DC1 and WIN1, and **Restricted** for APP1.
 
-The owner reports existing hardware and six ordered components. Ordered does not mean delivered, installed or validated. [Hardware status and preparation](docs/architecture/ARCHITECTURE.md#hardware-status-and-preparation) records the distinction. Receipt, inspection, compatibility, current data/service inventory, backups/recovery and exact destructive-change approval precede installation. Additional hardware does not expand scope.
+## Security Capabilities
 
-Start offline. No protected home/production trust, identities, credentials, routes, Microsoft 365, PE-DAP, customer data, corporate website testing or hosting integration is permitted. Independently isolated egress needs separate approval. Protected-network checks use configuration/passive review and lab-owned mocks, never probes of real protected systems.
+- Network segmentation, with OPNsense policy between zones and separate host firewalls.
+- Active Directory access management and endpoint security for Windows and Linux.
+- Trusted HTTPS certificates and separate application permissions based on user roles.
+- Tailscale remote access limited to the HTTPS application.
+- Security event monitoring, local automation and encrypted application backup and recovery.
 
-## Editable Lab Deliverable Templates
+## Documentation
 
-[Five editable Word and Excel templates](docs/README.md#editable-lab-deliverable-templates) are available for the approved four-week lab: environment/architecture, identity/access implementation, monitoring/testing, troubleshooting and final submission. They contain planned prompts and empty answer areas, with all ten requirements and tests, mandatory subchecks and the approved 100-point rubric.
+- [Project Assignment](docs/assignments/PROJECT-ASSIGNMENT.md), [Architecture](docs/architecture/ARCHITECTURE.md) and [Lab Implementation Guide](docs/lab-guides/LAB-IMPLEMENTATION-GUIDE.md)
+- [Security Requirements](docs/security/SECURITY-REQUIREMENTS.md), [Test Plan](docs/testing/TEST-PLAN.md) and [Acceptance Criteria](docs/testing/ACCEPTANCE-CRITERIA.md)
 
-Keep working copies and raw evidence private. Fill them during separately approved lab stages and publish only reviewed summaries. The eight retired T5 shells remain in Git history; no historical result transfers to these templates.
+## Technologies
 
-## Testing and evidence
-
-[Ten focused tests](docs/testing/TEST-PLAN.md) connect requirements, architecture, security controls, acceptance and future deliverables. All operational actual/evidence fields are empty. [Acceptance](docs/testing/ACCEPTANCE-CRITERIA.md) requires completed mandatory subchecks and separate owner UAT; critical failures block acceptance regardless of score.
-
-With Python 3.11+ and the existing pinned [documentation environment](docs/governance/DOCUMENTATION-BUILD.md):
-
-```powershell
-python scripts/validate_docs.py --require-finalized
-python scripts/validate_office_templates.py
-python scripts/build_docs.py --check --rebuild-check
-python -m unittest discover -s tests -v
-git diff --check
-```
-
-These checks validate documentation, preservation and bounded publication risks; they do not test lab security. CI remains read-only, commit-pinned, without retained checkout credentials or lab access. Manual content/metadata/history review and rendered PDF inspection remain necessary.
-
-## Project documentation
-
-The [documentation library](docs/README.md) links Markdown sources and generated PDFs. Markdown is authoritative; task reports/addenda are Markdown only and frozen when finalized. Existing report PDFs remain byte-frozen archives.
-
-- [Security controls](docs/security/SECURITY-REQUIREMENTS.md), [decisions](docs/governance/DECISIONS.md) and [risks](docs/governance/RISKS.md) explain safeguards and unresolved gates.
-- [T7 report](docs/reports/T7-Report.md) records the five-file consolidation; [T6](docs/reports/T6-Report.md) records specification alignment and [T5](docs/reports/T5-Report.md) preserves original template validation.
-- [All task reports](docs/reports/INDEX.md) preserve engineering history; [project final report](docs/final-report/FINAL-REPORT.md) remains a template.
-- [Glossary](docs/guides/GLOSSARY.md) and [official references](docs/governance/REFERENCES.md) explain terms and proposed commands.
-
-Use focused task branches, reviewed public-safe commits/PRs, exact-head CI and intentional main synchronization under [AGENTS.md](AGENTS.md). No background upload. Licensing and repository-protection settings remain owner decisions.
-
-**Next recommended task:** T8, a read-only Stage A hardware and isolation readiness assessment, after explicit owner approval of assets, scope, existing tools, validation, private evidence and recovery/stop conditions. No installation or later stage is included.
+Proxmox VE, OPNsense, Windows Server, Active Directory, Windows, Linux, Apache HTTP Server, Microsoft Defender, Tailscale, PowerShell and Python.
