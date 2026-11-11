@@ -59,7 +59,7 @@ def set_cell(raw, address, value=None, formula=None):
 
 
 class OfficeTemplateTests(unittest.TestCase):
-    def test_assignment_transition_requires_exact_published_packages_and_description(self):
+    def test_assignment_transition_preserves_frozen_history_and_office03_description(self):
         baseline = "7387219ab2c4690e5bbed3615c47d892f13b0e12"
         for name, expected in office.T9A_OFFICE_HASHES.items():
             data = subprocess.check_output(["git", "-C", str(ROOT), "show", baseline + ":" + REL + name])
@@ -75,7 +75,7 @@ class OfficeTemplateTests(unittest.TestCase):
             path = root / REL / office.FILES[2]
             rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "B9", office.T9B_FWR02))
             findings = office.template_set_issues(root)
-            self.assertTrue(any("only the byte-frozen" in x for x in findings))
+            self.assertIn(f"{office.FILES[2]}: package differs from the approved release", findings)
             self.assertTrue(any("FWR-02 traceability differs" in x for x in findings))
 
     def test_complete_shipped_shells_and_safe_parts(self):
@@ -250,7 +250,7 @@ class OfficeTemplateTests(unittest.TestCase):
             path = root / REL / office.FILES[2]
             rewrite(path, "xl/worksheets/sheet3.xml", lambda b: set_cell(b, "D19", "Changed FWT-02.01"))
             findings = office.template_set_issues(root)
-            self.assertTrue(any("Test Plan transition permits only the byte-frozen" in x for x in findings))
+            self.assertIn(f"{office.FILES[2]}: package differs from the approved release", findings)
             self.assertTrue(any("FWT-02.01 differs from approved test plan/subchecks" in x for x in findings))
 
     def test_missing_formula_guard_and_prepopulated_hardware_state_rejected(self):
@@ -262,6 +262,67 @@ class OfficeTemplateTests(unittest.TestCase):
             path = root / REL / office.FILES[0]
             rewrite(path, "xl/worksheets/sheet1.xml", lambda b: set_cell(b, "E8", "VALIDATED"))
             self.assertTrue(any("must be blank" in x for x in office.template_set_issues(root)))
+
+    def test_fourth_required_workload_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+
+            def add_vm(raw):
+                tree = ET.fromstring(raw)
+                data = tree.find("s:sheetData", office.NS)
+                sheet_ns = "{" + office.NS["s"] + "}"
+                row = ET.SubElement(data, sheet_ns + "row", {"r": "11"})
+                cell = ET.SubElement(row, sheet_ns + "c", {"r": "A11", "t": "str"})
+                ET.SubElement(cell, sheet_ns + "v").text = "OPNsense"
+                return ET.tostring(tree)
+
+            rewrite(path, "xl/worksheets/sheet2.xml", add_vm)
+            self.assertIn("Virtual Machines: approved inventory or zone order changed", office.template_set_issues(root))
+
+    def test_wrong_planned_budget_or_guest_input_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            formula = office.RESOURCE_FORMULAS["C16"]
+            rewrite(path, "xl/worksheets/sheet5.xml", lambda b: set_cell(b, "C16", "336", formula))
+            self.assertIn("Resource Allocation: planned guest totals or Dell ledger differ from the approved budget",
+                          office.template_set_issues(root))
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet2.xml", lambda b: set_cell(b, "E8", "8"))
+            self.assertIn("Virtual Machines: approved zone or allocation changed at row 8", office.template_set_issues(root))
+
+    def test_guest_actual_and_stale_actual_formula_cache_rejected(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            rewrite(path, "xl/worksheets/sheet2.xml", lambda b: set_cell(b, "G8", "2"))
+            self.assertTrue(any("actual/evidence/date fields must be blank" in x for x in office.template_set_issues(root)))
+        with fixture() as root:
+            path = root / REL / office.FILES[0]
+            formula = office.RESOURCE_FORMULAS["D8"]
+            rewrite(path, "xl/worksheets/sheet5.xml", lambda b: set_cell(b, "D8", "6", formula))
+            self.assertIn("Resource Allocation: cached actual totals must be blank", office.template_set_issues(root))
+
+    def test_missing_evidence_header_or_answer_cell_rejected(self):
+        for address in ("L7", "L8"):
+            with self.subTest(address=address), fixture() as root:
+                path = root / REL / office.FILES[0]
+
+                def remove_cell(raw):
+                    tree = ET.fromstring(raw)
+                    row = tree.find(f".//s:row[@r='{address[1:]}']", office.NS)
+                    row.remove(row.find(f"s:c[@r='{address}']", office.NS))
+                    return ET.tostring(tree)
+
+                rewrite(path, "xl/worksheets/sheet2.xml", remove_cell)
+                self.assertIn("Virtual Machines: required evidence field missing", office.template_set_issues(root))
+
+    def test_each_office02_through05_package_must_match_its_released_bytes(self):
+        for filename in office.FILES[1:]:
+            with self.subTest(filename=filename), fixture() as root:
+                path = root / REL / filename
+                rewrite(path, "[Content_Types].xml", lambda raw: raw + b"\n")
+                self.assertEqual(office.package_issues(root, REL + filename, public_content_issues), [])
+                self.assertEqual(office.template_set_issues(root), [f"{filename}: package differs from the approved release"])
 
     def test_legacy_target_extra_sheet_and_wrong_font_rejected(self):
         with fixture() as root:
@@ -314,10 +375,11 @@ class OfficeTemplateTests(unittest.TestCase):
             self.assertTrue(any("compatibility prefix" in x for x in office.package_issues(root, REL + path.name)))
 
     def test_network_flow_and_word_case_expectations_rejected(self):
-        with fixture() as root:
-            path = root / REL / office.FILES[0]
-            rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, "C8", "Allow all services"))
-            self.assertTrue(any("permission/enforcement" in x for x in office.template_set_issues(root)))
+        for address in ("C8", "C15"):
+            with self.subTest(address=address), fixture() as root:
+                path = root / REL / office.FILES[0]
+                rewrite(path, "xl/worksheets/sheet4.xml", lambda b: set_cell(b, address, "Allow all services"))
+                self.assertTrue(any("permission/enforcement" in x for x in office.template_set_issues(root)))
         with fixture() as root:
             path = root / REL / office.FILES[1]
             def wrong_case(raw):

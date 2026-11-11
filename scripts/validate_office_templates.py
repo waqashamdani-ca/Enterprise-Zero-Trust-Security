@@ -30,16 +30,12 @@ NS = {
 FORMULAS = {"IF", "COUNT", "SUM"}
 TEST_PLAN = "docs/testing/TEST-PLAN.md"
 
-# The T9D.4 Test Plan supersedes T9D.2 while workbook 03 still quotes T9D.1.
-# Pair the exact audited source (LF-normalized) with the byte-frozen Office
-# baseline and keep checking every legacy row against the published plan.
+# Office 03 quotes T9D.1 while the T9D.4 Test Plan governs execution.
+# Only the exact audited source (LF-normalized) uses the published definitions.
 T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
 T9D4_PLAN_SHA256 = "fdc664297e107b8f90179a4bb5da0e30bea8d91220067466ead9d78ff664e900"
 
-# T9B changes only the assignment's FWR-02 architecture wording. Office
-# alignment is separately authorized later. Preserve the exact published T9A
-# packages and their old description, while still checking every mapping,
-# method, subcheck and package safeguard. This is preservation, not alignment.
+# Office 03 retains the published FWR-02 wording until its alignment.
 T9B_FWR02 = "Verify the prepared Dell/Proxmox host, physical HP/OPNsense firewall, three workload VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
 T9A_FWR02 = "Run one host, four VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
 T9A_OFFICE_HASHES = {
@@ -49,6 +45,7 @@ T9A_OFFICE_HASHES = {
     FILES[3]: "084423d2c1daa47a23a8fe9bc2afb0cbc02866e6d0fca836050ead604fd368ae",
     FILES[4]: "6e5622322ab962e03b159e31d4d5b1098d89de656fb7151ac09c24b7f53100c6",
 }
+T9E1_OFFICE01_SHA256 = "2359a415a4e9ab0f7abbf9065171e70f35de93273e82fc0637ba87443302f541"
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -60,12 +57,19 @@ BLANK_COLUMNS = {
     "Owner Acceptance": "DEFG", "Issue Log": "ABCDEFGHIJK",
 }
 RESOURCE_FORMULAS = {
-    "C8": "SUM('Virtual Machines'!D8:D11)", "C9": "SUM('Virtual Machines'!E8:E11)",
-    "C10": "SUM('Virtual Machines'!F8:F11)",
-    "D8": "IF(COUNT('Virtual Machines'!G8:G11)<4,\"\",SUM('Virtual Machines'!G8:G11))",
-    "D9": "IF(COUNT('Virtual Machines'!H8:H11)<4,\"\",SUM('Virtual Machines'!H8:H11))",
-    "D10": "IF(COUNT('Virtual Machines'!I8:I11)<4,\"\",SUM('Virtual Machines'!I8:I11))",
+    "C8": "SUM('Virtual Machines'!D8:D10)", "C9": "SUM('Virtual Machines'!E8:E10)",
+    "C10": "SUM('Virtual Machines'!F8:F10)",
+    "D8": "IF(COUNT('Virtual Machines'!G8:G10)<3,\"\",SUM('Virtual Machines'!G8:G10))",
+    "D9": "IF(COUNT('Virtual Machines'!H8:H10)<3,\"\",SUM('Virtual Machines'!H8:H10))",
+    "D10": "IF(COUNT('Virtual Machines'!I8:I10)<3,\"\",SUM('Virtual Machines'!I8:I10))",
     "C16": "SUM(C10,C12:C15)", "D16": 'IF(COUNT(D10,D12:D15)<5,"",SUM(D10,D12:D15))',
+}
+OFFICE01_EVIDENCE = {
+    "Hardware & Readiness": ("I", 17),
+    "Virtual Machines": ("L", 10),
+    "Network Zones": ("H", 10),
+    "Allowed Network Flows": ("G", 15),
+    "Resource Allocation": ("G", 19),
 }
 
 
@@ -187,11 +191,6 @@ def plain_word(parts: dict[str, bytes]) -> str:
     return "\n".join("".join(p.itertext()) for p in ET.fromstring(parts["word/document.xml"]).findall(".//w:p", NS))
 
 
-def frozen_office_baseline(directory: Path) -> bool:
-    return all(hashlib.sha256((directory / name).read_bytes()).hexdigest() == expected
-               for name, expected in T9A_OFFICE_HASHES.items())
-
-
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
     if not directory.is_dir():
@@ -200,11 +199,13 @@ def template_set_issues(root: Path) -> list[str]:
     if {p.name for p in directory.iterdir()} != set(FILES):
         issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
+        released_hashes = T9A_OFFICE_HASHES | {FILES[0]: T9E1_OFFICE01_SHA256}
+        for filename, expected in released_hashes.items():
+            if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
+                issues.append(f"{filename}: package differs from the approved release")
         plan = (root / TEST_PLAN).read_text(encoding="utf-8")
         definitions = approved_tests(plan)
         if hashlib.sha256(plan.encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
-            if not frozen_office_baseline(directory):
-                issues.append("Test Plan transition permits only the byte-frozen published Office baseline")
             published_plan = subprocess.check_output(
                 ["git", "-C", str(ROOT), "show", f"{T9D1_PUBLICATION}:{TEST_PLAN}"],
                 encoding="utf-8", stderr=subprocess.PIPE)
@@ -279,21 +280,34 @@ def template_set_issues(root: Path) -> list[str]:
         owners = ["01", "01", "02", "02", "02", "02", "03", "03", "03", "03, 04, 05"]
         for rn, ((rid, required_result), owner) in enumerate(zip(required, owners), 8):
             if rid == "FWR-02" and required_result.strip() == T9B_FWR02:
-                if not frozen_office_baseline(directory):
-                    issues.append("FWR-02 transition permits only the byte-frozen published Office baseline; package alignment requires its approved scope")
                 required_result = T9A_FWR02
             expected = [rid, required_result.strip(), rid.replace("FWR", "FSC"), rid.replace("FWR", "FWT"), rid.replace("FWR", "FAC"), owner]
             if [coverage.get(f"{col}{rn}", {}).get("value") for col in "ABCDEF"] != expected:
                 issues.append(f"Requirements Coverage: {rid} traceability differs from approved assignment")
-        resource = all_workbooks[FILES[0]]["Resource Allocation"]["cells"]
+        office01 = all_workbooks[FILES[0]]
+        resource = office01["Resource Allocation"]["cells"]
         if {a: c["formula"] for a, c in resource.items() if c["formula"]} != RESOURCE_FORMULAS:
             issues.append("Resource Allocation: approved simple totals/input guards changed")
-        for name, expected in (("Virtual Machines", ["OPNsense", "DC1", "WIN1", "APP1"]), ("Network Zones", ["Management", "Corporate", "Restricted"])):
-            cells = all_workbooks[FILES[0]][name]["cells"]
+        if [resource.get(a, {}).get("value") for a in ("C8", "C9", "C10", "C16")] != ["6", "16", "160", "320"]:
+            issues.append("Resource Allocation: planned guest totals or Dell ledger differ from the approved budget")
+        if any(resource.get(a, {}).get("value") for a in ("D8", "D9", "D10", "D16")):
+            issues.append("Resource Allocation: cached actual totals must be blank")
+        for name, expected in (("Virtual Machines", ["DC1", "WIN1", "APP1"]), ("Network Zones", ["Management", "Corporate", "Restricted"])):
+            cells = office01[name]["cells"]
             values = [c["value"] for a, c in cells.items() if re.fullmatch(r"A(?:[89]|[1-9][0-9]+)", a)]
             if values != expected:
-                issues.append(f"{name}: approved four-VM/three-zone baseline changed")
-        flows = all_workbooks[FILES[0]]["Allowed Network Flows"]["cells"]
+                issues.append(f"{name}: approved inventory or zone order changed")
+        vm_cells = office01["Virtual Machines"]["cells"]
+        allocations = (["Corporate", "2", "6", "64"], ["Corporate", "2", "6", "64"], ["Restricted", "2", "4", "32"])
+        for row, expected in enumerate(allocations, 8):
+            if [vm_cells.get(f"{col}{row}", {}).get("value") for col in "CDEF"] != expected:
+                issues.append(f"Virtual Machines: approved zone or allocation changed at row {row}")
+        for name, (col, last_row) in OFFICE01_EVIDENCE.items():
+            cells = office01[name]["cells"]
+            if (cells.get(f"{col}7", {}).get("value") != "Evidence reference"
+                    or any(f"{col}{row}" not in cells for row in range(8, last_row + 1))):
+                issues.append(f"{name}: required evidence field missing")
+        flows = office01["Allowed Network Flows"]["cells"]
         architecture = (root / "docs/architecture/ARCHITECTURE.md").read_text(encoding="utf-8")
         approved_flows = re.findall(r"^\| (FF-\d{2}) \| ([^|]+) \| ([^|]+) \|$", architecture, re.M)
         if len(approved_flows) != 8:
@@ -363,7 +377,7 @@ def main() -> int:
         return 1
     print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
     if T9B_FWR02 in (ROOT / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8"):
-        print("BASELINE: FWR-02 checks byte-frozen published Office content; physical-firewall alignment remains deferred to T9E, not validated here.")
+        print("BASELINE: Office 01 uses three workloads. Office 03 retains the published FWR-02 description until T9E.3.")
     if hashlib.sha256((ROOT / TEST_PLAN).read_text(encoding="utf-8").encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
         print("BASELINE: Test Cases preserves the exact published workbook rows against the prior Test Plan. The revised plan is checked separately; workbook wording awaits T9E.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
