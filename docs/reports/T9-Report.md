@@ -703,9 +703,77 @@ The vendor comparison covered stateful firewall rule processing, physical bridge
 - **Scope:** the five approved Word/Excel templates linked by the assignment; physical firewall/three workload VMs, usable language/layout and identified formatting defects.
 - **Acceptance criteria:** remove obsolete virtual-firewall/four-VM assumptions; retain answer/evidence fields, all required test coverage and separate owner UAT; preserve owner-entered answers and existing useful work.
 - **Validation:** inspect original content before edits, compare requirements/subchecks/formulas and package safety, verify native editing/recalculation where relevant, inspect Word pages/all affected worksheet views, and compare unrelated content for preservation. No Office PDF deliverables.
-- **Change summary / files:** NOT STARTED; none.
-- **T9A dependency:** inspect all five docs/deliverables/ packages. In 01-Lab-Environment-and-Architecture.xlsx remove OPNsense from Virtual Machines, record HP separately, reconcile Hardware & Readiness / Network Zones / Allowed Network Flows, and update Resource Allocation input rows/formulas/reserves to three workloads. Update 02's implementation prompts, 03's FWT-02 counts/coverage/recovery prompts and 05's architecture/result summaries; check 04's references without discarding answers. FF permissions remain unchanged. Preserve blank actuals, owner fields and mandatory tests. Depends on T9D and separate T9E approval. The earlier initialization request did not enumerate its mentioned Office defects; obtain/reproduce specifics before claiming repairs.
-- **Owner review status:** PENDING; authorization reference/date not supplied; engineering result NOT TESTED.
+
+#### T9E subtask register
+
+| Subtask | Authorization | Scope | Changed files | Validation | GitHub evidence | Owner review | Remaining dependencies |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| T9E.1 - Office 01 | OWNER-T9E1-OFFICE01-2026-11-10 / 2026-11-10 | Align Lab Environment and Architecture workbook with the approved physical firewall and three workloads | Five paths listed below | Workbook VALIDATED. Native Excel and 136 offline tests PASS | [PR 27](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/27), initial push and PR CI PASS | T9D.4 ACCEPTED. T9E.1 PENDING | Private readiness, capacity and network evidence. Separate approval for T9E.2 |
+| T9E.2 - Office 02 | PENDING | Review identity and zero-trust implementation prompts and layer-specific evidence | None | NOT TESTED | Pending | PENDING | T9E.1 owner review and separate authorization |
+| T9E.3 - Office 03 | PENDING | Align ten OVERALL definitions, legacy FWT-01.01/FWT-02.01 and FWR-02 wording, recovery B08 and handover prompts | None | NOT TESTED | Pending | PENDING | T9E.2 owner review and separate authorization. Preserve the 91 mandatory subchecks and pending UAT |
+| T9E.4 - Office 04 | PENDING | Review issue, correction and retest references | None | NOT TESTED | Pending | PENDING | T9E.3 owner review and separate authorization |
+| T9E.5 - Office 05 | PENDING | Review the four-VM architecture summary, results and rubric references | None | NOT TESTED | Pending | PENDING | T9E.4 owner review and separate authorization |
+| T9E.6 - Office Integration and Audit | PENDING | Audit all five Office templates and their links to the current specifications | None | NOT TESTED | Pending | PENDING | T9E.5 owner review and separate authorization. T9F follows its own approval |
+
+#### T9E.1 - Office 01
+
+**Authority and predecessor.** OWNER-T9E1-OFFICE01-2026-11-10 records the owner's 2026-11-10 request in America/Toronto. It accepts T9D.4, closes T9D at documentation level and authorizes Office 01 alignment, its focused validators and tests, and reviewed publication. The request is retained privately. PR 26 merged as `c1393717bdadb506673c0671c1ddbff189b4fc7f`. Final head `5e472ba802727eae907e8c70c9aef4386a243abd` passed the pull request and push workflows. Main CI passed and local, tracking and live main agreed at the merge commit. The task ran in a clean checkout to preserve pre-existing local changes. The published archives and finalized T1-T8 records are the preservation baseline. [PR 26](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/26) · [Pull request CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42588370587) · [Push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42588366173) · [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42588574842)
+
+**Workbook audit before edits.** Reviewed [Office 01](../deliverables/01-Lab-Environment-and-Architecture.xlsx) against the [Architecture](../architecture/ARCHITECTURE.md), [Assignment](../assignments/PROJECT-ASSIGNMENT.md), [Lab Guide](../lab-guides/LAB-IMPLEMENTATION-GUIDE.md) and its seven references, [Security Requirements](../security/SECURITY-REQUIREMENTS.md), [Test Plan](../testing/TEST-PLAN.md) and [Acceptance Criteria](../testing/ACCEPTANCE-CRITERIA.md). Inspected all five released packages. Offices 02 and 05 are Word templates with 9 and 10 main headings. Office 03 has eight worksheets covering events, investigation, tests, traceability, automation, recovery, evidence and owner acceptance. Office 04 has one Issue Log worksheet. The source package and rendered worksheet views showed these Office 01 ranges in order.
+
+| Worksheet | Used range / filtered table | Blank record columns | Confirmed finding |
+| --- | --- | --- | --- |
+| Hardware & Readiness | `A1:J15` / `A7:J15` | D:G, I:J | Generic host/network rows and a procurement list obscure the four prepared devices and ownership. |
+| Virtual Machines | `A1:L11` / `A7:L11` | G:J, L | Row 8 allocates a virtual OPNsense guest. Rows 9–11 hold DC1, WIN1 and APP1. |
+| Network Zones | `A1:I10` / `A7:I10` | E:F, H:I | B8:B10 prescribe bridge names. D9:D10 assume internal-only attachments. |
+| Allowed Network Flows | `A1:H15` / `A7:H15` | D:E, G:H | A8:C15 agree with all eight approved flow rows. A3 needs physical and host enforcement context. |
+| Resource Allocation | `A1:H19` / `A7:H19` | D11:D15, D17:D19, G:H | C8:D10 use four guest rows. C16 shows 336 GiB. D16 has a separate five-input ledger guard. |
+
+Office 01 has five named filtered tables and two merged areas (`A2:E2`, `A3:E5`) per sheet. Every sheet freezes two columns and seven rows. Status list validation and four conditional status rules apply to H8:H15, K8:K11, G8:G10, F8:F15 and F8:F19 respectively. Hardware also has lists on D8:D15 and E8:E15. The package has default page margins, no saved print areas or other defined names, no hidden rows, columns or sheets, no hyperlinks and default calculation settings with no explicit calculation properties. The eight formulas are C8:D10 and C16:D16 on Resource Allocation. The sheet instructions and record columns hold operator/date, evidence, notes and outcome references. The execution and detailed evidence records belong in Office 03, with issues and retests in Office 04.
+
+**Formula decision before edits.** Keep one SUM per planned guest metric and one COUNT/SUM guard per actual metric. Move the three workloads into rows 8–10 and bind all six guest formulas to those rows. A partial metric remains blank. C16 and D16 already describe guest disks plus four Dell ledger inputs, so keep both formulas. This keeps D16 blank until the actual guest disk total and all four other ledger inputs are numeric. The separate HP capacity is verified on Hardware & Readiness. Any unexpected guest belongs in the issue record.
+
+**Implemented changes.** The existing Office 01 file keeps its five worksheets in order.
+
+| Worksheet | Affected cells and behavior |
+| --- | --- |
+| Hardware & Readiness | A3, D7, B8, B13, C8:C13, C15 and new A16:J17. Identifies Dell and physical HP and adds H09 for the TP-Link TL-SG108E and H10 for the GL.iNet Beryl AX. Ownership replaces procurement. Blank ownership, installation, actual configuration, verification, evidence and notes extend through row 17. Status and installation lists and the status color rules cover the two new rows. |
+| Virtual Machines | A3, J7 and A8:F10. Removes the firewall guest row and uses A8:L10 for DC1, WIN1 and APP1. J retains blank input for the observed VM ID, OS build, network attachment and power state. The status list and color rules end at K10. |
+| Network Zones | A3, B7:B10 and D8:D10. Prompts for the private switch, PVID, Dell bridge/NIC and physical HP routing record. Covers IPv4 and IPv6, host routes and bypasses, named management, default deny, console recovery and approved rollback. Retains symbolic subnets and all actual and evidence columns. |
+| Allowed Network Flows | A3 explains HP routed enforcement, same-zone Windows rules and independent APP1 host and overlay controls. All 24 cells in A8:C15 match the prior workbook and the approved FF-01 through FF-08 matrix. |
+| Resource Allocation | A3, C8:D10, C16's calculated value, E8:E10 and E16. Keeps 12 GiB host RAM reserve, 32 GiB host storage, 16 GiB media, 32 GiB temporary disconnected APP1 restore and 80 GiB free-space reserve. Keep usable capacity, variance and evidence in the existing inputs. |
+
+| Resource Allocation cells | Before | After |
+| --- | --- | --- |
+| C8:C10 | SUM of Virtual Machines D8:D11, E8:E11 and F8:F11 | SUM of D8:D10, E8:E10 and F8:F10 respectively. Planned totals are 6 vCPU, 16 GiB RAM and 160 GiB disk. |
+| D8:D10 | COUNT less than 4 keeps each total blank for G8:G11, H8:H11 and I8:I11 | COUNT less than 3 keeps the corresponding total blank for G8:G10, H8:H10 and I8:I10. SUM displays that metric after all three actual entries are numeric. |
+| C16 | `SUM(C10,C12:C15)` yielded 336 GiB | Same formula yields a provisional 320 GiB Dell ledger before overhead. HP is recorded separately. |
+| D16 | `IF(COUNT(D10,D12:D15)<5,"",SUM(D10,D12:D15))` | Same five-input guard. The actual ledger stays blank until the actual guest disk total and four storage inputs are numeric. |
+
+The workbook preserves the five named tables and their filters, frozen panes, Segoe UI styles, column widths, relationships and default calculation settings. The hardware and VM table ranges follow their new row counts. To keep wide sheets legible on landscape Letter, print areas split the table by column groups and repeat the row identifiers. The title and instruction merges fit the first print page. Network Zones rows 8–10 are taller for the wrapped prompts.
+
+**Contract and test files.** `scripts/validate_office_templates.py` pins the reviewed Office 01 package and retains exact released bytes for Office 02–05. It checks the three inventory rows, planned budget, formula guards, blank actual caches and evidence field presence. It retains the T9D.4 Test Plan source pin and compares Office 03's ten tests, all 91 subchecks and requirement mappings to their approved published wording. `tests/test_office_templates.py` checks negative cases for an extra guest, wrong totals, broadened permits or denies, filled actuals, missing evidence and changed Office 02–05 packages. `tests/test_build_docs.py` checks T9D.4 against its published Git tree so the original scope and manifest comparison continues to protect the historical result.
+
+**Validation on 2026-11-10.** Codex performed engineering checks using the blank workbook and disposable synthetic inputs.
+
+| Check | Expected and observed result | Verdict |
+| --- | --- | --- |
+| XLSX ZIP, XML, relationship and formula inspection | All 22 original package members remain. Styles, theme and relationships match the original bytes. Only the five sheets, workbook print names, shared strings and three affected table definitions changed. All eight formula references resolve and the dependency graph is acyclic. Independent arithmetic from the guest and reserve cells confirms 6/16/160 and 320. Cached actual totals are blank. | PASS |
+| Native Excel 16.0 build 20527, `CalculateFullRebuild` | Read-only opening and recalculation succeeded. Blank and partial actuals stayed blank. Complete synthetic guest totals differed from the plan as expected. The ledger waited for its remaining storage input, accepted a numeric zero and cleared when a guest disk input was removed. Planned values stayed stable. The temporary inputs were discarded. | PASS |
+| Normal view and Excel print layout | Viewed all five sheets and all 14 final landscape Letter pages, including formula values and blank inputs. The first print pass clipped some instructions. The final layout preserved all printed cell text and showed complete headers, merged instructions and evidence areas. Print previews are private QA artifacts. | PASS |
+| `python scripts/validate_office_templates.py` | Exact five packages, 14 worksheets, ten tests, 91 subchecks, six application cases, five event categories, one automation, one restore, blank results and evidence, pending owner UAT and the 100-point rubric passed. | PASS |
+| `python scripts/validate_docs.py --require-finalized --allow-t9-draft` and `python scripts/build_docs.py --check --rebuild-check` | 99 public candidates and 49 Markdown files passed. All 27 maintained PDF pairs and 135 pages matched deterministic rebuilds with zero generated changes. | PASS |
+| `python -m unittest discover -s tests -p test_office_templates.py -v` and `python -m unittest discover -s tests -v` | The Windows sandbox denied fixture access on the first run. With access to the isolated checkout's temporary fixtures, Python 3.12.14 passed 28 focused Office tests and all 136 offline regressions. | PASS |
+| Scope and public-content review | Office 02–05 matched their published Git blobs. The T9 report outside T9E matched the predecessor bytes. Inspected the changed workbook cells, ZIP metadata, changed paths and publication scan. Actual addresses, assets, credentials and raw evidence remain private. | PASS |
+| Lab validation, independent human review and owner UAT | Lab checks are NOT TESTED. Independent human review and T9E.1 owner review remain PENDING. Lab owner UAT remains PENDING. | NOT TESTED / PENDING |
+
+**Remaining dependencies.** Private asset identities, supported versions, measured capacity, reviewed VLAN/PVID and bridge/NIC mappings, isolation, console recovery and rollback remain readiness evidence to collect under the applicable stage approvals. The later Office 02–05 work, T9E integration and T9F each await their register dependencies and owner authorization.
+
+**Publication evidence cutoff.** 2026-11-10 20:45:56 America/Toronto, when both initial-head workflows had completed. Content commit `f07ae37fa570880a65e3efad7f1dcccbc4a7ceb2` was pushed on `codex/009e1-office01-architecture` to the public repository with verified GitHub noreply author and committer identities. PR 27 targets the default branch `main`. Initial push and PR CI succeeded. The final-head checks, merge, main CI and local/tracking/live read-back follow this cutoff. [PR 27](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/27) · [Initial push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42941216326) · [Initial PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/42941221972)
+
+**Rollback.** Revert the reviewed Office 01, focused contract/tests and T9E.1 draft change on a new branch if needed, using the preserved T9D.4 baseline for comparison.
+
+**Owner review and stop.** T9D.4 documentation is ACCEPTED. Office 01 owner review is PENDING. T9 remains DRAFT / IN PROGRESS. After publication and synchronization, the next bounded task is T9E.2, Office 02 alignment, after explicit owner review and approval of its scope, validation and rollback.
 
 ### T9F - Final Integration and Audit
 
