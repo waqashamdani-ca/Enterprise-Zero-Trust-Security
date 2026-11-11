@@ -11,6 +11,7 @@ import io
 import posixpath
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 from xml.etree import ElementTree as ET
@@ -55,6 +56,8 @@ T9E2_OFFICE02_SHA256 = "06ad5f5d7387c183cec61330539163ef51483ccc4afd50ec45866263
 T9E3_OFFICE03_SHA256 = "bef697f6e1aff26af97f2d2ba86e66cbf49b904b48a8e488397f7e3cf1454177"
 T9E4_OFFICE04_SHA256 = "f440243ae4601295d938b600f4a5c4ff0e0219358e08163de73f1cf9d277b613"
 
+T9E5_OFFICE05_SHA256 = "3c59271b2d2c609cd5a0f135f7c697a9d13769797837cba8feb74cb38fa78c1f"
+
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
     "Network Zones": "EFHI", "Allowed Network Flows": "DEGH",
@@ -81,6 +84,7 @@ OFFICE01_EVIDENCE = {
 }
 
 OFFICE02_TABLE_SIZES = ((5, 3), (6, 3), (4, 3), (6, 2), (7, 5), (5, 3))
+OFFICE05_TABLE_SIZES = ((4, 2), (6, 2), (6, 2), (7, 4))
 
 
 def package_parts(path: Path) -> dict[str, bytes]:
@@ -276,6 +280,84 @@ def office02_issues(word_text: str, tables: list[list[list[str]]]) -> list[str]:
     return issues
 
 
+def office05_issues(word_text: str, tables: list[list[list[str]]], test_rows: list[list[str]]) -> list[str]:
+    """Check the final summary against the approved records it references."""
+    issues = []
+    headers = [
+        ["Intended outcome", "Observed result / supporting reference"],
+        ["Phase", "Observed implementation summary / detail reference"],
+        ["Test family (mandatory child count) / mapping", "Actual result summary / evidence reference"],
+    ]
+    if [table[0] for table in tables[:3]] != headers:
+        issues.append("summary or evidence fields missing")
+
+    child_counts = Counter(row[0] for row in test_rows if row[2] != "OVERALL")
+    topics = (
+        "Isolation and network", "Identities and endpoints", "HTTPS and remote access",
+        "Events and automation", "Recovery and handover",
+    )
+    expected = []
+    for index, topic in enumerate(topics):
+        mappings = []
+        for number in (2 * index + 1, 2 * index + 2):
+            family = f"FWT-{number:02}"
+            mappings.append(f"{family} ({child_counts[family]}) / FWR-{number:02} / FSC-{number:02} / FAC-{number:02}")
+        expected.append(topic + "".join(mappings))
+    if [row[0] for row in tables[2][1:]] != expected:
+        issues.append("test family counts or FWT/FWR/FSC/FAC mappings changed")
+
+    if any(name not in word_text for name in FILES):
+        issues.append("five released deliverable references required")
+    if (word_text.count("[Enter your response.]") != 6
+            or "[Insert the sanitized final architecture diagram with caption and evidence ID.]" not in word_text):
+        issues.append("blank response or diagram evidence prompt missing")
+
+    prompts = {
+        "approved physical architecture or zone placement": (
+            "Dell Precision 5820 running Proxmox VE", "HP desktop running bare-metal OPNsense",
+            "TP-Link TL-SG108E managed switch", "GL.iNet Beryl AX upstream router",
+            "exactly three workload VMs", "and WIN1 (Windows domain client) share Corporate.",
+            "APP1 (Linux and Apache HTTPS) is in Restricted.", "Management is the third zone",
+            "Physical HP OPNsense provides default-deny routing between zones", "Windows host rules limit same-zone traffic",
+        ),
+        "planned guest allocations or capacity totals": (
+            "2 vCPU / 6 GiB RAM / 64 GiB disk each for DC1 and WIN1", "2 vCPU / 4 GiB RAM / 32 GiB disk for APP1",
+            "6 vCPU / 16 GiB RAM / 160 GiB disk", "320 GiB, subject to measured capacity and reserves",
+            "Assess HP capacity separately",
+        ),
+        "independent enforcement evidence": (
+            "separate APP1 host evidence for host filtering", "Tailscale grants and device evidence for overlay access",
+            "separate Apache role and log evidence", "A failed connection alone leaves attribution unresolved",
+        ),
+        "six approved application expectations": (
+            "C01 ava /reports/ ALLOW", "C02 ava /maintenance/ DENY", "C03 eli /reports/ ALLOW",
+            "C04 eli /maintenance/ ALLOW", "C05 uma /reports/ DENY", "C06 uma /maintenance/ DENY",
+        ),
+        "restricted Tailscale scope": (
+            "one approved existing remote client", "APP1 TCP 443 only",
+            "Subnet routing, exit nodes, Tailscale SSH, Funnel, Serve and sharing stay off",
+            "DC1, WIN1, physical HP and Proxmox are outside remote scope",
+        ),
+        "restore approval gates or shell verification": (
+            "APP1 restore remains BLOCKED until the owner separately approves",
+            "external encrypted storage backend and unlock/recovery method",
+            "exact isolated WIN1-to-restored-APP1 path through physical HP with disconnection, reconnection and rollback",
+            "Verify that command in the approved execution-stage shell before use",
+        ),
+        "authoritative verdict or missing-evidence guidance": (
+            "91 mandatory child checks", "Office 03 Test Cases supplies the verdicts", "Missing evidence remains NOT TESTED",
+        ),
+        "pending owner acceptance or confirmation field": (
+            "Owner user acceptance testing (UAT) stays PENDING", "Office 03 Owner Acceptance",
+            "explicit confirmation reference. [Enter owner decision and reference.]",
+        ),
+    }
+    for label, required in prompts.items():
+        if any(fragment not in word_text for fragment in required):
+            issues.append(f"{label} changed or missing")
+    return issues
+
+
 def office03_record_issues(data: dict[str, dict], tables: list[ET.Element]) -> list[str]:
     """Check the released recording tables, scope prompts and required blank fields."""
     issues = []
@@ -451,6 +533,7 @@ def template_set_issues(root: Path) -> list[str]:
         released_hashes = T9A_OFFICE_HASHES | {
             FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256,
             FILES[2]: T9E3_OFFICE03_SHA256, FILES[3]: T9E4_OFFICE04_SHA256,
+            FILES[4]: T9E5_OFFICE05_SHA256,
         }
         for filename, expected in released_hashes.items():
             if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
@@ -584,16 +667,18 @@ def template_set_issues(root: Path) -> list[str]:
                     if any(value != "Segoe UI" for key, value in node.attrib.items() if key.rsplit("}", 1)[-1] in {"ascii", "hAnsi", "eastAsia", "cs"}):
                         issues.append(f"{filename}: Word fonts must use Segoe UI")
             tables = [[["".join(c.itertext()) for c in tr.findall("w:tc", NS)] for tr in t.findall("w:tr", NS)] for t in document.findall(".//w:body/w:tbl", NS)]
+            sizes = OFFICE02_TABLE_SIZES if filename == FILES[1] else OFFICE05_TABLE_SIZES
+            if len(tables) != len(sizes) or any(
+                len(table) != rows or any(len(row) != columns for row in table)
+                for table, (rows, columns) in zip(tables, sizes)
+            ):
+                issues.append(f"{filename}: required tables or evidence cells missing")
+                continue
             if filename == FILES[1]:
-                if len(tables) != len(OFFICE02_TABLE_SIZES) or any(
-                    len(table) != rows or any(len(row) != columns for row in table)
-                    for table, (rows, columns) in zip(tables, OFFICE02_TABLE_SIZES)
-                ):
-                    issues.append(f"{filename}: required tables or evidence cells missing")
-                    continue
                 issues.extend(f"{filename}: {finding}" for finding in office02_issues(word_text, tables))
                 blank_columns = {0: (2,), 1: (1, 2), 2: (2,), 3: (1,), 4: (4,)}
             else:
+                issues.extend(f"{filename}: {finding}" for finding in office05_issues(word_text, tables, expected_rows))
                 blank_columns = {0: (1,), 1: (1,), 2: (1,), 3: (2, 3)}
             for index, columns in blank_columns.items():
                 if any(record[c] for record in tables[index][1:] for c in columns):
