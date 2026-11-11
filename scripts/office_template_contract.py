@@ -52,6 +52,29 @@ OFFICE03_TABLES = {
         "Actual usability observation", "Limits and follow-up", "Explicit confirmation reference",
     )),
 }
+OFFICE04_TABLE = ("Lab04Table1", "A7:K13", (
+    "Issue ID", "Date", "Affected component / check", "Problem", "Impact", "Cause or investigation",
+    "Corrective action", "Verification / retest", "Status", "Lesson learned", "Evidence reference",
+))
+OFFICE04_LINKS = {"F2": "'Test Cases'!A7", "I2": "'Evidence Index'!A7"}
+OFFICE04_PROMPTS = {
+    "C3": ("unique Issue ID", "observed and expected results", "effect and severity", "FWT-01 to FWT-10",
+           "FWR, FSC and FAC", "FF-01 to FF-08", "C01 to C06", "E01 to E05", "I01 to I07", "A01 to A07", "B01 to B10",
+           "TP-Link switching", "Dell Proxmox bridge attachment", "physical HP OPNsense routed filtering",
+           "Windows same-zone rules", "APP1 host firewall", "Tailscale grants and device authorization", "Apache roles"),
+    "F3": ("findings and hypotheses", "evidence for a verified cause", "timeout or missing log alone leaves the cause unresolved",
+           "stage A–L approval before changes", "authorized change reference", "before and after evidence",
+           "rollback, side effects and residual risk", "original failure and evidence", "retest date and operator",
+           "new evidence ID", "actual outcome", "second observation", "both results in Office 03 Test Cases",
+           "APP1 restore stays BLOCKED", "encrypted external storage and unlock/recovery",
+           "exact isolated WIN1-to-restored-APP1 path through physical HP", "disconnect, reconnect and rollback"),
+    "I3": ("original and retest IDs", "Office 03 Evidence Index", "source and observer UTC", "private custody",
+           "sanitized reference, reviewer and redaction", "synthetic lab data", "raw records and secrets private",
+           "OPEN for a new issue", "IN PROGRESS during investigation or pending retest", "BLOCKED for a dependency",
+           "RESOLVED after verification", "test verdicts in Test Cases", "owner decision in Owner Acceptance",
+           "Lesson learned", "verified reason if known", "what to repeat or change", "how to verify the improvement",
+           "remaining limits"),
+}
 STATUSES = "NOT TESTED,IN PROGRESS,PASS,FAIL,BLOCKED,NOT APPLICABLE"
 OWNER_DECISIONS = "PENDING,ACCEPTED,CHANGES REQUIRED"
 ISSUE_STATUSES = "OPEN,IN PROGRESS,BLOCKED,RESOLVED"

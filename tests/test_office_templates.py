@@ -401,6 +401,88 @@ class OfficeTemplateTests(unittest.TestCase):
                 rewrite(path, "xl/worksheets/sheet2.xml", remove_cell)
                 self.assertIn("Virtual Machines: required evidence field missing", office.template_set_issues(root))
 
+    def test_office04_rejects_missing_issue_headers_and_recording_cells(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[3]
+            rewrite(path, "xl/worksheets/sheet1.xml", lambda raw: set_cell(raw, "A7", ""))
+            self.assertIn("Issue Log: required recording headers changed", office.template_set_issues(root))
+        for address in ("A8", "H8", "J8", "K8"):
+            with self.subTest(address=address), fixture() as root:
+                path = root / REL / office.FILES[3]
+
+                def remove(raw):
+                    sheet = ET.fromstring(raw)
+                    row = sheet.find(".//s:row[@r='8']", office.NS)
+                    row.remove(row.find(f"s:c[@r='{address}']", office.NS))
+                    return ET.tostring(sheet)
+
+                rewrite(path, "xl/worksheets/sheet1.xml", remove)
+                self.assertIn("Issue Log: required blank issue, retest, lesson or evidence field missing",
+                              office.template_set_issues(root))
+
+    def test_office04_rejects_broken_child_id_and_lost_workflow_guidance(self):
+        for old, new, finding in (
+            ("FWT-04.03", "FWT-04.99", "broken or missing Office 03 FWT reference"),
+            ("stage A–L approval before changes", "review", "F3 required troubleshooting guidance changed"),
+            ("rollback, side effects and residual risk", "notes", "F3 required troubleshooting guidance changed"),
+            ("new evidence ID", "notes", "F3 required troubleshooting guidance changed"),
+            ("how to verify the improvement", "notes", "I3 required troubleshooting guidance changed"),
+            ("exact isolated WIN1-to-restored-APP1 path through physical HP", "a network path",
+             "F3 required troubleshooting guidance changed"),
+        ):
+            with self.subTest(text=old), fixture() as root:
+                path = root / REL / office.FILES[3]
+                rewrite(path, "xl/worksheets/sheet1.xml",
+                        lambda raw: raw.replace(old.encode(), new.encode(), 1))
+                self.assertIn("Issue Log: " + finding, office.template_set_issues(root))
+
+    def test_office04_rejects_changed_status_and_severity_validation(self):
+        for mutation in ("status list", "severity list", "status formatting"):
+            with self.subTest(mutation=mutation), fixture() as root:
+                path = root / REL / office.FILES[3]
+
+                def change(raw):
+                    sheet = ET.fromstring(raw)
+                    rules = sheet.find("s:dataValidations", office.NS)
+                    if mutation == "status list":
+                        rules[0].find("s:formula1", office.NS).text = '"OPEN,IN PROGRESS,BLOCKED,CLOSED"'
+                    elif mutation == "severity list":
+                        extra = ET.SubElement(rules, f"{{{office.NS['s']}}}dataValidation", type="list", sqref="E8:E13")
+                        ET.SubElement(extra, f"{{{office.NS['s']}}}formula1").text = '"LOW,MEDIUM,HIGH"'
+                        rules.set("count", "2")
+                    else:
+                        sheet.find("s:conditionalFormatting", office.NS).set("sqref", "I8:I12")
+                    return ET.tostring(sheet)
+
+                rewrite(path, "xl/worksheets/sheet1.xml", change)
+                finding = ("approved status conditional formatting changed" if mutation == "status formatting"
+                           else "approved status dropdown or free-text severity changed")
+                self.assertIn("Issue Log: " + finding, office.template_set_issues(root))
+
+    def test_office04_rejects_prefilled_issues_and_unapproved_topology(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[3]
+            rewrite(path, "xl/worksheets/sheet1.xml", lambda raw: set_cell(raw, "A8", "ISSUE-TEST"))
+            self.assertIn(f"{office.FILES[3]}:Issue Log: actual/evidence/date fields must be blank",
+                          office.template_set_issues(root))
+        for text in ("four workload VMs", "virtual OPNsense", "six VLANs"):
+            with self.subTest(text=text), fixture() as root:
+                path = root / REL / office.FILES[3]
+                rewrite(path, "xl/worksheets/sheet1.xml", lambda raw: set_cell(raw, "K6", text))
+                self.assertIn("Issue Log: unapproved architecture assumption", office.template_set_issues(root))
+
+    def test_office04_rejects_broken_trace_links_and_print_titles(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[3]
+            rewrite(path, "xl/worksheets/sheet1.xml", lambda raw: raw.replace(b"Test Cases'!A7", b"Other'!A7"))
+            self.assertIn("Issue Log: links to Office 03 Test Cases and Evidence Index changed",
+                          office.template_set_issues(root))
+        with fixture() as root:
+            path = root / REL / office.FILES[3]
+            rewrite(path, "xl/workbook.xml", lambda raw: raw.replace(b"'Issue Log'!$A:$A,", b""))
+            self.assertIn("Issue Log: print must repeat identifiers and headers and include appended rows",
+                          office.template_set_issues(root))
+
     def test_each_office_package_must_match_its_released_bytes(self):
         for filename in office.FILES:
             with self.subTest(filename=filename), fixture() as root:
