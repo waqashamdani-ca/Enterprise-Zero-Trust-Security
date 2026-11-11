@@ -316,8 +316,8 @@ class OfficeTemplateTests(unittest.TestCase):
                 rewrite(path, "xl/worksheets/sheet2.xml", remove_cell)
                 self.assertIn("Virtual Machines: required evidence field missing", office.template_set_issues(root))
 
-    def test_each_office02_through05_package_must_match_its_released_bytes(self):
-        for filename in office.FILES[1:]:
+    def test_each_office_package_must_match_its_released_bytes(self):
+        for filename in office.FILES:
             with self.subTest(filename=filename), fixture() as root:
                 path = root / REL / filename
                 rewrite(path, "[Content_Types].xml", lambda raw: raw + b"\n")
@@ -363,6 +363,49 @@ class OfficeTemplateTests(unittest.TestCase):
             rewrite(path, "word/footer1.xml", lambda b: b.replace(b'NUMPAGES', b'UNAPPROVED'))
             self.assertTrue(any("page numbering" in x for x in office.template_set_issues(root)))
             self.assertTrue(any("active Word field" in x for x in office.package_issues(root, REL + path.name)))
+
+    def test_office02_rejects_control_and_evidence_drift(self):
+        changes = (
+            ("exactly three workload VMs", "four required workload VMs", "approved three-workload architecture"),
+            ("Standard analyst; LabReaders", "Standard analyst; LabAdmins", "approved directory or Apache group memberships"),
+            ("AD single sign-on and automatic role synchronization are excluded.",
+             "AD automatically synchronizes Apache roles.", "independent Apache roles"),
+            ("APP1 TCP 443-only grant", "grant to the Corporate subnet on all ports", "Tailscale access boundary"),
+            ("new network requests from existing authenticated and fresh sessions",
+             "a request from the same browser", "revocation evidence"),
+            ("known-listening denial to the APP1 rule and log or counter.",
+             "denial to the HP firewall log.", "endpoint enforcement attribution"),
+            ("Match each denial to effective grants, device state, independent APP1 host rules or Apache roles and logs.",
+             "A failed connection verifies the grant.", "remote denial attribution"),
+            ("[Insert a sanitized certificate/browser screenshot and an evidence ID.]",
+             "", "answer or screenshot/evidence prompts missing"),
+            ("Evidence ID</w:t>", "Notes</w:t>", "application evidence field missing"),
+        )
+        for original, altered, finding in changes:
+            with self.subTest(finding=finding), fixture() as root:
+                path = root / REL / office.FILES[1]
+
+                def mutate(raw):
+                    self.assertIn(original.encode(), raw)
+                    return raw.replace(original.encode(), altered.encode(), 1)
+
+                rewrite(path, "word/document.xml", mutate)
+                self.assertTrue(any(finding in issue for issue in office.template_set_issues(root)))
+
+    def test_office02_rejects_prefilled_case_evidence(self):
+        with fixture() as root:
+            path = root / REL / office.FILES[1]
+
+            def prefill(raw):
+                tree = ET.fromstring(raw)
+                table = tree.findall(".//w:body/w:tbl", office.NS)[4]
+                evidence_cell = table.findall("w:tr", office.NS)[1].findall("w:tc", office.NS)[4]
+                evidence_cell.find(".//w:t", office.NS).text = "QA-FILLED"
+                return ET.tostring(tree)
+
+            rewrite(path, "word/document.xml", prefill)
+            self.assertTrue(any("actual/score/evidence answer cells must be blank" in issue
+                                for issue in office.template_set_issues(root)))
 
     def test_undeclared_compatibility_prefix_rejected(self):
         with fixture() as root:
