@@ -10,7 +10,6 @@ import hashlib
 import io
 import posixpath
 import re
-import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -19,9 +18,9 @@ from zipfile import BadZipFile, ZipFile
 
 ROOT = Path(__file__).resolve().parents[1]
 try:
-    from office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, SUBCHECKS, RUBRIC, approved_tests
+    from office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES, RUBRIC, office03_test_rows
 except ModuleNotFoundError:
-    from scripts.office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, SUBCHECKS, RUBRIC, approved_tests
+    from scripts.office_template_contract import FILES, SHEETS, STATUSES, OWNER_DECISIONS, ISSUE_STATUSES, WORD_SECTIONS, OFFICE03_TABLES, RUBRIC, office03_test_rows
 NS = {
     "s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
@@ -30,12 +29,12 @@ NS = {
 FORMULAS = {"IF", "COUNT", "SUM"}
 TEST_PLAN = "docs/testing/TEST-PLAN.md"
 
-# Office 03 quotes T9D.1 while the T9D.4 Test Plan governs execution.
-# Only the exact audited source (LF-normalized) uses the published definitions.
+# Preserve the T9D.1 publication reference for historical regression checks.
+# The LF-normalized T9D.4 source supplies the current worksheet definitions.
 T9D1_PUBLICATION = "2852dbd8b5e85bf7e306650e6e73013860dfec4c"
 T9D4_PLAN_SHA256 = "fdc664297e107b8f90179a4bb5da0e30bea8d91220067466ead9d78ff664e900"
 
-# Office 03 retains the published FWR-02 wording until its alignment.
+# The prior FWR-02 wording remains part of the historical release checks.
 T9B_FWR02 = "Verify the prepared Dell/Proxmox host, physical HP/OPNsense firewall, three workload VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
 T9A_FWR02 = "Run one host, four VMs and three zones; deny unlisted flows, restrict administration, retain console recovery and confirm measured capacity fits."
 T9A_OFFICE_HASHES = {
@@ -47,6 +46,7 @@ T9A_OFFICE_HASHES = {
 }
 T9E1_OFFICE01_SHA256 = "2359a415a4e9ab0f7abbf9065171e70f35de93273e82fc0637ba87443302f541"
 T9E2_OFFICE02_SHA256 = "06ad5f5d7387c183cec61330539163ef51483ccc4afd50ec4586626392d035b9"
+T9E3_OFFICE03_SHA256 = "bef697f6e1aff26af97f2d2ba86e66cbf49b904b48a8e488397f7e3cf1454177"
 
 BLANK_COLUMNS = {
     "Hardware & Readiness": "DEFGIJ", "Virtual Machines": "GHIJL",
@@ -269,6 +269,107 @@ def office02_issues(word_text: str, tables: list[list[list[str]]]) -> list[str]:
     return issues
 
 
+def office03_record_issues(data: dict[str, dict], tables: list[ET.Element]) -> list[str]:
+    """Check the released recording tables, scope prompts and required blank fields."""
+    issues = []
+    by_name = {table.get("name"): table for table in tables}
+    for index, (name, (reference, headers)) in enumerate(OFFICE03_TABLES.items(), 1):
+        cells = data[name]["cells"]
+        last_col, last_row = re.fullmatch(r"A7:([A-Z])(\d+)", reference).groups()
+        columns = [chr(col) for col in range(ord("A"), ord(last_col) + 1)]
+        table = by_name.get(f"Lab03Table{index}")
+        if table is None or table.get("ref") != reference or table.find("s:autoFilter", NS) is None:
+            issues.append(f"{name}: approved named table, range or filter changed")
+        elif (table.find("s:autoFilter", NS).get("ref") != reference
+              or tuple(c.get("name") for c in table.findall("s:tableColumns/s:tableColumn", NS)) != headers):
+            issues.append(f"{name}: table filter range or recording headers changed")
+        if tuple(cells.get(f"{col}7", {}).get("value") for col in columns) != headers:
+            issues.append(f"{name}: required recording headers changed")
+        if any(f"{col}{row}" not in cells for col in columns for row in range(8, int(last_row) + 1)):
+            issues.append(f"{name}: required actual/evidence or other recording field missing")
+
+    events = data["Security Events"]["cells"]
+    categories = (
+        "Directory logon success", "One directory logon failure", "Application allow",
+        "Authenticated application denial", "Firewall denial",
+    )
+    if [(events.get(f"A{row}", {}).get("value"), events.get(f"B{row}", {}).get("value"))
+        for row in range(8, 13)] != [(f"E{i:02}", category) for i, category in enumerate(categories, 1)]:
+        issues.append("Security Events: five approved event categories missing")
+
+    for name, prefix, count in (
+        ("Denied Access Investigation", "I", 7), ("Automation Verification", "A", 7),
+        ("Backup & Restore", "B", 10), ("Owner Acceptance", "U", 5),
+    ):
+        cells = data[name]["cells"]
+        if [cells.get(f"A{row}", {}).get("value") for row in range(8, 8 + count)] != [
+            f"{prefix}{i:02}" for i in range(1, count + 1)
+        ]:
+            issues.append(f"{name}: approved check fields missing or out of order")
+
+    prompts = {
+        "Security Events": {
+            "A3": ("source and observer UTC", "second observation", "private custody"),
+            "C8": ("DC1 Security", "Kerberos event"),
+            "C9": ("DC1 Security", "lockout margin", "one safe wrong-password attempt"),
+            "C10": ("APP1 Apache", "allowed authenticated application request"),
+            "C11": ("APP1 Apache", "valid application credentials", "denied request"),
+            "C12": ("Physical HP OPNsense", "effective rule", "log or counter"),
+        },
+        "Denied Access Investigation": {
+            "A3": ("one approved denied lab-owned action", "working positive control", "event-time policy"),
+            "B8": ("source, destination and service",),
+            "B12": ("source log, state or counter",),
+            "B13": ("second observation", "State limits"),
+        },
+        "Test Cases": {
+            "A3": ("every mandatory child passes with verified evidence", "FAIL if any child fails",
+                   "NOT TESTED otherwise", "NOT APPLICABLE cannot waive a mandatory check"),
+        },
+        "Automation Verification": {
+            "A3": ("one local WIN1 disk-capacity summary", "approved standard user", "No unapproved elevation or writes"),
+            "B9": ("WIN1/ad.lab.test target", "protected private output path"),
+            "B10": ("First-run result", "independent OS/storage comparison"),
+            "B11": ("Second successful run", "side effects"),
+            "B12": ("invalid-target rejection",),
+            "B13": ("invalid-path rejection",),
+            "B14": ("before and after both runs and rejections",),
+        },
+        "Backup & Restore": {
+            "A3": ("BLOCKED", "encrypted external-storage backend and unlock/recovery",
+                   "exact isolated physical HP path", "disconnection, reconnection and rollback"),
+            "B8": ("One approved full APP1 backup",),
+            "B9": ("off-compute custody", "separate recovery-key access", "sole archive"),
+            "B11": ("original APP1 off before backup and throughout", "unused temporary VM ID",
+                    "all restored NICs disconnected and autostart off"),
+            "B12": ("Tailscale stopped and disabled",),
+            "B13": ("verified integrity and usable HTTPS", "independent clock"),
+            "B14": ("authentic independently retained manifest", "approved execution-stage shell"),
+            "B15": ("exact approved isolated WIN1-to-copy path through physical HP OPNsense", "both approvals",
+                    "disconnect/reconnect and rollback checklist", "upstream and nonparticipants disconnected",
+                    "narrow temporary settings", "matching HP and APP1 evidence"),
+            "B16": ("reports allowed and maintenance denied", "trusted HTTPS"),
+            "B17": ("Disconnect and stop the copy before rollback", "original APP1 final state"),
+        },
+        "Evidence Index": {
+            "A3": ("exact requirement/test/check", "source system, operator, date/time",
+                   "second observation and issue/retest", "private original custody", "reviewed sanitized reference"),
+        },
+        "Owner Acceptance": {
+            "A3": ("91 mandatory results and their evidence", "critical safety failures",
+                   "100-point rubric (25 / 25 / 20 / 20 / 10)", "user acceptance testing (UAT) separately",
+                   "explicit confirmation reference", "Start PENDING"),
+        },
+    }
+    for name, required in prompts.items():
+        cells = data[name]["cells"]
+        for address, phrases in required.items():
+            if any(phrase not in cells.get(address, {}).get("value", "") for phrase in phrases):
+                issues.append(f"{name}: {address} approved control or evidence prompt changed")
+
+    return issues
+
+
 def template_set_issues(root: Path) -> list[str]:
     directory = root / "docs/deliverables"
     if not directory.is_dir():
@@ -277,17 +378,16 @@ def template_set_issues(root: Path) -> list[str]:
     if {p.name for p in directory.iterdir()} != set(FILES):
         issues.append("docs/deliverables/ must contain exactly the five approved Office templates")
     try:
-        released_hashes = T9A_OFFICE_HASHES | {FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256}
+        released_hashes = T9A_OFFICE_HASHES | {
+            FILES[0]: T9E1_OFFICE01_SHA256, FILES[1]: T9E2_OFFICE02_SHA256, FILES[2]: T9E3_OFFICE03_SHA256,
+        }
         for filename, expected in released_hashes.items():
             if hashlib.sha256((directory / filename).read_bytes()).hexdigest() != expected:
                 issues.append(f"{filename}: package differs from the approved release")
         plan = (root / TEST_PLAN).read_text(encoding="utf-8")
-        definitions = approved_tests(plan)
-        if hashlib.sha256(plan.encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
-            published_plan = subprocess.check_output(
-                ["git", "-C", str(ROOT), "show", f"{T9D1_PUBLICATION}:{TEST_PLAN}"],
-                encoding="utf-8", stderr=subprocess.PIPE)
-            definitions = approved_tests(published_plan)
+        if hashlib.sha256(plan.encode("utf-8")).hexdigest() != T9D4_PLAN_SHA256:
+            issues.append("Test Cases: approved test plan source differs from the audited T9D.4 publication")
+        expected_rows = office03_test_rows(plan)
         all_workbooks = {}
         for filename, expected in SHEETS.items():
             parts = package_parts(directory / filename)
@@ -306,6 +406,8 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: missing or duplicate named tables")
             if any(t.find("s:autoFilter", NS) is None for t in tables):
                 issues.append(f"{filename}: table filters are missing")
+            if filename == FILES[2]:
+                issues.extend(office03_record_issues(data, tables))
             for sheet_name, sheet in data.items():
                 tree, cells = sheet["tree"], sheet["cells"]
                 pane = tree.find("s:sheetViews/s:sheetView/s:pane", NS)
@@ -340,10 +442,6 @@ def template_set_issues(root: Path) -> list[str]:
                 if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|six standard users|two-tier|twenty.event|twelve application|two automation", visible, re.I):
                     issues.append(f"{filename}:{sheet_name}: obsolete enterprise target or ID")
         cases = all_workbooks[FILES[2]]["Test Cases"]["cells"]
-        expected_rows = []
-        for t in definitions:
-            expected_rows.append([t["id"], t["requirement"], "OVERALL", t["title"] + "\n" + t["scope"] + "\n" + t["method"], t["expected"], t["second"]])
-            expected_rows.extend([[t["id"], t["requirement"], f'{t["id"]}.{i:02}', action, expectation, detail] for i, (action, expectation, detail) in enumerate(SUBCHECKS[t["id"]], 1)])
         actual_ids = [c["value"] for a, c in cases.items() if re.fullmatch(r"C(?:[89]|[1-9][0-9]+)", a)]
         if actual_ids != [r[2] for r in expected_rows]:
             issues.append("Test Cases: ten tests and all mandatory subchecks must occur once in approved order")
@@ -357,8 +455,6 @@ def template_set_issues(root: Path) -> list[str]:
             raise ValueError("Missing approved requirements")
         owners = ["01", "01", "02", "02", "02", "02", "03", "03", "03", "03, 04, 05"]
         for rn, ((rid, required_result), owner) in enumerate(zip(required, owners), 8):
-            if rid == "FWR-02" and required_result.strip() == T9B_FWR02:
-                required_result = T9A_FWR02
             expected = [rid, required_result.strip(), rid.replace("FWR", "FSC"), rid.replace("FWR", "FWT"), rid.replace("FWR", "FAC"), owner]
             if [coverage.get(f"{col}{rn}", {}).get("value") for col in "ABCDEF"] != expected:
                 issues.append(f"Requirements Coverage: {rid} traceability differs from approved assignment")
@@ -393,15 +489,6 @@ def template_set_issues(root: Path) -> list[str]:
         for rn, expected in enumerate(approved_flows, 8):
             if [flows.get(f"{c}{rn}", {}).get("value") for c in "ABC"] != [v.strip() for v in expected]:
                 issues.append("Allowed Network Flows: approved permission/enforcement changed")
-        events = all_workbooks[FILES[2]]["Security Events"]["cells"]
-        categories = ["Directory logon success", "One directory logon failure", "Application allow", "Authenticated application denial", "Firewall denial"]
-        if [events.get(f"B{r}", {}).get("value") for r in range(8, 13)] != categories:
-            issues.append("Security Events: five approved event categories missing")
-        for filename, prefix, count in ((FILES[2], "A", 7), (FILES[2], "B", 10)):
-            name = "Automation Verification" if prefix == "A" else "Backup & Restore"
-            cells = all_workbooks[filename][name]["cells"]
-            if [cells.get(f"A{r}", {}).get("value") for r in range(8, 8 + count)] != [f"{prefix}{i:02}" for i in range(1, count + 1)]:
-                issues.append(f"{name}: approved exercise check fields missing")
         for filename in (FILES[1], FILES[4]):
             parts = package_parts(directory / filename)
             word_text = plain_word(parts)
@@ -442,7 +529,7 @@ def template_set_issues(root: Path) -> list[str]:
                 issues.append(f"{filename}: approved 100-point rubric/blank scores changed")
             if re.search(r"\b(?:R[0-9]{2}|T[0-9]{2}|S[0-9]{2})\b|six (?:security )?zones|two-tier|twenty.event|twelve application|two automation", word_text, re.I):
                 issues.append(f"{filename}: obsolete enterprise target or ID")
-    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError, subprocess.CalledProcessError):
+    except (OSError, BadZipFile, ET.ParseError, ValueError, KeyError, IndexError, TypeError):
         issues.append("Office template structure/approved plan traceability could not be verified")
     return sorted(set(issues))
 
@@ -458,10 +545,6 @@ def main() -> int:
             print("- " + issue)
         return 1
     print("PASS: five editable blank Office packages; 14 worksheets; FWR-01 to FWR-10; ten FWT tests/91 mandatory subchecks; exact approved outcomes; blank actuals/evidence; separate pending UAT; 100-point rubric.")
-    if T9B_FWR02 in (ROOT / "docs/assignments/PROJECT-ASSIGNMENT.md").read_text(encoding="utf-8"):
-        print("BASELINE: Office 01 uses three workloads. Office 03 retains the published FWR-02 description until T9E.3.")
-    if hashlib.sha256((ROOT / TEST_PLAN).read_text(encoding="utf-8").encode("utf-8")).hexdigest() == T9D4_PLAN_SHA256:
-        print("BASELINE: Test Cases preserves the exact published workbook rows against the prior Test Plan. The revised plan is checked separately; workbook wording awaits T9E.")
     print("LIMITS: native opening/editing/recalculation and visual review require separate observations; owner UAT remains PENDING.")
     return 0
 
