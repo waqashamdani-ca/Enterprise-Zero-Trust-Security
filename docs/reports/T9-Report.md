@@ -1045,6 +1045,14 @@ The root README introduces the lab's purpose, physical firewall, three workloads
 | Publication and preservation review | Four changed paths, 95 unchanged Git blobs and 19 unchanged historical report and archive paths. The other 26 manifest entries are identical. Manual content and metadata review and `git diff --check` passed. | PASS |
 | Operational lab validation | Documentation scope only. | NOT TESTED |
 
+**README publication evidence cutoff.** 2026-11-11 11:49:54 -05:00 America/Toronto. The public repository defaults to `main`.
+
+| Publication check | Observed result |
+| --- | --- |
+| Reviewed commit and checks | PR 33 contained the four reviewed paths. Push and pull request CI passed for `ffadd9b8822e60a760e7d3bda8238577c5eb11f5` on `codex/009-readme-simplification`. [PR 33](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/pull/33) · [Push CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061584179) · [PR CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061594390) |
+| Merge and main CI | GitHub recorded PR 33 as merged at `a07866fa84c645b5f1e30bf08ac4f791782c5042`. The task and merge commits used the verified GitHub noreply author and committer. The main workflow passed at that merge. [Main CI](https://github.com/waqashamdani-ca/Enterprise-Zero-Trust-Security/actions/runs/43061960039) |
+| Synchronization and preservation | After `git pull --ff-only origin main`, local, tracking and live main all matched `a07866fa84c645b5f1e30bf08ac4f791782c5042`. The task worktree was clean and the original checkout retained exactly its five pre-existing unstaged archive PDF deletions. |
+
 **T9F follow-up.** This revision resolves the root README part of the earlier T9A dependency. The documentation library's Office 01 summary still lists four VMs, and the glossary still describes workload bridges without a physical uplink. Both are follow-up items for the separately authorized integration audit.
 
 ### T9F - Final Integration and Audit
