@@ -16,10 +16,13 @@ Research update: **2026-11-06, America/Toronto, T6**. Primary guidance supports 
 
 ## OPNsense
 
-- [Virtual installation](https://docs.opnsense.org/manual/virtuals.html): VM deployment.
+Project 01 uses bare-metal OPNsense on a separate HP desktop. Use the [prepared infrastructure reference](../lab-guides/reference/01-Prepared-Infrastructure.md#physical-map-and-proxmox-bridges) to check how it connects to the switch and Dell host.
+
+- [Installation and initial configuration](https://docs.opnsense.org/manual/install.html) and [hardware sizing](https://docs.opnsense.org/manual/hardware.html) support the separate HP assessment.
 - [Firewall processing](https://docs.opnsense.org/manual/firewall.html): incoming/stateful policy and automatic/floating/group/interface order; quick and non-quick behavior differ.
 - [Firewall logging](https://docs.opnsense.org/manual/logging_firewall.html): log/counter interpretation and existing-state limits.
 - [Interfaces](https://docs.opnsense.org/manual/interfaces.html): exact NIC assignment, private/bogon settings.
+- [Virtual installation](https://docs.opnsense.org/manual/virtuals.html) supports the superseded design recorded in the [decision register](DECISIONS.md#decision-register).
 
 ## Windows evaluation and hardware
 

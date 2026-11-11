@@ -913,6 +913,20 @@ class PdfArtifactTests(unittest.TestCase):
                     current = reader.get_destination_page_number(destinations["phase-5-mock-and-connection-tools"])
                     self.assertEqual(old, current)
 
+    def test_recovery_reference_preserves_path_and_role_recording_destinations(self):
+        source = (ROOT / docs.RECOVERY_REFERENCE).read_text(encoding="utf-8")
+        path = source.split("## Physical-firewall isolated test path\n", 1)[1].split("\n## ", 1)[0]
+        https = source.split("## HTTPS role checks and recovery time\n", 1)[1].split("\n## ", 1)[0]
+        reader = docs.PdfReader(ROOT / docs.RECOVERY_REFERENCE.replace(".md", ".pdf"))
+        pdf = re.sub(r"\s+", " ", " ".join(page.extract_text() for page in reader.pages))
+        for section, expected in (
+            (path, "B08 for the approved path, both approval references"),
+            (https, "B08 for trusted HTTPS on the approved path"),
+            (https, "B09 for authenticated role outcomes"),
+        ):
+            self.assertIn(expected, section)
+            self.assertIn(expected, pdf)
+
     def test_phase5_pdf_keeps_every_procedure_table_and_compatibility_link_intact(self):
         content = (ROOT / docs.GUIDE).read_bytes()
         sources = set(docs.discover_sources(ROOT))

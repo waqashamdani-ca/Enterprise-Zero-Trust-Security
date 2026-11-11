@@ -4,7 +4,7 @@
 
 ## Decision register
 
-Architecture baseline: DEC-28, 2026-11-07. DEC-23 through DEC-27 retain the other focused requirements and deliverables. Earlier decisions remain for traceability; superseded portions impose no additional current requirement. Assignment, guide, testing and template alignment is tracked in the [T9 register](../reports/T9-Report.md#microtask-register) and requires its own authorization.
+Architecture baseline: DEC-28, 2026-11-07. DEC-23 through DEC-27 retain the other focused requirements and deliverables. Earlier decisions remain for traceability; superseded portions impose no additional current requirement. The [T9 integration audit](../reports/T9-Report.md#t9f---final-integration-and-audit) records the assignment, guide, testing and template alignment. Dated entries retain the dependencies recorded at the time.
 
 | ID | Decision / rationale | Status and owner | Revisit trigger |
 | --- | --- | --- | --- |

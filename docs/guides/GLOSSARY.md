@@ -1,6 +1,6 @@
 # Project terminology and status
 
-This guide explains terms used in the assignment and lab procedures. The [architecture](../architecture/ARCHITECTURE.md) defines the actual proposed design; the glossary does not add controls or implementation claims.
+The [architecture](../architecture/ARCHITECTURE.md) puts routing and filtering between zones on the physical HP OPNsense firewall. Windows host firewalls filter DC1 and WIN1 within Corporate. APP1's Linux host firewall filters local and overlay traffic. Apache checks separate credentials and applies manually mapped roles.
 
 ## Access, identity, and networking
 
@@ -12,7 +12,7 @@ This guide explains terms used in the assignment and lab procedures. The [archit
 | Trust boundary / security zone | A boundary is where access must be checked; a zone groups components with a defined role and access policy. Being in the same zone does not grant application permission. |
 | Management, Corporate, Restricted | The three current zones: host/firewall administration, AD/Windows endpoint, and Linux HTTPS application. Logs are reviewed from existing sources; Tailscale enrolls APP1 without an extra zone. |
 | Hypervisor / virtual machine (VM) | The hypervisor runs separate guest operating systems on one physical host; each guest is a VM. Proxmox VE is the proposed hypervisor. |
-| Bridge / NIC | A bridge connects selected network interfaces; a network interface controller (NIC) connects a host or guest to a network. Workload bridges have no physical uplink in the baseline. |
+| Switch / VLAN / bridge / NIC | A virtual LAN (VLAN) separates traffic on the TP-Link switch and its links. Dell Proxmox bridges connect guest network interfaces (NICs) to each zone's physical path to HP. The bridges carry no host address or routing policy. |
 | Egress / WAN | Egress is traffic leaving a zone or the lab. The firewall's wide area network (WAN) interface is the proposed external path, disconnected until isolation is approved. |
 | NAT | Network address translation changes packet addresses. It does not by itself prevent access to protected networks. |
 | IPv6 | Internet Protocol version 6 requires its own addressing/routing policy review so it cannot bypass the intended IPv4 boundaries. |
@@ -20,7 +20,7 @@ This guide explains terms used in the assignment and lab procedures. The [archit
 | DNS / Group Policy (GPO) | The Domain Name System resolves names to service/address information. Group Policy Objects apply selected Windows configuration and access settings. |
 | Kerberos, LDAP, SMB, RPC | Protocols used for authentication, directory access, file/policy access, and remote procedure calls. Their required flows must be scoped to approved lab components. |
 | MFA / SSO | Multi-factor authentication checks more than one factor. Single sign-on reuses an identity provider for sign-in. Remote MFA does not automatically protect every internal logon, and corporate SSO is excluded. |
-| Overlay / subnet router / exit node | An overlay adds a logical network over existing connections. A subnet router exposes routes to another network; an exit node can carry Internet traffic. The one-resource Tailscale baseline excludes the latter two capabilities. |
+| Overlay / subnet router / exit node | A logical overlay runs over existing networks. Tailscale grants and device authorization limit access to APP1 TCP 443. The lab excludes subnet routers (access to other networks) and exit nodes (Internet routing). |
 | Device posture | Information about a device's security state used in an access decision. Available checks depend on the selected technology and plan; they are not assumed implemented. |
 
 ## Certificates, logging, and recovery
